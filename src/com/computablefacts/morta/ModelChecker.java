@@ -4,8 +4,10 @@ import java.util.List;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
+import com.google.errorprone.annotations.CheckReturnValue;
 import com.google.errorprone.annotations.Var;
 
+@CheckReturnValue
 final public class ModelChecker {
 
   private ModelChecker() {}

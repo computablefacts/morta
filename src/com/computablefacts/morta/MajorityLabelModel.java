@@ -7,8 +7,10 @@ import java.util.List;
 import java.util.Random;
 
 import com.google.common.base.Preconditions;
+import com.google.errorprone.annotations.CheckReturnValue;
 import com.google.errorprone.annotations.Var;
 
+@CheckReturnValue
 final public class MajorityLabelModel {
 
   private MajorityLabelModel() {}
