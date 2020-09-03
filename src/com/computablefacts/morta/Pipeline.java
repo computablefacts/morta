@@ -62,7 +62,7 @@ final public class Pipeline {
 
     /**
      * For each data point, get the label output by each labeling functions.
-     * 
+     *
      * @param lfs labeling functions.
      * @return pairs of (data point, {@link FeatureVector}). Each column of the
      *         {@link FeatureVector} represents a distinct labeling function output. The first
@@ -103,7 +103,7 @@ final public class Pipeline {
 
     /**
      * Compute the probability of each label using a majority vote.
-     * 
+     *
      * @param lfNames mapping of the labeling function names to integers. Each integer represents
      *        the position of the labeling function in the lfs list.
      * @param lfOutputs lfOutputs mapping of the labeling function outputs, i.e. labels, to
@@ -121,7 +121,7 @@ final public class Pipeline {
 
     /**
      * Try to predict the label associated with each data point using a majority vote.
-     * 
+     *
      * @param lfNames mapping of the labeling function names to integers. Each integer represents
      *        the position of the labeling function in the lfs list.
      * @param lfOutputs lfOutputs mapping of the labeling function outputs, i.e. labels, to
