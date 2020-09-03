@@ -108,7 +108,7 @@ final public class Pipeline {
      * @param lfOutputs mapping of the labeling function outputs to integers. Each integer
      *        represents a machine-friendly version of a human-readable label.
      * @param lfs labeling functions.
-     * @return a {@link Summary} object for each data point.
+     * @return a {@link Summary} object for each labeling function.
      */
     public List<Summary> summaries(Dictionary lfNames, Dictionary lfOutputs,
         List<LabelingFunction<D>> lfs) {
@@ -127,7 +127,7 @@ final public class Pipeline {
      *        represents a machine-friendly version of a human-readable label.
      * @param lfs labeling functions.
      * @param goldLabels gold labels.
-     * @return a {@link Summary} object for each data point.
+     * @return a {@link Summary} object for each labeling function.
      */
     public List<Summary> summaries(Dictionary lfNames, Dictionary lfOutputs,
         List<LabelingFunction<D>> lfs, List<Integer> goldLabels) {

@@ -145,6 +145,7 @@ public class PipelineTest {
     Dictionary lfNames = new Dictionary();
     lfNames.put("isDivisibleBy2", 0);
     lfNames.put("isDivisibleBy3", 1);
+    lfNames.put("isDivisibleBy6", 2);
 
     // OK = isDivisibleBy2 AND isDivisibleBy3
     // KO = !isDivisibleBy2 OR !isDivisibleBy3
@@ -159,16 +160,20 @@ public class PipelineTest {
     List<LabelingFunction<Integer>> lfs = new ArrayList<>();
     lfs.add(x -> x % 2 == 0 ? 1 : 0);
     lfs.add(x -> x % 3 == 0 ? 1 : 0);
+    lfs.add(x -> x % 6 == 0 ? 1 : 0);
 
     List<Summary> summaries = Pipeline.on(Lists.newArrayList(1, 2, 3, 4, 5, 6)).summaries(lfNames,
         lfOutputs, lfs, goldLabels);
-    Summary summaryIsDivisibleBy2 =
-        new Summary("isDivisibleBy2", Sets.newHashSet("OK", "KO"), 1.0, 0.5, 0.5, 4, 2);
-    Summary summaryIsDivisibleBy3 =
-        new Summary("isDivisibleBy3", Sets.newHashSet("OK", "KO"), 1.0, 0.5, 0.5, 5, 1);
+    Summary summaryIsDivisibleBy2 = new Summary("isDivisibleBy2", Sets.newHashSet("OK", "KO"), 1.0,
+        0.6666666666666666, 0.5, 4, 2);
+    Summary summaryIsDivisibleBy3 = new Summary("isDivisibleBy3", Sets.newHashSet("OK", "KO"), 1.0,
+        0.8333333333333334, 0.5, 5, 1);
+    Summary summaryIsDivisibleBy6 =
+        new Summary("isDivisibleBy6", Sets.newHashSet("OK", "KO"), 1.0, 1.0, 0.5, 6, 0);
 
     Assert.assertEquals(lfNames.size(), summaries.size());
     Assert.assertEquals(summaryIsDivisibleBy2, summaries.get(0));
     Assert.assertEquals(summaryIsDivisibleBy3, summaries.get(1));
+    Assert.assertEquals(summaryIsDivisibleBy6, summaries.get(2));
   }
 }
