@@ -27,7 +27,7 @@ final public class Summarizer {
     List<Summary> summaries = new ArrayList<>(nbLabelingFunctions);
 
     Preconditions.checkState(goldLabels == null || instances.size() == goldLabels.size(),
-        "mismatch between the number of instances and the number of gold labels : %s vs %s",
+        "Mismatch between the number of instances and the number of gold labels : %s vs %s",
         instances.size(), goldLabels == null ? 0 : goldLabels.size());
 
     for (int i = 0; i < nbLabelingFunctions; i++) {
