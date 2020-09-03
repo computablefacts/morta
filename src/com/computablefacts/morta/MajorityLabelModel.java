@@ -4,6 +4,7 @@ import static com.computablefacts.morta.LabelingFunction.ABSTAIN;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import com.google.common.base.Preconditions;
 import com.google.errorprone.annotations.Var;
@@ -86,5 +87,78 @@ final public class MajorityLabelModel {
       }
     }
     return yp;
+  }
+
+  public static List<Integer> predictions(Dictionary lfNames, Dictionary lfOutputs,
+      List<FeatureVector<Double>> instances, eTieBreakPolicy tieBreakPolicy, double tolerance) {
+
+    Preconditions.checkNotNull(lfNames, "lfNames should not be null");
+    Preconditions.checkNotNull(lfOutputs, "lfOutputs should not be null");
+    Preconditions.checkNotNull(instances, "instances should not be null");
+    Preconditions.checkArgument(lfOutputs.size() >= 2, "cardinality must be >= 2");
+    Preconditions.checkArgument(tolerance >= 0, "tolerance must be >= 0");
+
+    List<FeatureVector<Double>> yp = instances;
+
+    // diffs[n][k] with n = dataset.size() and k = the number of distinct labels i.e. the
+    // cardinality. diffs[n][k] is the label with the highest probability.
+    List<FeatureVector<Double>> diffs = new ArrayList<>(yp.size());
+
+    for (FeatureVector<Double> ypi : yp) {
+
+      // Get the label with the highest probability
+      @Var
+      double max = 0;
+
+      for (int k = 0; k < ypi.size(); k++) {
+        if (ypi.get(k) > max) {
+          max = ypi.get(k);
+        }
+      }
+
+      // For each label, compute the distance between the current label probability and the highest
+      // probability found
+      for (int k = 0; k < ypi.size(); k++) {
+        ypi.set(k, Math.abs(ypi.get(k) - max));
+      }
+
+      diffs.add(ypi);
+    }
+
+    // Try predicting the label being associated with each instance using labeling functions
+    Random rand = new Random();
+    List<Integer> predictions = new ArrayList<>(diffs.size());
+
+    for (FeatureVector<Double> vector : diffs) {
+
+      List<Integer> maxIndexes = new ArrayList<>();
+
+      for (int k = 0; k < vector.size(); k++) {
+        if (vector.get(k) < tolerance) {
+          maxIndexes.add(k);
+        }
+      }
+
+      if (maxIndexes.isEmpty()) {
+        predictions.add(LabelingFunction.ABSTAIN); // TODO : not sure about this
+      } else if (maxIndexes.size() == 1) {
+        predictions.add(maxIndexes.get(0));
+      } else if (tieBreakPolicy.equals(eTieBreakPolicy.RANDOM)) {
+        predictions.add(maxIndexes.get(predictions.size() % maxIndexes.size()));
+      } else if (tieBreakPolicy.equals(eTieBreakPolicy.TRUE_RANDOM)) {
+        predictions.add(maxIndexes.get(rand.nextInt(maxIndexes.size())));
+      } else if (tieBreakPolicy.equals(eTieBreakPolicy.ABSTAIN)) {
+        predictions.add(ABSTAIN);
+      } else {
+        Preconditions.checkState(false, "Invalid tie-break policy : %s", tieBreakPolicy);
+      }
+    }
+    return predictions;
+  }
+
+  public enum eTieBreakPolicy {
+    RANDOM, /* randomly choose among tied option in a predictable way */
+    TRUE_RANDOM, /* randomly choose among the tied options */
+    ABSTAIN /* return an abstain vote */
   }
 }

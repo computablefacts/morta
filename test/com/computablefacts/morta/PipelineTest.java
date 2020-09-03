@@ -128,7 +128,7 @@ public class PipelineTest {
     lfs.add(x -> x % 3 == 0 ? 1 : 0);
 
     List<Summary> summaries =
-        Pipeline.on(Lists.newArrayList(1, 2, 3, 4, 5, 6)).summaries(lfNames, lfOutputs, lfs);
+        Pipeline.on(Lists.newArrayList(1, 2, 3, 4, 5, 6)).summaries(lfNames, lfOutputs, lfs, null);
     Summary summaryIsDivisibleBy2 =
         new Summary("isDivisibleBy2", Sets.newHashSet("OK", "KO"), 1.0, 0.5, 0.5, -1, -1);
     Summary summaryIsDivisibleBy3 =
@@ -191,22 +191,55 @@ public class PipelineTest {
     lfOutputs.put("OK", 1);
     lfOutputs.put("KO", 0);
 
-    List<LabelingFunction<Integer>> lfs = new ArrayList<>();
-    lfs.add(x -> x % 2 == 0 ? 1 : 0);
-    lfs.add(x -> x % 3 == 0 ? 1 : 0);
-    lfs.add(x -> x % 6 == 0 ? 1 : 0);
-
+    // goldProbs = [[1.0, 0.0], [1.0, 0.0], [1.0, 0.0], [1.0, 0.0], [1.0, 0.0], [0.0, 1.0]]
     List<FeatureVector<Double>> goldProbs = Lists.newArrayList(
         FeatureVector.from(new double[] {1.0, 0.0}), FeatureVector.from(new double[] {1.0, 0.0}),
         FeatureVector.from(new double[] {1.0, 0.0}), FeatureVector.from(new double[] {1.0, 0.0}),
         FeatureVector.from(new double[] {1.0, 0.0}), FeatureVector.from(new double[] {0.0, 1.0}));
 
+    List<LabelingFunction<Integer>> lfs = new ArrayList<>();
+    lfs.add(x -> x % 2 == 0 ? 1 : 0);
+    lfs.add(x -> x % 3 == 0 ? 1 : 0);
+    lfs.add(x -> x % 6 == 0 ? 1 : 0);
+
     List<Integer> instances = Lists.newArrayList(1, 2, 3, 4, 5, 6);
 
     List<FeatureVector<Double>> probabilities =
-        Pipeline.on(instances).probabilities(lfNames, lfOutputs, lfs).collect();
+        Pipeline.on(instances).probabilities(lfNames, lfOutputs, lfs);
 
     Assert.assertEquals(instances.size(), probabilities.size());
     Assert.assertEquals(goldProbs, probabilities);
+  }
+
+  @Test
+  public void testPredictions() {
+
+    Dictionary lfNames = new Dictionary();
+    lfNames.put("isDivisibleBy2", 0);
+    lfNames.put("isDivisibleBy3", 1);
+    lfNames.put("isDivisibleBy6", 2);
+
+    // OK = isDivisibleBy2 AND isDivisibleBy3
+    // KO = !isDivisibleBy2 OR !isDivisibleBy3
+    Dictionary lfOutputs = new Dictionary();
+    lfOutputs.put("OK", 1);
+    lfOutputs.put("KO", 0);
+
+    // instances = [1, 2, 3, 4, 5, 6]
+    // goldLabels = ["KO", "KO", "KO", "KO", "KO", "OK"]
+    List<Integer> goldProbs = Lists.newArrayList(0, 0, 0, 0, 0, 1);
+
+    List<LabelingFunction<Integer>> lfs = new ArrayList<>();
+    lfs.add(x -> x % 2 == 0 ? 1 : 0);
+    lfs.add(x -> x % 3 == 0 ? 1 : 0);
+    lfs.add(x -> x % 6 == 0 ? 1 : 0);
+
+    List<Integer> instances = Lists.newArrayList(1, 2, 3, 4, 5, 6);
+
+    List<Integer> predictions = Pipeline.on(instances).predictions(lfNames, lfOutputs, lfs,
+        MajorityLabelModel.eTieBreakPolicy.RANDOM);
+
+    Assert.assertEquals(instances.size(), predictions.size());
+    Assert.assertEquals(goldProbs, predictions);
   }
 }

@@ -61,13 +61,14 @@ final public class Pipeline {
     }
 
     /**
-     * Apply all labeling functions on each data point and return the label output by each of them
-     * in a {@link FeatureVector}. The first feature is the output of the first labeling function,
-     * the second feature is the output of the second labeling function, etc. Thus, the
-     * {@link FeatureVector} length is equal to the number of labeling functions.
+     * For each data point, get the label output by each labeling functions.
      * 
      * @param lfs labeling functions.
-     * @return pairs of (data point, feature vector).
+     * @return pairs of (data point, {@link FeatureVector}). Each column of the
+     *         {@link FeatureVector} represents a distinct labeling function output. The first
+     *         feature is the output of the first labeling function, the second feature is the
+     *         output of the second labeling function, etc. Thus, the {@link FeatureVector} length
+     *         is equal to the number of labeling functions.
      */
     public Builder<Map.Entry<D, FeatureVector<Integer>>> label(List<LabelingFunction<D>> lfs) {
 
@@ -87,63 +88,66 @@ final public class Pipeline {
     }
 
     /**
-     * Apply all labeling functions on each data point and return the label output by each of them
-     * in a {@link FeatureVector}. The first feature is the output of the first labeling function,
-     * the second feature is the output of the second labeling function, etc. Thus, the
-     * {@link FeatureVector} length is equal to the number of labeling functions.
+     * For each data point, get the label output by each labeling functions.
      *
      * @param lfs labeling functions.
-     * @return a single feature vector for each data point.
+     * @return a {@link FeatureVector} for each data point. Each column of the {@link FeatureVector}
+     *         represents a distinct labeling function output. The first feature is the output of
+     *         the first labeling function, the second feature is the output of the second labeling
+     *         function, etc. Thus, the {@link FeatureVector} length is equal to the number of
+     *         labeling functions.
      */
     public Builder<FeatureVector<Integer>> labels(List<LabelingFunction<D>> lfs) {
       return label(lfs).transform(Map.Entry::getValue);
     }
 
     /**
-     * Apply all labeling functions on each data point and for each labeling function return the
-     * label probability using a majority vote in a {@link FeatureVector}.
+     * Compute the probability of each label using a majority vote.
      * 
      * @param lfNames mapping of the labeling function names to integers. Each integer represents
      *        the position of the labeling function in the lfs list.
-     * @param lfOutputs lfOutputs mapping of the labeling function outputs to integers. Each integer
-     *        represents a machine-friendly version of a human-readable label.
+     * @param lfOutputs lfOutputs mapping of the labeling function outputs, i.e. labels, to
+     *        integers. Each integer represents a machine-friendly version of a human-readable
+     *        label.
      * @param lfs labeling functions.
-     * @return a single feature vector for each data point.
+     * @return a {@link FeatureVector} for each data point. Each column of the {@link FeatureVector}
+     *         represents a distinct label. Thus, the {@link FeatureVector} length is equal to the
+     *         number of labels.
      */
-    public Builder<FeatureVector<Double>> probabilities(Dictionary lfNames, Dictionary lfOutputs,
+    public List<FeatureVector<Double>> probabilities(Dictionary lfNames, Dictionary lfOutputs,
         List<LabelingFunction<D>> lfs) {
-      return new Builder<>(
-          MajorityLabelModel.probabilities(lfNames, lfOutputs, labels(lfs).collect()).stream());
+      return MajorityLabelModel.probabilities(lfNames, lfOutputs, labels(lfs).collect());
     }
 
     /**
-     * Apply labeling functions on each data point. Return a {@link Summary} object with polarity,
-     * coverage, overlaps, ... for each data point.
-     *
+     * Try to predict the label associated with each data point using a majority vote.
+     * 
      * @param lfNames mapping of the labeling function names to integers. Each integer represents
      *        the position of the labeling function in the lfs list.
-     * @param lfOutputs mapping of the labeling function outputs to integers. Each integer
-     *        represents a machine-friendly version of a human-readable label.
+     * @param lfOutputs lfOutputs mapping of the labeling function outputs, i.e. labels, to
+     *        integers. Each integer represents a machine-friendly version of a human-readable
+     *        label.
      * @param lfs labeling functions.
-     * @return a {@link Summary} object for each labeling function.
+     * @param tieBreakPolicy tie-break policy.
+     * @return a single label for each data point.
      */
-    public List<Summary> summaries(Dictionary lfNames, Dictionary lfOutputs,
-        List<LabelingFunction<D>> lfs) {
-      return summaries(lfNames, lfOutputs, lfs, null);
+    public List<Integer> predictions(Dictionary lfNames, Dictionary lfOutputs,
+        List<LabelingFunction<D>> lfs, MajorityLabelModel.eTieBreakPolicy tieBreakPolicy) {
+      return MajorityLabelModel.predictions(lfNames, lfOutputs,
+          probabilities(lfNames, lfOutputs, lfs), tieBreakPolicy, 0.00001);
     }
 
     /**
-     * Apply labeling functions on each data point. Return a {@link Summary} object with polarity,
-     * coverage, overlaps, ... for each data point. Furthermore, because gold labels are provided,
-     * this method will compute the number of correct and incorrect labels output by each labeling
-     * function.
+     * Compute a {@link Summary} object with polarity, coverage, overlaps, etc. for each labeling
+     * function. When gold labels are provided, this method will compute the number of correct and
+     * incorrect labels output by each labeling function.
      *
      * @param lfNames mapping of the labeling function names to integers. Each integer represents
      *        the name of a labeling function (and its position in the lfs list).
-     * @param lfOutputs mapping of the labeling function outputs to integers. Each integer
-     *        represents a machine-friendly version of a human-readable label.
+     * @param lfOutputs mapping of the labeling function outputs, i.e. labels, to integers. Each
+     *        integer represents a machine-friendly version of a human-readable label.
      * @param lfs labeling functions.
-     * @param goldLabels gold labels.
+     * @param goldLabels gold labels (optional).
      * @return a {@link Summary} object for each labeling function.
      */
     public List<Summary> summaries(Dictionary lfNames, Dictionary lfOutputs,
