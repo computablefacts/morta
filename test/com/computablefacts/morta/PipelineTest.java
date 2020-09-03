@@ -227,7 +227,7 @@ public class PipelineTest {
 
     // instances = [1, 2, 3, 4, 5, 6]
     // goldLabels = ["KO", "KO", "KO", "KO", "KO", "OK"]
-    List<Integer> goldProbs = Lists.newArrayList(0, 0, 0, 0, 0, 1);
+    List<Integer> goldLabels = Lists.newArrayList(0, 0, 0, 0, 0, 1);
 
     List<LabelingFunction<Integer>> lfs = new ArrayList<>();
     lfs.add(x -> x % 2 == 0 ? 1 : 0);
@@ -240,6 +240,39 @@ public class PipelineTest {
         MajorityLabelModel.eTieBreakPolicy.RANDOM);
 
     Assert.assertEquals(instances.size(), predictions.size());
-    Assert.assertEquals(goldProbs, predictions);
+    Assert.assertEquals(goldLabels, predictions);
+  }
+
+  @Test
+  public void testAccuracy() {
+
+    Dictionary lfNames = new Dictionary();
+    lfNames.put("isDivisibleBy2", 0);
+    lfNames.put("isDivisibleBy3", 1);
+    lfNames.put("isDivisibleBy6", 2);
+
+    // OK = isDivisibleBy2 AND isDivisibleBy3
+    // KO = !isDivisibleBy2 OR !isDivisibleBy3
+    Dictionary lfOutputs = new Dictionary();
+    lfOutputs.put("OK", 1);
+    lfOutputs.put("KO", 0);
+
+    // instances = [1, 2, 3, 4, 5, 6]
+    // goldLabels = ["KO", "KO", "KO", "KO", "KO", "OK"]
+    List<Integer> goldLabels = Lists.newArrayList(0, 0, 0, 0, 0, 1);
+
+    List<LabelingFunction<Integer>> lfs = new ArrayList<>();
+    lfs.add(x -> x % 2 == 0 ? 1 : 0);
+    lfs.add(x -> x % 3 == 0 ? 1 : 0);
+    lfs.add(x -> x % 6 == 0 ? 1 : 0);
+
+    List<Integer> instances = Lists.newArrayList(1, 2, 3, 4, 5, 6);
+
+    List<Integer> accuracy = Pipeline.on(instances).accuracy(lfNames, lfOutputs, lfs,
+        MajorityLabelModel.eTieBreakPolicy.RANDOM, goldLabels);
+
+    Assert.assertEquals(2, accuracy.size());
+    Assert.assertEquals((Integer) 6, accuracy.get(0));
+    Assert.assertEquals((Integer) 0, accuracy.get(1));
   }
 }
