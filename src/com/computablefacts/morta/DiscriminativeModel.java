@@ -11,12 +11,12 @@ import com.google.errorprone.annotations.CheckReturnValue;
 import smile.classification.LogisticRegression;
 
 @CheckReturnValue
-final public class GenerativeModel {
+final public class DiscriminativeModel {
 
-  private GenerativeModel() {}
+  private DiscriminativeModel() {}
 
   /**
-   * Train a generative model from a discriminative one (majority vote).
+   * Train a discriminative model from a generative one (majority vote).
    *
    * @param lfNames mapping of the labeling function names to integers. Each integer represents the
    *        position of the labeling function in the lfs list.
