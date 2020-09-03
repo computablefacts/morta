@@ -2,23 +2,29 @@ os: linux
 dist: trusty
 language: java
 jdk:
-  - openjdk8
+- openjdk8
 install: "/bin/true"
 script:
-  - mvn clean install -q -B
+- mvn clean install -q -B
 env:
   global:
-before_deploy:
+  - secure: UsoRbpfhTB5pb0/wa/HmBs2P7rZv3tOWKbq9hfgrmkoQRjEo+JEGw7pAoUf7bAbumOCst+ySRifAdZTu16MrSlNxylOEQjyBozQav5TRsfiuiZLJjBBWg1yfoTcKduNE/JXB7zRiEc3Sz+cVMILxzhEqnslEsZIcFM9RsP+x59bV0ExuHkPUkKu+dzgXZ0uw70FIDSzy7jSQP7PAX+IKrOkise6mZVWX/sEE30u2+nBJm04VwGnH4w4pLstvUVAwsKp3ZUrwuxKQ/uknljIavoi4q1JbnlrVxBHbK3V9b3FBYqutDkxESfVBi5mVipIHJTy8OSkIin8MdqSlMLRLlCfwKFj1P5bd7X1shN7pLdEqjQ3NIVLjHnHqIwHbddK196DsP+ceIreiwfbhhatKNgNJ9PPoYh5mh/wFCC+PB0ut/6pNNBxn0IQ7krEw8g2ULHEBeeYSHtgGNGNGuE+y71XUI9l3Q/gMC9CSQsh1dZ3p3qnonDKAxQXjlWO3IwmIN90rlOoSd6S7vqTqbh2RHQYewFF6gtJ569slhFxT4I45uVeXz1Qc8k3TbsOM9gBNhzNXpEXCAnxBJ/i6Y1gBMcJxWOofnVPioCq2e9oeykF1+2xavJpnNoEwmUZXs4W8AV4X54tlvdDyOvIC4I1sfJqk18IA5pWJ6OGgezRPn4c=
+  - secure: Qu6DNnLC87ZkLA7q/VONOH9BdIfnARZtH9A0cVEyRWpBpfUSlrjHagEmzlLkA71GquZVrKyD93814HfwyZ2DTloffP62Pk+Q33SEjX06E9v3H8lDbBFIcgWRonxPeC3/UMiaN51afvL0Jutsnfr/iuPIX1yFwcifyjNidB1gxL4rvr90mqMwYKgiV94V3ESN8laIz+cL3fFG+987FlfDO0Sv7M8iC1Cgw3mEG6n0eue/MUJyXPxWvfWDPzcGNjxIAhGzvU8OEjYXbjZQd1l0l/YqcYzi/cPXHLPFWQBeGIUDbdBnUvN5b76ay8NJtYLIcTtw3HpKaQ2I5yfN5oo6Dx4/oa7B4+m2++ZStzgvE4HMEWpOhjR9f9BwMLl/+usPHNm61ke0SnbRvIGvzKCWeS/eSV05NBXizM/ol42QUtVysqGrsgsaspGCmVXYOF0CRCxhyDMLse0AGWSJ8tZ7GEn5rQd88/bhcNgbsDGJzIKBRnf0ioUQqci0P1fONqECl1uuX6+z33Rt9Y/dhe66cEeRzV8rp2G0DgzIFIv1TG1g4KvNlMmc6jjGmNRNQhYXPLQU/RwVE/8mDgDzBXxa90QAzwE8IDTwu6iG54ayB1vEfqH4eRf9iazA6gZsqyc/MFlrMuQ/uSfNdwdzEKZCchTqvw7Nf/lgX34szjL1QJ8=
+  - secure: wt/TGtd+PPSYQe160Gsnfc10WON1QJhdUhb3K8KST+cfu3p0/pvaR+4r74Z2R5AzzjnWBlNuyr5urywimMairUPYpAFNgJ3e5XZWdaLFffKC2txUMO9DoM8SxinDdPKPOwPEtiQ6wRixJTjBUIPnbUkJ+8hCV/NFvmZ4e+rqB5UC+WCDXs6A+cGayPkqKKPo0HD/chLk7voofdJSlTN7SXQwW2PjfGr1r/UA5Og4kqejSE50xZwZhv+uuOudHUnaOcKjHNAwHziaRfskpEssnAICL85t+E2jFOt3cnDWOLESGpM90eiGrrobf7RbhQ8B7B1YxD5BG+d3c0OrABYIF61wgKGaaYSJoCO4JQU7MIUXGr4B5YPH7rZqkC886xqvA92yT0oBpOo4AyfJPf7CRiGvXteEFZc8XUzTvjjf0T7D9XVoi8pe1s69MgykFPpP6UVO4v18Jdt1JYfdd3gLxSiiNi5s8bAq7a4tXbmw/6fT3fSZWWu1Dh3mnQ4NOMKaZwqlDV1wBfmtm1MTs+WLHftiyYTxKUtzKp7dU6tM2st4kRYGFmYQnTYKkQgrSdXwW5LSeIHnKb5FASifb5ts8L2N6LprMUAo8CcFmFSagWNwMq/CaGvih1XjAFwtS8bQ6xj/9t+j3CfDymcDKeVGi+mCZa/iAMW3iLy09sgn63Y=
+  - secure: cgSCK4O0xgjTEXA/moE7s3X1ae48ibZOJCUQ+IhcD4WOwIs+JfyoCn/O2DUpVR6qXM0pq/q38uJDBxXjK7M4ClzEvNwZe9GpILqOyNt/qN32xx7XFP6uKkW9eg9PYMebe69d3ZLcJiPEy7E/P/RMLDkbKHkHOXCMRATRLpKFY5kljDt9p0qGDlY0dfsPf0q3xRLORpDUNUrlboU15DLXSnJLIy8+3mNeq/1Ud34kWSvVxjV0k13yFeaK0hwgzxWr69x7OUCBmNVU0/Lf/M/cTa3pn480q46PvEq4H4wV/cwFcjQ3CvEHQjVZ22zL/4sPyMcq5Z1g2k0GJGyilDmJqrsmy5doXqVpsiGoT+dZJyTuohzLLeVSYebZ//+q3qZFVdTNVhgAH3wgjxuLxr/GNxwn0u0Uts3ByxhfT343m9WCluU7pUBiCELYUkTzCpKVgdhyXD3nrCnx2ev3UDUiDzYwxngwpL9h+eL1Q4PZYPUetyLEewJ4VdP4yV0B+7eZmqZXcxuWbEurKHPEkQ70uAkmHJ/3abGC4iBI/hKVs+ibVJCPwZ/f9lxXXoTKDu2zcVfO9tmQZoF1JHhbw8/u2iLhRXgBWeIQDa6wHsm0s7+VS3ee+NTQxmcomKed7e2JC3BBxW5Il8wkCtuKopB0P/2onvoSAPQJb090w2txoFw=
+before_deploy: 
+- openssl aes-256-cbc -K $encrypted_4f0d00631887_key -iv $encrypted_4f0d00631887_iv
+  -in .travis/gpg.asc.enc -out .travis/gpg.asc -d
 deploy:
-  - skip_cleanup: true
-    provider: script
-    script: chmod +x ./deploy.sh && ./deploy.sh
-    on:
-      branch: master
-  - skip_cleanup: true
-    provider: script
-    script: chmod +x ./deploy.sh && ./deploy.sh
-    on:
-      tags: true
+- skip_cleanup: true
+  provider: script
+  script: chmod +x ./deploy.sh && ./deploy.sh
+  on:
+    branch: master
+- skip_cleanup: true
+  provider: script
+  script: chmod +x ./deploy.sh && ./deploy.sh
+  on:
+    tags: true
 after_success:
-  - bash <(curl -s https://codecov.io/bash) -t 
+- bash <(curl -s https://codecov.io/bash) -t
