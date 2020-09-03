@@ -176,4 +176,37 @@ public class PipelineTest {
     Assert.assertEquals(summaryIsDivisibleBy3, summaries.get(1));
     Assert.assertEquals(summaryIsDivisibleBy6, summaries.get(2));
   }
+
+  @Test
+  public void testProbabilities() {
+
+    Dictionary lfNames = new Dictionary();
+    lfNames.put("isDivisibleBy2", 0);
+    lfNames.put("isDivisibleBy3", 1);
+    lfNames.put("isDivisibleBy6", 2);
+
+    // OK = isDivisibleBy2 AND isDivisibleBy3
+    // KO = !isDivisibleBy2 OR !isDivisibleBy3
+    Dictionary lfOutputs = new Dictionary();
+    lfOutputs.put("OK", 1);
+    lfOutputs.put("KO", 0);
+
+    List<LabelingFunction<Integer>> lfs = new ArrayList<>();
+    lfs.add(x -> x % 2 == 0 ? 1 : 0);
+    lfs.add(x -> x % 3 == 0 ? 1 : 0);
+    lfs.add(x -> x % 6 == 0 ? 1 : 0);
+
+    List<FeatureVector<Double>> goldProbs = Lists.newArrayList(
+        FeatureVector.from(new double[] {1.0, 0.0}), FeatureVector.from(new double[] {1.0, 0.0}),
+        FeatureVector.from(new double[] {1.0, 0.0}), FeatureVector.from(new double[] {1.0, 0.0}),
+        FeatureVector.from(new double[] {1.0, 0.0}), FeatureVector.from(new double[] {0.0, 1.0}));
+
+    List<Integer> instances = Lists.newArrayList(1, 2, 3, 4, 5, 6);
+
+    List<FeatureVector<Double>> probabilities =
+        Pipeline.on(instances).probabilities(lfNames, lfOutputs, lfs).collect();
+
+    Assert.assertEquals(instances.size(), probabilities.size());
+    Assert.assertEquals(goldProbs, probabilities);
+  }
 }

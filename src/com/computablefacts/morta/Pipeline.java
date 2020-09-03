@@ -100,6 +100,23 @@ final public class Pipeline {
     }
 
     /**
+     * Apply all labeling functions on each data point and for each labeling function return the
+     * label probability using a majority vote in a {@link FeatureVector}.
+     * 
+     * @param lfNames mapping of the labeling function names to integers. Each integer represents
+     *        the position of the labeling function in the lfs list.
+     * @param lfOutputs lfOutputs mapping of the labeling function outputs to integers. Each integer
+     *        represents a machine-friendly version of a human-readable label.
+     * @param lfs labeling functions.
+     * @return a single feature vector for each data point.
+     */
+    public Builder<FeatureVector<Double>> probabilities(Dictionary lfNames, Dictionary lfOutputs,
+        List<LabelingFunction<D>> lfs) {
+      return new Builder<>(
+          MajorityLabelModel.probabilities(lfNames, lfOutputs, labels(lfs).collect()).stream());
+    }
+
+    /**
      * Apply labeling functions on each data point. Return a {@link Summary} object with polarity,
      * coverage, overlaps, ... for each data point.
      *
