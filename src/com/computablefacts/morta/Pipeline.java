@@ -10,7 +10,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Table;
 import com.google.errorprone.annotations.CheckReturnValue;
+
+import smile.stat.hypothesis.CorTest;
 
 /**
  * Order and execute one or more of the following functions :
@@ -106,9 +109,8 @@ final public class Pipeline {
      *
      * @param lfNames mapping of the labeling function names to integers. Each integer represents
      *        the position of the labeling function in the lfs list.
-     * @param lfOutputs lfOutputs mapping of the labeling function outputs, i.e. labels, to
-     *        integers. Each integer represents a machine-friendly version of a human-readable
-     *        label.
+     * @param lfOutputs mapping of the labeling function outputs, i.e. labels, to integers. Each
+     *        integer represents a machine-friendly version of a human-readable label.
      * @param lfs labeling functions.
      * @return a {@link FeatureVector} for each data point. Each column of the {@link FeatureVector}
      *         represents a distinct label. Thus, the {@link FeatureVector} length is equal to the
@@ -124,9 +126,8 @@ final public class Pipeline {
      *
      * @param lfNames mapping of the labeling function names to integers. Each integer represents
      *        the position of the labeling function in the lfs list.
-     * @param lfOutputs lfOutputs mapping of the labeling function outputs, i.e. labels, to
-     *        integers. Each integer represents a machine-friendly version of a human-readable
-     *        label.
+     * @param lfOutputs mapping of the labeling function outputs, i.e. labels, to integers. Each
+     *        integer represents a machine-friendly version of a human-readable label.
      * @param lfs labeling functions.
      * @param tieBreakPolicy tie-break policy.
      * @return a single label for each data point.
@@ -142,9 +143,8 @@ final public class Pipeline {
      * 
      * @param lfNames mapping of the labeling function names to integers. Each integer represents
      *        the position of the labeling function in the lfs list.
-     * @param lfOutputs lfOutputs mapping of the labeling function outputs, i.e. labels, to
-     *        integers. Each integer represents a machine-friendly version of a human-readable
-     *        label.
+     * @param lfOutputs mapping of the labeling function outputs, i.e. labels, to integers. Each
+     *        integer represents a machine-friendly version of a human-readable label.
      * @param lfs labeling functions.
      * @param tieBreakPolicy tie-break policy.
      * @param goldLabels gold labels.
@@ -156,6 +156,35 @@ final public class Pipeline {
         List<Integer> goldLabels) {
       return ModelChecker.accuracy(predictions(lfNames, lfOutputs, lfs, tieBreakPolicy),
           goldLabels);
+    }
+
+    /**
+     * Compute the correlation matrix associated with the outputs of the labeling functions.
+     *
+     * @param lfNames mapping of the labeling function names to integers. Each integer represents
+     *        the position of the labeling function in the lfs list.
+     * @param lfs labeling functions.
+     * @param correlation correlation type.
+     * @return a correlation matrix.
+     */
+    public Table<String, String, CorTest> labelingFunctionsCorrelations(Dictionary lfNames,
+        List<LabelingFunction<D>> lfs, Explorer.eCorrelation correlation) {
+      return Explorer.labelingFunctionsCorrelations(lfNames, labels(lfs).collect(), correlation);
+    }
+
+    /**
+     * Explore the labeling functions outputs.
+     *
+     * @param lfNames mapping of the labeling function names to integers. Each integer represents
+     *        the position of the labeling function in the lfs list.
+     * @param lfs labeling functions.
+     * @param goldLabels gold labels.
+     * @return a segmentation of the data according to the output produced by each labeling
+     *         function.
+     */
+    public Table<String, Explorer.eStatus, List<Map.Entry<D, FeatureVector<Integer>>>> explore(
+        Dictionary lfNames, List<LabelingFunction<D>> lfs, List<Integer> goldLabels) {
+      return Explorer.explore(lfNames, label(lfs).collect(), goldLabels);
     }
 
     /**
