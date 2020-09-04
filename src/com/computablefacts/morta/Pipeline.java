@@ -109,16 +109,16 @@ final public class Pipeline {
      *
      * @param lfNames mapping of the labeling function names to integers. Each integer represents
      *        the position of the labeling function in the lfs list.
-     * @param lfOutputs mapping of the labeling function outputs, i.e. labels, to integers. Each
+     * @param lfLabels mapping of the labeling function outputs, i.e. labels, to integers. Each
      *        integer represents a machine-friendly version of a human-readable label.
      * @param lfs labeling functions.
      * @return a {@link FeatureVector} for each data point. Each column of the {@link FeatureVector}
      *         represents a distinct label. Thus, the {@link FeatureVector} length is equal to the
      *         number of labels.
      */
-    public List<FeatureVector<Double>> probabilities(Dictionary lfNames, Dictionary lfOutputs,
+    public List<FeatureVector<Double>> probabilities(Dictionary lfNames, Dictionary lfLabels,
         List<LabelingFunction<D>> lfs) {
-      return MajorityLabelModel.probabilities(lfNames, lfOutputs, labels(lfs).collect());
+      return MajorityLabelModel.probabilities(lfNames, lfLabels, labels(lfs).collect());
     }
 
     /**
@@ -126,16 +126,16 @@ final public class Pipeline {
      *
      * @param lfNames mapping of the labeling function names to integers. Each integer represents
      *        the position of the labeling function in the lfs list.
-     * @param lfOutputs mapping of the labeling function outputs, i.e. labels, to integers. Each
+     * @param lfLabels mapping of the labeling function outputs, i.e. labels, to integers. Each
      *        integer represents a machine-friendly version of a human-readable label.
      * @param lfs labeling functions.
      * @param tieBreakPolicy tie-break policy.
      * @return a single label for each data point.
      */
-    public List<Integer> predictions(Dictionary lfNames, Dictionary lfOutputs,
+    public List<Integer> predictions(Dictionary lfNames, Dictionary lfLabels,
         List<LabelingFunction<D>> lfs, MajorityLabelModel.eTieBreakPolicy tieBreakPolicy) {
-      return MajorityLabelModel.predictions(lfNames, lfOutputs,
-          probabilities(lfNames, lfOutputs, lfs), tieBreakPolicy, 0.00001);
+      return MajorityLabelModel.predictions(lfNames, lfLabels,
+          probabilities(lfNames, lfLabels, lfs), tieBreakPolicy, 0.00001);
     }
 
     /**
@@ -143,7 +143,7 @@ final public class Pipeline {
      * 
      * @param lfNames mapping of the labeling function names to integers. Each integer represents
      *        the position of the labeling function in the lfs list.
-     * @param lfOutputs mapping of the labeling function outputs, i.e. labels, to integers. Each
+     * @param lfLabels mapping of the labeling function outputs, i.e. labels, to integers. Each
      *        integer represents a machine-friendly version of a human-readable label.
      * @param lfs labeling functions.
      * @param tieBreakPolicy tie-break policy.
@@ -151,11 +151,10 @@ final public class Pipeline {
      * @return a list with two elements. The first element is the number of accurately labeled data
      *         points. The second element is the number of inexactly labeled data points.
      */
-    public List<Integer> accuracy(Dictionary lfNames, Dictionary lfOutputs,
+    public List<Integer> accuracy(Dictionary lfNames, Dictionary lfLabels,
         List<LabelingFunction<D>> lfs, MajorityLabelModel.eTieBreakPolicy tieBreakPolicy,
         List<Integer> goldLabels) {
-      return ModelChecker.accuracy(predictions(lfNames, lfOutputs, lfs, tieBreakPolicy),
-          goldLabels);
+      return ModelChecker.accuracy(predictions(lfNames, lfLabels, lfs, tieBreakPolicy), goldLabels);
     }
 
     /**
@@ -194,15 +193,15 @@ final public class Pipeline {
      *
      * @param lfNames mapping of the labeling function names to integers. Each integer represents
      *        the name of a labeling function (and its position in the lfs list).
-     * @param lfOutputs mapping of the labeling function outputs, i.e. labels, to integers. Each
+     * @param lfLabels mapping of the labeling function outputs, i.e. labels, to integers. Each
      *        integer represents a machine-friendly version of a human-readable label.
      * @param lfs labeling functions.
      * @param goldLabels gold labels (optional).
      * @return a {@link Summary} object for each labeling function.
      */
-    public List<Summary> summaries(Dictionary lfNames, Dictionary lfOutputs,
+    public List<Summary> summaries(Dictionary lfNames, Dictionary lfLabels,
         List<LabelingFunction<D>> lfs, List<Integer> goldLabels) {
-      return Summarizer.summaries(lfNames, lfOutputs, labels(lfs).collect(), goldLabels);
+      return Summarizer.summaries(lfNames, lfLabels, labels(lfs).collect(), goldLabels);
     }
   }
 }

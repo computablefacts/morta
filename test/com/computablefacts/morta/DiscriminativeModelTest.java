@@ -23,9 +23,9 @@ public class DiscriminativeModelTest {
 
     // OK = isDivisibleBy2 AND isDivisibleBy3
     // KO = !isDivisibleBy2 OR !isDivisibleBy3
-    Dictionary lfOutputs = new Dictionary();
-    lfOutputs.put("OK", 1);
-    lfOutputs.put("KO", 0);
+    Dictionary lfLabels = new Dictionary();
+    lfLabels.put("OK", 1);
+    lfLabels.put("KO", 0);
 
     List<LabelingFunction<Integer>> lfs = new ArrayList<>();
     lfs.add(x -> x % 2 == 0 ? 1 : 0);
@@ -46,7 +46,7 @@ public class DiscriminativeModelTest {
     };
 
     LogisticRegression logisticRegression =
-        DiscriminativeModel.trainLogisticRegression(lfNames, lfOutputs, lfs, instances, transform);
+        DiscriminativeModel.trainLogisticRegression(lfNames, lfLabels, lfs, instances, transform);
 
     // Here, instances = [1, 2, 3, 4, 5, 6] and goldLabels = ["KO", "KO", "KO", "KO", "KO", "OK"]
     List<Integer> goldLabels = Lists.newArrayList(0, 0, 0, 0, 0, 1);

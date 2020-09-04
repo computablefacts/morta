@@ -119,16 +119,16 @@ public class PipelineTest {
     lfNames.put("isDivisibleBy2", 0);
     lfNames.put("isDivisibleBy3", 1);
 
-    Dictionary lfOutputs = new Dictionary();
-    lfOutputs.put("OK", 1);
-    lfOutputs.put("KO", 0);
+    Dictionary lfLabels = new Dictionary();
+    lfLabels.put("OK", 1);
+    lfLabels.put("KO", 0);
 
     List<LabelingFunction<Integer>> lfs = new ArrayList<>();
     lfs.add(x -> x % 2 == 0 ? 1 : 0);
     lfs.add(x -> x % 3 == 0 ? 1 : 0);
 
     List<Summary> summaries =
-        Pipeline.on(Lists.newArrayList(1, 2, 3, 4, 5, 6)).summaries(lfNames, lfOutputs, lfs, null);
+        Pipeline.on(Lists.newArrayList(1, 2, 3, 4, 5, 6)).summaries(lfNames, lfLabels, lfs, null);
     Summary summaryIsDivisibleBy2 =
         new Summary("isDivisibleBy2", Sets.newHashSet("OK", "KO"), 1.0, 0.5, 0.5, -1, -1);
     Summary summaryIsDivisibleBy3 =
@@ -149,9 +149,9 @@ public class PipelineTest {
 
     // OK = isDivisibleBy2 AND isDivisibleBy3
     // KO = !isDivisibleBy2 OR !isDivisibleBy3
-    Dictionary lfOutputs = new Dictionary();
-    lfOutputs.put("OK", 1);
-    lfOutputs.put("KO", 0);
+    Dictionary lfLabels = new Dictionary();
+    lfLabels.put("OK", 1);
+    lfLabels.put("KO", 0);
 
     // instances = [1, 2, 3, 4, 5, 6]
     // goldLabels = ["KO", "KO", "KO", "KO", "KO", "OK"]
@@ -163,7 +163,7 @@ public class PipelineTest {
     lfs.add(x -> x % 6 == 0 ? 1 : 0);
 
     List<Summary> summaries = Pipeline.on(Lists.newArrayList(1, 2, 3, 4, 5, 6)).summaries(lfNames,
-        lfOutputs, lfs, goldLabels);
+        lfLabels, lfs, goldLabels);
     Summary summaryIsDivisibleBy2 = new Summary("isDivisibleBy2", Sets.newHashSet("OK", "KO"), 1.0,
         0.6666666666666666, 0.5, 4, 2);
     Summary summaryIsDivisibleBy3 = new Summary("isDivisibleBy3", Sets.newHashSet("OK", "KO"), 1.0,
@@ -187,9 +187,9 @@ public class PipelineTest {
 
     // OK = isDivisibleBy2 AND isDivisibleBy3
     // KO = !isDivisibleBy2 OR !isDivisibleBy3
-    Dictionary lfOutputs = new Dictionary();
-    lfOutputs.put("OK", 1);
-    lfOutputs.put("KO", 0);
+    Dictionary lfLabels = new Dictionary();
+    lfLabels.put("OK", 1);
+    lfLabels.put("KO", 0);
 
     // goldProbs = [[1.0, 0.0], [1.0, 0.0], [1.0, 0.0], [1.0, 0.0], [1.0, 0.0], [0.0, 1.0]]
     List<FeatureVector<Double>> goldProbs = Lists.newArrayList(
@@ -205,7 +205,7 @@ public class PipelineTest {
     List<Integer> instances = Lists.newArrayList(1, 2, 3, 4, 5, 6);
 
     List<FeatureVector<Double>> probabilities =
-        Pipeline.on(instances).probabilities(lfNames, lfOutputs, lfs);
+        Pipeline.on(instances).probabilities(lfNames, lfLabels, lfs);
 
     Assert.assertEquals(instances.size(), probabilities.size());
     Assert.assertEquals(goldProbs, probabilities);
@@ -221,9 +221,9 @@ public class PipelineTest {
 
     // OK = isDivisibleBy2 AND isDivisibleBy3
     // KO = !isDivisibleBy2 OR !isDivisibleBy3
-    Dictionary lfOutputs = new Dictionary();
-    lfOutputs.put("OK", 1);
-    lfOutputs.put("KO", 0);
+    Dictionary lfLabels = new Dictionary();
+    lfLabels.put("OK", 1);
+    lfLabels.put("KO", 0);
 
     // instances = [1, 2, 3, 4, 5, 6]
     // goldLabels = ["KO", "KO", "KO", "KO", "KO", "OK"]
@@ -236,7 +236,7 @@ public class PipelineTest {
 
     List<Integer> instances = Lists.newArrayList(1, 2, 3, 4, 5, 6);
 
-    List<Integer> predictions = Pipeline.on(instances).predictions(lfNames, lfOutputs, lfs,
+    List<Integer> predictions = Pipeline.on(instances).predictions(lfNames, lfLabels, lfs,
         MajorityLabelModel.eTieBreakPolicy.RANDOM);
 
     Assert.assertEquals(instances.size(), predictions.size());
@@ -253,9 +253,9 @@ public class PipelineTest {
 
     // OK = isDivisibleBy2 AND isDivisibleBy3
     // KO = !isDivisibleBy2 OR !isDivisibleBy3
-    Dictionary lfOutputs = new Dictionary();
-    lfOutputs.put("OK", 1);
-    lfOutputs.put("KO", 0);
+    Dictionary lfLabels = new Dictionary();
+    lfLabels.put("OK", 1);
+    lfLabels.put("KO", 0);
 
     // instances = [1, 2, 3, 4, 5, 6]
     // goldLabels = ["KO", "KO", "KO", "KO", "KO", "OK"]
@@ -268,7 +268,7 @@ public class PipelineTest {
 
     List<Integer> instances = Lists.newArrayList(1, 2, 3, 4, 5, 6);
 
-    List<Integer> accuracy = Pipeline.on(instances).accuracy(lfNames, lfOutputs, lfs,
+    List<Integer> accuracy = Pipeline.on(instances).accuracy(lfNames, lfLabels, lfs,
         MajorityLabelModel.eTieBreakPolicy.RANDOM, goldLabels);
 
     Assert.assertEquals(2, accuracy.size());

@@ -15,15 +15,15 @@ final public class MajorityLabelModel {
 
   private MajorityLabelModel() {}
 
-  public static List<FeatureVector<Double>> probabilities(Dictionary lfNames, Dictionary lfOutputs,
+  public static List<FeatureVector<Double>> probabilities(Dictionary lfNames, Dictionary lfLabels,
       List<FeatureVector<Integer>> instances) {
 
     Preconditions.checkNotNull(lfNames, "lfNames should not be null");
-    Preconditions.checkNotNull(lfOutputs, "lfOutputs should not be null");
+    Preconditions.checkNotNull(lfLabels, "lfLabels should not be null");
     Preconditions.checkNotNull(instances, "instances should not be null");
 
     int nbLabelingFunctions = lfNames.size();
-    int cardinality = lfOutputs.size();
+    int cardinality = lfLabels.size();
 
     // instances[n][m] with n = instances.size() and m = the number of distinct labeling functions
     // yp[n][k] with n = instances.size() and k = the number of distinct labels i.e. the cardinality
@@ -91,13 +91,13 @@ final public class MajorityLabelModel {
     return yp;
   }
 
-  public static List<Integer> predictions(Dictionary lfNames, Dictionary lfOutputs,
+  public static List<Integer> predictions(Dictionary lfNames, Dictionary lfLabels,
       List<FeatureVector<Double>> instances, eTieBreakPolicy tieBreakPolicy, double tolerance) {
 
     Preconditions.checkNotNull(lfNames, "lfNames should not be null");
-    Preconditions.checkNotNull(lfOutputs, "lfOutputs should not be null");
+    Preconditions.checkNotNull(lfLabels, "lfLabels should not be null");
     Preconditions.checkNotNull(instances, "instances should not be null");
-    Preconditions.checkArgument(lfOutputs.size() >= 2, "cardinality must be >= 2");
+    Preconditions.checkArgument(lfLabels.size() >= 2, "cardinality must be >= 2");
     Preconditions.checkArgument(tolerance >= 0, "tolerance must be >= 0");
 
     List<FeatureVector<Double>> yp = instances;

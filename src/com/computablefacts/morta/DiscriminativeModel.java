@@ -20,7 +20,7 @@ final public class DiscriminativeModel {
    *
    * @param lfNames mapping of the labeling function names to integers. Each integer represents the
    *        position of the labeling function in the lfs list.
-   * @param lfOutputs mapping of the labeling function outputs, i.e. labels, to integers. Each
+   * @param lfLabels mapping of the labeling function outputs, i.e. labels, to integers. Each
    *        integer represents a machine-friendly version of a human-readable label.
    * @param lfs labeling functions.
    * @param dataset data points.
@@ -29,17 +29,17 @@ final public class DiscriminativeModel {
    * @return a {@link LogisticRegression} model.
    */
   public static <D> LogisticRegression trainLogisticRegression(Dictionary lfNames,
-      Dictionary lfOutputs, List<LabelingFunction<D>> lfs, Collection<D> dataset,
+      Dictionary lfLabels, List<LabelingFunction<D>> lfs, Collection<D> dataset,
       TransformationFunction<D, FeatureVector<Double>> transform) {
 
     Preconditions.checkNotNull(lfNames, "lfNames should not be null");
-    Preconditions.checkNotNull(lfOutputs, "lfOutputs should not be null");
+    Preconditions.checkNotNull(lfLabels, "lfLabels should not be null");
     Preconditions.checkNotNull(lfs, "lfs should not be null");
     Preconditions.checkNotNull(dataset, "dataset should not be null");
     Preconditions.checkNotNull(transform, "transform should not be null");
 
     List<FeatureVector<Double>> instances = Pipeline.on(dataset).transform(transform).collect();
-    List<Integer> predictions = Pipeline.on(dataset).predictions(lfNames, lfOutputs, lfs,
+    List<Integer> predictions = Pipeline.on(dataset).predictions(lfNames, lfLabels, lfs,
         MajorityLabelModel.eTieBreakPolicy.RANDOM);
 
     Preconditions.checkArgument(predictions.size() == instances.size(),

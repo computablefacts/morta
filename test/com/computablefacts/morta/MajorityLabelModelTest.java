@@ -23,9 +23,9 @@ public class MajorityLabelModelTest {
     lfNames.put("lf2", 1);
     lfNames.put("lf3", 2);
 
-    Dictionary lfOutputs = new Dictionary();
-    lfOutputs.put("KO", 0);
-    lfOutputs.put("OK", 1);
+    Dictionary lfLabels = new Dictionary();
+    lfLabels.put("KO", 0);
+    lfLabels.put("OK", 1);
 
     List<FeatureVector<Integer>> instances =
         Lists.newArrayList(FeatureVector.from(new int[] {0, 0, ABSTAIN}),
@@ -33,7 +33,7 @@ public class MajorityLabelModelTest {
             FeatureVector.from(new int[] {1, ABSTAIN, 0}));
 
     List<FeatureVector<Double>> probabilities =
-        MajorityLabelModel.probabilities(lfNames, lfOutputs, instances);
+        MajorityLabelModel.probabilities(lfNames, lfLabels, instances);
 
     Assert.assertEquals(instances.size(), probabilities.size());
     Assert.assertEquals(goldProbs, probabilities);
@@ -64,9 +64,9 @@ public class MajorityLabelModelTest {
     lfNames.put("lf9", 8);
     lfNames.put("lf10", 9);
 
-    Dictionary lfOutputs = new Dictionary();
-    lfOutputs.put("KO", 0);
-    lfOutputs.put("OK", 1);
+    Dictionary lfLabels = new Dictionary();
+    lfLabels.put("KO", 0);
+    lfLabels.put("OK", 1);
 
     List<FeatureVector<Integer>> instances =
         Lists.newArrayList(FeatureVector.from(new int[] {-1, -1, -1, -1, -1, -1, 1, -1, -1, -1}),
@@ -86,7 +86,7 @@ public class MajorityLabelModelTest {
             FeatureVector.from(new int[] {-1, -1, 1, -1, -1, -1, -1, -1, -1, 0}));
 
     List<FeatureVector<Double>> probabilities =
-        MajorityLabelModel.probabilities(lfNames, lfOutputs, instances);
+        MajorityLabelModel.probabilities(lfNames, lfLabels, instances);
 
     Assert.assertEquals(instances.size(), probabilities.size());
     Assert.assertEquals(goldProbs, probabilities);
@@ -117,9 +117,9 @@ public class MajorityLabelModelTest {
     lfNames.put("lf9", 8);
     lfNames.put("lf10", 9);
 
-    Dictionary lfOutputs = new Dictionary();
-    lfOutputs.put("KO", 0);
-    lfOutputs.put("OK", 1);
+    Dictionary lfLabels = new Dictionary();
+    lfLabels.put("KO", 0);
+    lfLabels.put("OK", 1);
 
     List<FeatureVector<Integer>> instances =
         Lists.newArrayList(FeatureVector.from(new int[] {-1, -1, -1, -1, -1, -1, 1, -1, -1, -1}),
@@ -139,7 +139,7 @@ public class MajorityLabelModelTest {
             FeatureVector.from(new int[] {-1, -1, 1, -1, -1, -1, -1, -1, -1, 0}));
 
     List<FeatureVector<Double>> probabilities =
-        MajorityLabelModel.probabilities(lfNames, lfOutputs, instances);
+        MajorityLabelModel.probabilities(lfNames, lfLabels, instances);
 
     Assert.assertEquals(instances.size(), probabilities.size());
     Assert.assertEquals(goldProbs, probabilities);

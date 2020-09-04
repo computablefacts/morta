@@ -16,11 +16,11 @@ final public class Summarizer {
 
   private Summarizer() {}
 
-  static List<Summary> summaries(Dictionary lfNames, Dictionary lfOutputs,
+  static List<Summary> summaries(Dictionary lfNames, Dictionary lfLabels,
       List<FeatureVector<Integer>> instances, List<Integer> goldLabels) {
 
     Preconditions.checkNotNull(lfNames, "lfNames should not be null");
-    Preconditions.checkNotNull(lfOutputs, "lfOutputs should not be null");
+    Preconditions.checkNotNull(lfLabels, "lfLabels should not be null");
     Preconditions.checkNotNull(instances, "instances should not be null");
 
     int nbLabelingFunctions = lfNames.size();
@@ -71,7 +71,7 @@ final public class Summarizer {
           }
 
           nbLabelled += 1.0;
-          labels.add(lfOutputs.label(lfValue));
+          labels.add(lfLabels.label(lfValue));
 
           @Var
           boolean hasOverlap = false;
