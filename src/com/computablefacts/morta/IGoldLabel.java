@@ -1,10 +1,11 @@
 package com.computablefacts.morta;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.computablefacts.nona.helpers.ConfusionMatrix;
 import com.google.common.base.Preconditions;
@@ -13,18 +14,32 @@ import com.google.common.collect.Lists;
 
 public interface IGoldLabel<D> {
 
-  // result[0] = dev (25% of the dataset)
-  // result[1] = train (50% of the dataset)
-  // result[2] = test (25% of the dataset)
-  static <D, T extends IGoldLabel<D>> List<Set<T>> split(Set<T> goldLabels) {
+  /**
+   * Split a set of gold labels i.e. reference labels into 3 subsets : dev, train and test. The dev
+   * subset is made of 25% of the dataset, the train subset is made of 50% of the dataset and the
+   * test subset is made of 25% of the dataset.
+   * 
+   * @param goldLabels gold labels.
+   * @param <D> type of the original data points.
+   * @param <T> type of the gold labels.
+   * @return a list. The first element is the dev dataset, the second element is the train dataset
+   *         and the third element is the test dataset.
+   */
+  static <D, T extends IGoldLabel<D>> List<Set<T>> split(Collection<T> goldLabels) {
     return split(goldLabels, 0.25, 0.50);
   }
 
-  // result[0] = dev
-  // result[1] = train
-  // result[2] = test
-  static <D, T extends IGoldLabel<D>> List<Set<T>> split(Set<T> goldLabels, double devSizeInPercent,
-      double trainSizeInPercent) {
+  /**
+   * Split a set of gold labels i.e. reference labels into 3 subsets : dev, train and test.
+   *
+   * @param goldLabels gold labels.
+   * @param <D> type of the original data points.
+   * @param <T> type of the gold labels.
+   * @return a list. The first element is the dev dataset, the second element is the train dataset
+   *         and the third element is the test dataset.
+   */
+  static <D, T extends IGoldLabel<D>> List<Set<T>> split(Collection<T> goldLabels,
+      double devSizeInPercent, double trainSizeInPercent) {
 
     Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
     Preconditions.checkArgument(0.0 <= devSizeInPercent && devSizeInPercent <= 1.0,
@@ -34,7 +49,7 @@ public interface IGoldLabel<D> {
     Preconditions.checkArgument(devSizeInPercent + trainSizeInPercent <= 1.0,
         "devSizeInPercent + trainSizeInPercent must be <= 1.0");
 
-    List<T> gls = new ArrayList<>(goldLabels);
+    List<T> gls = Lists.newArrayList(goldLabels);
 
     Collections.shuffle(gls);
 
@@ -50,6 +65,15 @@ public interface IGoldLabel<D> {
     return Lists.newArrayList(dev, train, test);
   }
 
+  /**
+   * Build a confusion matrix from a set of gold labels.
+   *
+   * @param label considered label.
+   * @param goldLabels gold labels.
+   * @param <D> type of the original data points.
+   * @param <T> type of the gold labels.
+   * @return a {@link ConfusionMatrix}.
+   */
   static <D, T extends IGoldLabel<D>> ConfusionMatrix confusionMatrix(String label,
       Set<T> goldLabels) {
 
@@ -57,7 +81,8 @@ public interface IGoldLabel<D> {
         "label should neither be null nor empty");
     Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
 
-    List<T> gls = new ArrayList<>(goldLabels);
+    List<T> gls =
+        goldLabels.stream().filter(gl -> gl.label().equals(label)).collect(Collectors.toList());
     ConfusionMatrix matrix = new ConfusionMatrix(label);
 
     for (int i = 0; i < gls.size(); i++) {
