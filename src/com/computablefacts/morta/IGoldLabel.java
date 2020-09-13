@@ -13,9 +13,9 @@ import com.google.common.collect.Lists;
 
 public interface IGoldLabel<D> {
 
-  // result[0] = dev
-  // result[1] = train
-  // result[2] = test (empty)
+  // result[0] = dev (25% of the dataset)
+  // result[1] = train (50% of the dataset)
+  // result[2] = test (25% of the dataset)
   static <D, T extends IGoldLabel<D>> List<Set<T>> split(Set<T> goldLabels) {
     return split(goldLabels, 0.25, 0.50);
   }
