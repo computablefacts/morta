@@ -1,6 +1,6 @@
 package com.computablefacts.morta;
 
-import static com.computablefacts.morta.LabelingFunction.ABSTAIN;
+import static com.computablefacts.morta.ILabelingFunction.ABSTAIN;
 
 import java.util.List;
 

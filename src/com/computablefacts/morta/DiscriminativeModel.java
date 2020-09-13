@@ -29,8 +29,8 @@ final public class DiscriminativeModel {
    * @return a {@link LogisticRegression} model.
    */
   public static <D> LogisticRegression trainLogisticRegression(Dictionary lfNames,
-      Dictionary lfLabels, List<LabelingFunction<D>> lfs, Collection<D> dataset,
-      TransformationFunction<D, FeatureVector<Double>> transform) {
+      Dictionary lfLabels, List<ILabelingFunction<D>> lfs, Collection<D> dataset,
+      ITransformationFunction<D, FeatureVector<Double>> transform) {
 
     Preconditions.checkNotNull(lfNames, "lfNames should not be null");
     Preconditions.checkNotNull(lfLabels, "lfLabels should not be null");

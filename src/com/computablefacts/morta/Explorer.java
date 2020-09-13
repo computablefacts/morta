@@ -2,7 +2,7 @@ package com.computablefacts.morta;
 
 import static com.computablefacts.morta.Explorer.eCorrelation.KENDALL;
 import static com.computablefacts.morta.Explorer.eCorrelation.SPEARMAN;
-import static com.computablefacts.morta.LabelingFunction.ABSTAIN;
+import static com.computablefacts.morta.ILabelingFunction.ABSTAIN;
 
 import java.util.ArrayList;
 import java.util.List;

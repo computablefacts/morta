@@ -9,5 +9,5 @@ import java.util.function.Function;
  * @param <O> output type.
  */
 @FunctionalInterface
-public interface TransformationFunction<I, O> extends Function<I, O> {
+public interface ITransformationFunction<I, O> extends Function<I, O> {
 }

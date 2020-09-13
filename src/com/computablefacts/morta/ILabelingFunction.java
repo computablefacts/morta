@@ -6,7 +6,7 @@ package com.computablefacts.morta;
  * @param <I> input type.
  */
 @FunctionalInterface
-public interface LabelingFunction<I> extends TransformationFunction<I, Integer> {
+public interface ILabelingFunction<I> extends ITransformationFunction<I, Integer> {
 
   int ABSTAIN = -1;
 }

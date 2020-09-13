@@ -1,6 +1,6 @@
 package com.computablefacts.morta;
 
-import static com.computablefacts.morta.LabelingFunction.ABSTAIN;
+import static com.computablefacts.morta.ILabelingFunction.ABSTAIN;
 
 import java.util.AbstractMap;
 import java.util.Collection;
@@ -19,9 +19,9 @@ import smile.stat.hypothesis.CorTest;
  * Order and execute one or more of the following functions :
  *
  * <ul>
- * <li>{@link TransformationFunction}</li>
- * <li>{@link SlicingFunction}</li>
- * <li>{@link LabelingFunction}</li>
+ * <li>{@link ITransformationFunction}</li>
+ * <li>{@link ISlicingFunction}</li>
+ * <li>{@link ILabelingFunction}</li>
  * </ul>
  */
 @CheckReturnValue
@@ -49,14 +49,14 @@ final public class Pipeline {
       return stream_.collect(Collectors.toList());
     }
 
-    public Builder<D> slice(SlicingFunction<D> slice) {
+    public Builder<D> slice(ISlicingFunction<D> slice) {
 
       Preconditions.checkNotNull(slice, "slice should not be null");
 
       return new Builder<>(stream_.filter(slice));
     }
 
-    public <O> Builder<O> transform(TransformationFunction<D, O> transform) {
+    public <O> Builder<O> transform(ITransformationFunction<D, O> transform) {
 
       Preconditions.checkNotNull(transform, "transform should not be null");
 
@@ -73,7 +73,7 @@ final public class Pipeline {
      *         output of the second labeling function, etc. Thus, the {@link FeatureVector} length
      *         is equal to the number of labeling functions.
      */
-    public Builder<Map.Entry<D, FeatureVector<Integer>>> label(List<LabelingFunction<D>> lfs) {
+    public Builder<Map.Entry<D, FeatureVector<Integer>>> label(List<ILabelingFunction<D>> lfs) {
 
       Preconditions.checkNotNull(lfs, "lfs should not be null");
 
@@ -82,7 +82,7 @@ final public class Pipeline {
         FeatureVector<Integer> vector = new FeatureVector<>(lfs.size(), ABSTAIN);
 
         for (int i = 0; i < lfs.size(); i++) {
-          LabelingFunction<D> lf = lfs.get(i);
+          ILabelingFunction<D> lf = lfs.get(i);
           int label = lf.apply(d);
           vector.set(i, label);
         }
@@ -100,7 +100,7 @@ final public class Pipeline {
      *         function, etc. Thus, the {@link FeatureVector} length is equal to the number of
      *         labeling functions.
      */
-    public Builder<FeatureVector<Integer>> labels(List<LabelingFunction<D>> lfs) {
+    public Builder<FeatureVector<Integer>> labels(List<ILabelingFunction<D>> lfs) {
       return label(lfs).transform(Map.Entry::getValue);
     }
 
@@ -117,7 +117,7 @@ final public class Pipeline {
      *         number of labels.
      */
     public List<FeatureVector<Double>> probabilities(Dictionary lfNames, Dictionary lfLabels,
-        List<LabelingFunction<D>> lfs) {
+        List<ILabelingFunction<D>> lfs) {
       return MajorityLabelModel.probabilities(lfNames, lfLabels, labels(lfs).collect());
     }
 
@@ -133,7 +133,7 @@ final public class Pipeline {
      * @return a single label for each data point.
      */
     public List<Integer> predictions(Dictionary lfNames, Dictionary lfLabels,
-        List<LabelingFunction<D>> lfs, MajorityLabelModel.eTieBreakPolicy tieBreakPolicy) {
+        List<ILabelingFunction<D>> lfs, MajorityLabelModel.eTieBreakPolicy tieBreakPolicy) {
       return MajorityLabelModel.predictions(lfNames, lfLabels,
           probabilities(lfNames, lfLabels, lfs), tieBreakPolicy, 0.00001);
     }
@@ -152,7 +152,7 @@ final public class Pipeline {
      *         points. The second element is the number of inexactly labeled data points.
      */
     public List<Integer> accuracy(Dictionary lfNames, Dictionary lfLabels,
-        List<LabelingFunction<D>> lfs, MajorityLabelModel.eTieBreakPolicy tieBreakPolicy,
+        List<ILabelingFunction<D>> lfs, MajorityLabelModel.eTieBreakPolicy tieBreakPolicy,
         List<Integer> goldLabels) {
       return ModelChecker.accuracy(predictions(lfNames, lfLabels, lfs, tieBreakPolicy), goldLabels);
     }
@@ -167,7 +167,7 @@ final public class Pipeline {
      * @return a correlation matrix.
      */
     public Table<String, String, CorTest> labelingFunctionsCorrelations(Dictionary lfNames,
-        List<LabelingFunction<D>> lfs, Explorer.eCorrelation correlation) {
+        List<ILabelingFunction<D>> lfs, Explorer.eCorrelation correlation) {
       return Explorer.labelingFunctionsCorrelations(lfNames, labels(lfs).collect(), correlation);
     }
 
@@ -182,7 +182,7 @@ final public class Pipeline {
      *         function.
      */
     public Table<String, Explorer.eStatus, List<Map.Entry<D, FeatureVector<Integer>>>> explore(
-        Dictionary lfNames, List<LabelingFunction<D>> lfs, List<Integer> goldLabels) {
+        Dictionary lfNames, List<ILabelingFunction<D>> lfs, List<Integer> goldLabels) {
       return Explorer.explore(lfNames, label(lfs).collect(), goldLabels);
     }
 
@@ -200,7 +200,7 @@ final public class Pipeline {
      * @return a {@link Summary} object for each labeling function.
      */
     public List<Summary> summaries(Dictionary lfNames, Dictionary lfLabels,
-        List<LabelingFunction<D>> lfs, List<Integer> goldLabels) {
+        List<ILabelingFunction<D>> lfs, List<Integer> goldLabels) {
       return Summarizer.summaries(lfNames, lfLabels, labels(lfs).collect(), goldLabels);
     }
   }

@@ -63,7 +63,7 @@ public class PipelineTest {
         new AbstractMap.SimpleEntry<>(3, f3), new AbstractMap.SimpleEntry<>(4, f4),
         new AbstractMap.SimpleEntry<>(5, f5), new AbstractMap.SimpleEntry<>(6, f6));
 
-    List<LabelingFunction<Integer>> lfs = new ArrayList<>();
+    List<ILabelingFunction<Integer>> lfs = new ArrayList<>();
     lfs.add(x -> x % 2 == 0 ? 1 : 0);
     lfs.add(x -> x % 3 == 0 ? 1 : 0);
 
@@ -102,7 +102,7 @@ public class PipelineTest {
 
     List<FeatureVector<Integer>> goldLabels = Lists.newArrayList(f1, f2, f3, f4, f5, f6);
 
-    List<LabelingFunction<Integer>> lfs = new ArrayList<>();
+    List<ILabelingFunction<Integer>> lfs = new ArrayList<>();
     lfs.add(x -> x % 2 == 0 ? 1 : 0);
     lfs.add(x -> x % 3 == 0 ? 1 : 0);
 
@@ -123,7 +123,7 @@ public class PipelineTest {
     lfLabels.put("OK", 1);
     lfLabels.put("KO", 0);
 
-    List<LabelingFunction<Integer>> lfs = new ArrayList<>();
+    List<ILabelingFunction<Integer>> lfs = new ArrayList<>();
     lfs.add(x -> x % 2 == 0 ? 1 : 0);
     lfs.add(x -> x % 3 == 0 ? 1 : 0);
 
@@ -157,7 +157,7 @@ public class PipelineTest {
     // goldLabels = ["KO", "KO", "KO", "KO", "KO", "OK"]
     List<Integer> goldLabels = Lists.newArrayList(0, 0, 0, 0, 0, 1);
 
-    List<LabelingFunction<Integer>> lfs = new ArrayList<>();
+    List<ILabelingFunction<Integer>> lfs = new ArrayList<>();
     lfs.add(x -> x % 2 == 0 ? 1 : 0);
     lfs.add(x -> x % 3 == 0 ? 1 : 0);
     lfs.add(x -> x % 6 == 0 ? 1 : 0);
@@ -197,7 +197,7 @@ public class PipelineTest {
         FeatureVector.from(new double[] {1.0, 0.0}), FeatureVector.from(new double[] {1.0, 0.0}),
         FeatureVector.from(new double[] {1.0, 0.0}), FeatureVector.from(new double[] {0.0, 1.0}));
 
-    List<LabelingFunction<Integer>> lfs = new ArrayList<>();
+    List<ILabelingFunction<Integer>> lfs = new ArrayList<>();
     lfs.add(x -> x % 2 == 0 ? 1 : 0);
     lfs.add(x -> x % 3 == 0 ? 1 : 0);
     lfs.add(x -> x % 6 == 0 ? 1 : 0);
@@ -229,7 +229,7 @@ public class PipelineTest {
     // goldLabels = ["KO", "KO", "KO", "KO", "KO", "OK"]
     List<Integer> goldLabels = Lists.newArrayList(0, 0, 0, 0, 0, 1);
 
-    List<LabelingFunction<Integer>> lfs = new ArrayList<>();
+    List<ILabelingFunction<Integer>> lfs = new ArrayList<>();
     lfs.add(x -> x % 2 == 0 ? 1 : 0);
     lfs.add(x -> x % 3 == 0 ? 1 : 0);
     lfs.add(x -> x % 6 == 0 ? 1 : 0);
@@ -261,7 +261,7 @@ public class PipelineTest {
     // goldLabels = ["KO", "KO", "KO", "KO", "KO", "OK"]
     List<Integer> goldLabels = Lists.newArrayList(0, 0, 0, 0, 0, 1);
 
-    List<LabelingFunction<Integer>> lfs = new ArrayList<>();
+    List<ILabelingFunction<Integer>> lfs = new ArrayList<>();
     lfs.add(x -> x % 2 == 0 ? 1 : 0);
     lfs.add(x -> x % 3 == 0 ? 1 : 0);
     lfs.add(x -> x % 6 == 0 ? 1 : 0);

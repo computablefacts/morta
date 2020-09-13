@@ -1,6 +1,6 @@
 package com.computablefacts.morta;
 
-import static com.computablefacts.morta.LabelingFunction.ABSTAIN;
+import static com.computablefacts.morta.ILabelingFunction.ABSTAIN;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -142,7 +142,7 @@ final public class MajorityLabelModel {
       }
 
       if (maxIndexes.isEmpty()) {
-        predictions.add(LabelingFunction.ABSTAIN); // TODO : not sure about this
+        predictions.add(ILabelingFunction.ABSTAIN); // TODO : not sure about this
       } else if (maxIndexes.size() == 1) {
         predictions.add(maxIndexes.get(0));
       } else if (tieBreakPolicy.equals(eTieBreakPolicy.RANDOM)) {

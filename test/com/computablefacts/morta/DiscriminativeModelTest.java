@@ -27,14 +27,14 @@ public class DiscriminativeModelTest {
     lfLabels.put("OK", 1);
     lfLabels.put("KO", 0);
 
-    List<LabelingFunction<Integer>> lfs = new ArrayList<>();
+    List<ILabelingFunction<Integer>> lfs = new ArrayList<>();
     lfs.add(x -> x % 2 == 0 ? 1 : 0);
     lfs.add(x -> x % 3 == 0 ? 1 : 0);
     lfs.add(x -> x % 6 == 0 ? 1 : 0);
 
     List<Integer> instances = Lists.newArrayList(1, 2, 3, 4, 5, 6);
 
-    TransformationFunction<Integer, FeatureVector<Double>> transform = x -> {
+    ITransformationFunction<Integer, FeatureVector<Double>> transform = x -> {
 
       String number = new StringBuilder(Integer.toBinaryString(x)).reverse().toString();
       FeatureVector<Double> vector = new FeatureVector<>(8, 0.0);

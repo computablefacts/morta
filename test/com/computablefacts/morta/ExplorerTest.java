@@ -23,7 +23,7 @@ public class ExplorerTest {
     lfNames.put("isDivisibleBy3", 1);
     lfNames.put("isDivisibleBy6", 2);
 
-    List<LabelingFunction<Integer>> lfs = new ArrayList<>();
+    List<ILabelingFunction<Integer>> lfs = new ArrayList<>();
     lfs.add(x -> x % 2 == 0 ? 1 : 0);
     lfs.add(x -> x % 3 == 0 ? 1 : 0);
     lfs.add(x -> x % 6 == 0 ? 1 : 0);
@@ -53,7 +53,7 @@ public class ExplorerTest {
     lfNames.put("isDivisibleBy3", 1);
     lfNames.put("isDivisibleBy6", 2);
 
-    List<LabelingFunction<Integer>> lfs = new ArrayList<>();
+    List<ILabelingFunction<Integer>> lfs = new ArrayList<>();
     lfs.add(x -> x % 2 == 0 ? 1 : 0);
     lfs.add(x -> x % 3 == 0 ? 1 : 0);
     lfs.add(x -> x % 6 == 0 ? 1 : 0);
@@ -83,7 +83,7 @@ public class ExplorerTest {
     lfNames.put("isDivisibleBy3", 1);
     lfNames.put("isDivisibleBy6", 2);
 
-    List<LabelingFunction<Integer>> lfs = new ArrayList<>();
+    List<ILabelingFunction<Integer>> lfs = new ArrayList<>();
     lfs.add(x -> x % 2 == 0 ? 1 : 0);
     lfs.add(x -> x % 3 == 0 ? 1 : 0);
     lfs.add(x -> x % 6 == 0 ? 1 : 0);
@@ -113,7 +113,7 @@ public class ExplorerTest {
     lfNames.put("isDivisibleBy3", 1);
     lfNames.put("isDivisibleBy6", 2);
 
-    List<LabelingFunction<Integer>> lfs = new ArrayList<>();
+    List<ILabelingFunction<Integer>> lfs = new ArrayList<>();
     lfs.add(x -> x % 2 == 0 ? 1 : 0);
     lfs.add(x -> x % 3 == 0 ? 1 : 0);
     lfs.add(x -> x % 6 == 0 ? 1 : 0);
