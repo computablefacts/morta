@@ -3,7 +3,6 @@ package com.computablefacts.morta;
 import static com.computablefacts.morta.ILabelingFunction.ABSTAIN;
 
 import java.util.AbstractMap;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -29,7 +28,7 @@ final public class Pipeline {
 
   private Pipeline() {}
 
-  public static <D> Builder<D> on(Collection<D> dataset) {
+  public static <D> Builder<D> on(List<D> dataset) {
     return on(dataset.stream());
   }
 

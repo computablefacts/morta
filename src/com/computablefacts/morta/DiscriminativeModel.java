@@ -1,6 +1,5 @@
 package com.computablefacts.morta;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -29,7 +28,7 @@ final public class DiscriminativeModel {
    * @return a {@link LogisticRegression} model.
    */
   public static <D> LogisticRegression trainLogisticRegression(Dictionary lfNames,
-      Dictionary lfLabels, List<ILabelingFunction<D>> lfs, Collection<D> dataset,
+      Dictionary lfLabels, List<ILabelingFunction<D>> lfs, List<D> dataset,
       ITransformationFunction<D, FeatureVector<Double>> transform) {
 
     Preconditions.checkNotNull(lfNames, "lfNames should not be null");
