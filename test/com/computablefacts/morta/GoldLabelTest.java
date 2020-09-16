@@ -25,7 +25,18 @@ public class GoldLabelTest {
   @Test
   public void testSplit_0_75_25() {
 
-    List<Set<GoldLabel>> goldLabels = IGoldLabel.split(goldLabels(), 0, 0.75);
+    List<Set<GoldLabel>> goldLabels = IGoldLabel.split(goldLabels(), false, 0, 0.75);
+
+    Assert.assertEquals(3, goldLabels.size());
+    Assert.assertEquals(0, goldLabels.get(0).size());
+    Assert.assertEquals(6, goldLabels.get(1).size());
+    Assert.assertEquals(2, goldLabels.get(2).size());
+  }
+
+  @Test
+  public void testProportionalSplit_0_75_25() {
+
+    List<Set<GoldLabel>> goldLabels = IGoldLabel.split(goldLabels(), true, 0, 0.75);
 
     Assert.assertEquals(3, goldLabels.size());
     Assert.assertEquals(0, goldLabels.get(0).size());

@@ -26,20 +26,22 @@ public interface IGoldLabel<D> {
    *         and the third element is the test dataset.
    */
   static <D, T extends IGoldLabel<D>> List<Set<T>> split(Collection<T> goldLabels) {
-    return split(goldLabels, 0.25, 0.50);
+    return split(goldLabels, false, 0.25, 0.50);
   }
 
   /**
    * Split a set of gold labels i.e. reference labels into 3 subsets : dev, train and test.
    *
    * @param goldLabels gold labels.
+   * @param keepProportions must be true iif the proportion of TP, TN, FP and FN must be the same in
+   *        the dev, train and test subsets.
    * @param <D> type of the original data points.
    * @param <T> type of the gold labels.
    * @return a list. The first element is the dev dataset, the second element is the train dataset
    *         and the third element is the test dataset.
    */
   static <D, T extends IGoldLabel<D>> List<Set<T>> split(Collection<T> goldLabels,
-      double devSizeInPercent, double trainSizeInPercent) {
+      boolean keepProportions, double devSizeInPercent, double trainSizeInPercent) {
 
     Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
     Preconditions.checkArgument(0.0 <= devSizeInPercent && devSizeInPercent <= 1.0,
@@ -53,14 +55,58 @@ public interface IGoldLabel<D> {
 
     Collections.shuffle(gls);
 
-    int devSize = (int) (gls.size() * devSizeInPercent);
-    int trainSize = (int) (gls.size() * trainSizeInPercent);
+    Set<T> dev = new HashSet<>();
+    Set<T> train = new HashSet<>();
+    Set<T> test = new HashSet<>();
 
-    Set<T> dev = new HashSet<>(gls.subList(0, devSize));
-    Set<T> train = new HashSet<>(gls.subList(devSize, devSize + trainSize));
-    Set<T> test = new HashSet<>(gls.subList(devSize + trainSize, gls.size()));
+    if (!keepProportions) {
 
-    Preconditions.checkState(dev.size() + train.size() + test.size() == gls.size());
+      int devSize = (int) (gls.size() * devSizeInPercent);
+      int trainSize = (int) (gls.size() * trainSizeInPercent);
+
+      dev.addAll(gls.subList(0, devSize));
+      train.addAll(gls.subList(devSize, devSize + trainSize));
+      test.addAll(gls.subList(devSize + trainSize, gls.size()));
+    } else {
+
+      List<T> tps =
+          goldLabels.stream().filter(IGoldLabel::isTruePositive).collect(Collectors.toList());
+      List<T> tns =
+          goldLabels.stream().filter(IGoldLabel::isTrueNegative).collect(Collectors.toList());
+      List<T> fps =
+          goldLabels.stream().filter(IGoldLabel::isFalsePositive).collect(Collectors.toList());
+      List<T> fns =
+          goldLabels.stream().filter(IGoldLabel::isFalseNegative).collect(Collectors.toList());
+
+      int devTpSize = (int) (devSizeInPercent * tps.size());
+      int devTnSize = (int) (devSizeInPercent * tns.size());
+      int devFpSize = (int) (devSizeInPercent * fps.size());
+      int devFnSize = (int) (devSizeInPercent * fns.size());
+
+      int trainTpSize = (int) (trainSizeInPercent * tps.size());
+      int trainTnSize = (int) (trainSizeInPercent * tns.size());
+      int trainFpSize = (int) (trainSizeInPercent * fps.size());
+      int trainFnSize = (int) (trainSizeInPercent * fns.size());
+
+      dev.addAll(tps.subList(0, devTpSize));
+      dev.addAll(tns.subList(0, devTnSize));
+      dev.addAll(fps.subList(0, devFpSize));
+      dev.addAll(fns.subList(0, devFnSize));
+
+      train.addAll(tps.subList(devTpSize, devTpSize + trainTpSize));
+      train.addAll(tns.subList(devTnSize, devTnSize + trainTnSize));
+      train.addAll(fps.subList(devFpSize, devFpSize + trainFpSize));
+      train.addAll(fns.subList(devFnSize, devFnSize + trainFnSize));
+
+      test.addAll(tps.subList(devTpSize + trainTpSize, tps.size()));
+      test.addAll(tns.subList(devTnSize + trainTnSize, tns.size()));
+      test.addAll(fps.subList(devFpSize + trainFpSize, fps.size()));
+      test.addAll(fns.subList(devFnSize + trainFnSize, fns.size()));
+    }
+
+    Preconditions.checkState(dev.size() + train.size() + test.size() == gls.size(),
+        "Inconsistent state reached for splits : %s found vs %s expected",
+        dev.size() + train.size() + test.size(), gls.size());
 
     return Lists.newArrayList(dev, train, test);
   }
@@ -75,7 +121,7 @@ public interface IGoldLabel<D> {
    * @return a {@link ConfusionMatrix}.
    */
   static <D, T extends IGoldLabel<D>> ConfusionMatrix confusionMatrix(String label,
-      Set<T> goldLabels) {
+      Collection<T> goldLabels) {
 
     Preconditions.checkArgument(!Strings.isNullOrEmpty(label),
         "label should neither be null nor empty");
