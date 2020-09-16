@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.computablefacts.nona.helpers.ConfusionMatrix;
 import com.google.common.collect.Lists;
 
 import smile.classification.LogisticRegression;
@@ -54,11 +55,14 @@ public class DiscriminativeModelTest {
     List<Integer> predictions =
         instances.stream().map(i -> logisticRegression.predict(transform.apply(i).toDoubleArray()))
             .collect(Collectors.toList());
-    List<Integer> accuracy = ModelChecker.accuracy(predictions, goldLabels);
 
-    Assert.assertEquals(2, accuracy.size());
-    Assert.assertEquals((Integer) 6, accuracy.get(0));
-    Assert.assertEquals((Integer) 0, accuracy.get(1));
+    ConfusionMatrix matrix = new ConfusionMatrix();
+    matrix.addAll(goldLabels, predictions, 1, 0);
+
+    Assert.assertEquals(1, matrix.nbTruePositives());
+    Assert.assertEquals(5, matrix.nbTrueNegatives());
+    Assert.assertEquals(0, matrix.nbFalsePositives());
+    Assert.assertEquals(0, matrix.nbFalseNegatives());
   }
 
   @Test

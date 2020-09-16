@@ -8,6 +8,7 @@ import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.computablefacts.nona.helpers.ConfusionMatrix;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
@@ -244,7 +245,7 @@ public class PipelineTest {
   }
 
   @Test
-  public void testAccuracy() {
+  public void testConfusionMatrix() {
 
     Dictionary lfNames = new Dictionary();
     lfNames.put("isDivisibleBy2", 0);
@@ -268,11 +269,15 @@ public class PipelineTest {
 
     List<Integer> instances = Lists.newArrayList(1, 2, 3, 4, 5, 6);
 
-    List<Integer> accuracy = Pipeline.on(instances).accuracy(lfNames, lfLabels, lfs,
-        MajorityLabelModel.eTieBreakPolicy.RANDOM, goldLabels);
+    List<Integer> predictions = Pipeline.on(instances).predictions(lfNames, lfLabels, lfs,
+        MajorityLabelModel.eTieBreakPolicy.RANDOM);
 
-    Assert.assertEquals(2, accuracy.size());
-    Assert.assertEquals((Integer) 6, accuracy.get(0));
-    Assert.assertEquals((Integer) 0, accuracy.get(1));
+    ConfusionMatrix matrix = new ConfusionMatrix();
+    matrix.addAll(goldLabels, predictions, 1, 0);
+
+    Assert.assertEquals(1, matrix.nbTruePositives());
+    Assert.assertEquals(5, matrix.nbTrueNegatives());
+    Assert.assertEquals(0, matrix.nbFalsePositives());
+    Assert.assertEquals(0, matrix.nbFalseNegatives());
   }
 }

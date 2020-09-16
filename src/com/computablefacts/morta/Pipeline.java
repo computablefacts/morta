@@ -138,26 +138,7 @@ final public class Pipeline {
     }
 
     /**
-     * Compute the accuracy of the predictions made using a majority vote.
-     * 
-     * @param lfNames mapping of the labeling function names to integers. Each integer represents
-     *        the position of the labeling function in the lfs list.
-     * @param lfLabels mapping of the labeling function outputs, i.e. labels, to integers. Each
-     *        integer represents a machine-friendly version of a human-readable label.
-     * @param lfs labeling functions.
-     * @param tieBreakPolicy tie-break policy.
-     * @param goldLabels gold labels.
-     * @return a list with two elements. The first element is the number of accurately labeled data
-     *         points. The second element is the number of inexactly labeled data points.
-     */
-    public List<Integer> accuracy(Dictionary lfNames, Dictionary lfLabels,
-        List<ILabelingFunction<D>> lfs, MajorityLabelModel.eTieBreakPolicy tieBreakPolicy,
-        List<Integer> goldLabels) {
-      return ModelChecker.accuracy(predictions(lfNames, lfLabels, lfs, tieBreakPolicy), goldLabels);
-    }
-
-    /**
-     * Compute the correlation matrix associated with the outputs of the labeling functions.
+     * Compute correlation between each pair of labeling functions.
      *
      * @param lfNames mapping of the labeling function names to integers. Each integer represents
      *        the position of the labeling function in the lfs list.

@@ -9,7 +9,6 @@ import java.util.stream.Collectors;
 
 import com.computablefacts.nona.helpers.ConfusionMatrix;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 
 public interface IGoldLabel<D> {
@@ -114,42 +113,33 @@ public interface IGoldLabel<D> {
   /**
    * Build a confusion matrix from a set of gold labels.
    *
-   * @param label considered label.
    * @param goldLabels gold labels.
    * @param <D> type of the original data points.
    * @param <T> type of the gold labels.
    * @return a {@link ConfusionMatrix}.
    */
-  static <D, T extends IGoldLabel<D>> ConfusionMatrix confusionMatrix(String label,
-      Collection<T> goldLabels) {
+  static <D, T extends IGoldLabel<D>> ConfusionMatrix confusionMatrix(List<T> goldLabels) {
 
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(label),
-        "label should neither be null nor empty");
     Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
 
-    List<T> gls =
-        goldLabels.stream().filter(gl -> gl.label().equals(label)).collect(Collectors.toList());
-    ConfusionMatrix matrix = new ConfusionMatrix(label);
+    ConfusionMatrix matrix = new ConfusionMatrix();
 
-    for (int i = 0; i < gls.size(); i++) {
+    for (int i = 0; i < goldLabels.size(); i++) {
 
-      T gl = gls.get(i);
+      T gl = goldLabels.get(i);
 
-      if (label.equals(gl.label())) {
+      int tp = gl.isTruePositive() ? 1 : 0;
+      int tn = gl.isTrueNegative() ? 1 : 0;
+      int fp = gl.isFalsePositive() ? 1 : 0;
+      int fn = gl.isFalseNegative() ? 1 : 0;
 
-        int tp = gl.isTruePositive() ? 1 : 0;
-        int tn = gl.isTrueNegative() ? 1 : 0;
-        int fp = gl.isFalsePositive() ? 1 : 0;
-        int fn = gl.isFalseNegative() ? 1 : 0;
+      Preconditions.checkState(tp + tn + fp + fn == 1,
+          "Inconsistent state reached for gold label : (%s, %s)", gl.label(), gl.id());
 
-        Preconditions.checkState(tp + tn + fp + fn == 1,
-            "Inconsistent state reached for gold label : (%s, %s)", gl.label(), gl.id());
-
-        matrix.addTruePositives(tp);
-        matrix.addTrueNegatives(tn);
-        matrix.addFalsePositives(fp);
-        matrix.addFalseNegatives(fn);
-      }
+      matrix.addTruePositives(tp);
+      matrix.addTrueNegatives(tn);
+      matrix.addFalsePositives(fp);
+      matrix.addFalseNegatives(fn);
     }
     return matrix;
   }

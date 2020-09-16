@@ -2,6 +2,7 @@ package com.computablefacts.morta;
 
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -47,7 +48,8 @@ public class GoldLabelTest {
   @Test
   public void testConfusionMatrix() {
 
-    ConfusionMatrix confusionMatrix = IGoldLabel.confusionMatrix("test1", goldLabels());
+    ConfusionMatrix confusionMatrix = IGoldLabel.confusionMatrix(goldLabels().stream()
+        .filter(gl -> gl.label().equals("test1")).collect(Collectors.toList()));
 
     Assert.assertEquals(4, confusionMatrix.nbTruePositives());
     Assert.assertEquals(0, confusionMatrix.nbTrueNegatives());
