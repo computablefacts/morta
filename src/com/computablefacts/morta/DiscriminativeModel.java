@@ -15,40 +15,13 @@ final public class DiscriminativeModel {
   private DiscriminativeModel() {}
 
   /**
-   * Train a discriminative model from a generative one (majority vote).
+   * Train a logistic regression model.
    *
-   * @param lfNames mapping of the labeling function names to integers. Each integer represents the
-   *        position of the labeling function in the lfs list.
-   * @param lfLabels mapping of the labeling function outputs, i.e. labels, to integers. Each
-   *        integer represents a machine-friendly version of a human-readable label.
-   * @param lfs labeling functions.
-   * @param dataset data points.
-   * @param transform transform each data point to a {@link FeatureVector<Double>}.
-   * @param <D> type of the original data points.
+   * @param instances a list of feature vectors. There is one feature vector for each data point.
+   * @param labels a list of output labels. There is one label associated to each feature vector.
    * @return a {@link LogisticRegression} model.
    */
-  public static <D> LogisticRegression trainLogisticRegression(Dictionary lfNames,
-      Dictionary lfLabels, List<ILabelingFunction<D>> lfs, List<D> dataset,
-      ITransformationFunction<D, FeatureVector<Double>> transform) {
-
-    Preconditions.checkNotNull(lfNames, "lfNames should not be null");
-    Preconditions.checkNotNull(lfLabels, "lfLabels should not be null");
-    Preconditions.checkNotNull(lfs, "lfs should not be null");
-    Preconditions.checkNotNull(dataset, "dataset should not be null");
-    Preconditions.checkNotNull(transform, "transform should not be null");
-
-    List<FeatureVector<Double>> instances = Pipeline.on(dataset).transform(transform).collect();
-    List<Integer> predictions = Pipeline.on(dataset).predictions(lfNames, lfLabels, lfs,
-        MajorityLabelModel.eTieBreakPolicy.RANDOM);
-
-    Preconditions.checkArgument(predictions.size() == instances.size(),
-        "Mismatch between the number of predictions and the number of data points : %s vs %s",
-        predictions.size(), instances.size());
-
-    return logisticRegression(instances, predictions);
-  }
-
-  public static LogisticRegression logisticRegression(List<FeatureVector<Double>> instances,
+  public static LogisticRegression trainLogisticRegression(List<FeatureVector<Double>> instances,
       List<Integer> labels) {
 
     Preconditions.checkNotNull(instances, "instances should not be null");

@@ -46,8 +46,11 @@ public class DiscriminativeModelTest {
       return vector;
     };
 
+    List<FeatureVector<Double>> insts = Pipeline.on(instances).transform(transform).collect();
+    List<Integer> preds = Pipeline.on(instances).predictions(lfNames, lfLabels, lfs,
+        MajorityLabelModel.eTieBreakPolicy.RANDOM);
     LogisticRegression logisticRegression =
-        DiscriminativeModel.trainLogisticRegression(lfNames, lfLabels, lfs, instances, transform);
+        DiscriminativeModel.trainLogisticRegression(insts, preds);
 
     // Here, instances = [1, 2, 3, 4, 5, 6] and goldLabels = ["KO", "KO", "KO", "KO", "KO", "OK"]
     List<Integer> goldLabels = Lists.newArrayList(0, 0, 0, 0, 0, 1);
