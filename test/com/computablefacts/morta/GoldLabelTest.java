@@ -1,6 +1,8 @@
 package com.computablefacts.morta;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -10,7 +12,37 @@ import org.junit.Test;
 import com.computablefacts.nona.helpers.ConfusionMatrix;
 import com.google.common.collect.Sets;
 
+import nl.jqno.equalsverifier.EqualsVerifier;
+
 public class GoldLabelTest {
+
+  @Test
+  public void testEqualsAndHashcode() {
+    EqualsVerifier.forClass(GoldLabel.class).verify();
+  }
+
+  @Test
+  public void testFillFromJsonObject() {
+
+    Map<String, Object> json = new HashMap<>();
+    json.put("id", "1");
+    json.put("label", "json");
+    json.put("data", "test");
+    json.put("is_true_positive", true);
+    json.put("is_false_positive", false);
+    json.put("is_true_negative", false);
+    json.put("is_false_negative", false);
+
+    GoldLabel goldLabel = new GoldLabel(json);
+
+    Assert.assertEquals("1", goldLabel.id());
+    Assert.assertEquals("json", goldLabel.label());
+    Assert.assertEquals("test", goldLabel.data());
+    Assert.assertEquals(true, goldLabel.isTruePositive());
+    Assert.assertEquals(false, goldLabel.isFalsePositive());
+    Assert.assertEquals(false, goldLabel.isTrueNegative());
+    Assert.assertEquals(false, goldLabel.isFalseNegative());
+  }
 
   @Test
   public void testSplit_25_50_25() {
@@ -58,70 +90,14 @@ public class GoldLabelTest {
   }
 
   private Set<GoldLabel> goldLabels() {
-    return Sets.newHashSet(new GoldLabel(1, "test1", "test1", true, false, false, false),
-        new GoldLabel(1, "test1", "test2", true, false, false, false),
-        new GoldLabel(1, "test1", "test3", true, false, false, false),
-        new GoldLabel(1, "test1", "test4", true, false, false, false),
-        new GoldLabel(1, "test2", "test1", true, false, false, false),
-        new GoldLabel(1, "test2", "test2", true, false, false, false),
-        new GoldLabel(1, "test2", "test3", true, false, false, false),
-        new GoldLabel(1, "test2", "test4", true, false, false, false));
-  }
-
-  private static class GoldLabel implements IGoldLabel<String> {
-
-    private final String id_;
-    private final String label_;
-    private final String data_;
-    private final boolean isTruePositive_;
-    private final boolean isFalsePositive_;
-    private final boolean isTrueNegative_;
-    private final boolean isFalseNegative_;
-
-    public GoldLabel(int id, String label, String data, boolean isTruePositive,
-        boolean isFalsePositive, boolean isTrueNegative, boolean isFalseNegative) {
-      id_ = Integer.toString(id, 10);
-      label_ = label;
-      data_ = data;
-      isTruePositive_ = isTruePositive;
-      isFalsePositive_ = isFalsePositive;
-      isTrueNegative_ = isTrueNegative;
-      isFalseNegative_ = isFalseNegative;
-    }
-
-    @Override
-    public String id() {
-      return id_;
-    }
-
-    @Override
-    public String label() {
-      return label_;
-    }
-
-    @Override
-    public String data() {
-      return data_;
-    }
-
-    @Override
-    public boolean isTruePositive() {
-      return isTruePositive_;
-    }
-
-    @Override
-    public boolean isFalsePositive() {
-      return isFalsePositive_;
-    }
-
-    @Override
-    public boolean isTrueNegative() {
-      return isTrueNegative_;
-    }
-
-    @Override
-    public boolean isFalseNegative() {
-      return isFalseNegative_;
-    }
+    return Sets.newHashSet(
+        new GoldLabel(Integer.toString(1, 10), "test1", "test1", true, false, false, false),
+        new GoldLabel(Integer.toString(2, 10), "test1", "test2", true, false, false, false),
+        new GoldLabel(Integer.toString(3, 10), "test1", "test3", true, false, false, false),
+        new GoldLabel(Integer.toString(4, 10), "test1", "test4", true, false, false, false),
+        new GoldLabel(Integer.toString(5, 10), "test2", "test1", true, false, false, false),
+        new GoldLabel(Integer.toString(6, 10), "test2", "test2", true, false, false, false),
+        new GoldLabel(Integer.toString(7, 10), "test2", "test3", true, false, false, false),
+        new GoldLabel(Integer.toString(8, 10), "test2", "test4", true, false, false, false));
   }
 }

@@ -1,7 +1,9 @@
 package com.computablefacts.morta;
 
 import java.util.Map;
+import java.util.Objects;
 
+import com.computablefacts.nona.Generated;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.errorprone.annotations.CheckReturnValue;
@@ -9,22 +11,80 @@ import com.google.errorprone.annotations.CheckReturnValue;
 @CheckReturnValue
 final public class GoldLabel implements IGoldLabel<String> {
 
-  private final Map<String, Object> json_;
+  private final String id_;
+  private final String label_;
+  private final String data_;
+  private final boolean isTruePositive_;
+  private final boolean isFalsePositive_;
+  private final boolean isTrueNegative_;
+  private final boolean isFalseNegative_;
 
   public GoldLabel(Map<String, Object> json) {
-    json_ = Preconditions.checkNotNull(json, "json should not be null");
+
+    Preconditions.checkNotNull(json, "json should not be null");
+
+    id_ = (String) Preconditions.checkNotNull(json.get("id"), "id should not be null");
+    label_ = (String) Preconditions.checkNotNull(json.get("label"), "label should not be null");
+    data_ = (String) Preconditions.checkNotNull(json.get("data"), "data should not be null");
+    isTruePositive_ = (Boolean) Preconditions.checkNotNull(json.get("is_true_positive"),
+        "is_true_positive should not be null");
+    isFalsePositive_ = (Boolean) Preconditions.checkNotNull(json.get("is_false_positive"),
+        "is_false_positive should not be null");
+    isTrueNegative_ = (Boolean) Preconditions.checkNotNull(json.get("is_true_negative"),
+        "is_true_negative should not be null");
+    isFalseNegative_ = (Boolean) Preconditions.checkNotNull(json.get("is_false_negative"),
+        "is_false_negative should not be null");
+
+    Preconditions.checkState(
+        (isTruePositive_ ? 1 : 0) + (isFalsePositive_ ? 1 : 0) + (isTrueNegative_ ? 1 : 0)
+            + (isFalseNegative_ ? 1 : 0) == 1,
+        "Exactly one is_xxx flag must be set to true : (TP, FP, TN, FN) = (%s, %s, %s, %s)",
+        isTruePositive_, isFalsePositive_, isTrueNegative_, isFalseNegative_);
+  }
+
+  public GoldLabel(String id, String label, String data, boolean isTruePositive,
+      boolean isFalsePositive, boolean isTrueNegative, boolean isFalseNegative) {
+
+    id_ = Preconditions.checkNotNull(id, "id should not be null");
+    label_ = Preconditions.checkNotNull(label, "label should not be null");
+    data_ = Preconditions.checkNotNull(data, "data should not be null");
+    isTruePositive_ = isTruePositive;
+    isFalsePositive_ = isFalsePositive;
+    isTrueNegative_ = isTrueNegative;
+    isFalseNegative_ = isFalseNegative;
+
+    Preconditions.checkState(
+        (isTruePositive_ ? 1 : 0) + (isFalsePositive_ ? 1 : 0) + (isTrueNegative_ ? 1 : 0)
+            + (isFalseNegative_ ? 1 : 0) == 1,
+        "Exactly one is_xxx flag must be set to true : (TP, FP, TN, FN) = (%s, %s, %s, %s)",
+        isTruePositive_, isFalsePositive_, isTrueNegative_, isFalseNegative_);
   }
 
   @Override
   public boolean equals(Object obj) {
-    return json_.equals(obj);
+    if (obj == null) {
+      return false;
+    }
+    if (!(obj instanceof GoldLabel)) {
+      return false;
+    }
+    GoldLabel gl = (GoldLabel) obj;
+    return com.google.common.base.Objects.equal(id(), gl.id())
+        && com.google.common.base.Objects.equal(label(), gl.label())
+        && com.google.common.base.Objects.equal(data(), gl.data())
+        && com.google.common.base.Objects.equal(isTruePositive(), gl.isTruePositive())
+        && com.google.common.base.Objects.equal(isFalsePositive(), gl.isFalsePositive())
+        && com.google.common.base.Objects.equal(isTrueNegative(), gl.isTrueNegative())
+        && com.google.common.base.Objects.equal(isFalseNegative(), gl.isFalseNegative());
   }
 
   @Override
   public int hashCode() {
-    return json_.hashCode();
+    return Objects.hash(id(), label(), data(), isTruePositive(), isFalsePositive(),
+        isTrueNegative(), isFalseNegative());
   }
 
+  @Generated
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this).add("id", id()).add("label", label())
@@ -35,36 +95,36 @@ final public class GoldLabel implements IGoldLabel<String> {
 
   @Override
   public String id() {
-    return (String) json_.get("id");
+    return id_;
   }
 
   @Override
   public String label() {
-    return (String) json_.get("label");
+    return label_;
   }
 
   @Override
   public String data() {
-    return (String) json_.get("data");
+    return data_;
   }
 
   @Override
   public boolean isTruePositive() {
-    return (Boolean) json_.get("is_true_positive");
+    return isTruePositive_;
   }
 
   @Override
   public boolean isFalsePositive() {
-    return (Boolean) json_.get("is_false_positive");
+    return isFalsePositive_;
   }
 
   @Override
   public boolean isTrueNegative() {
-    return (Boolean) json_.get("is_true_negative");
+    return isTrueNegative_;
   }
 
   @Override
   public boolean isFalseNegative() {
-    return (Boolean) json_.get("is_false_negative");
+    return isFalseNegative_;
   }
 }
