@@ -10,7 +10,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="nona" />
+    <orderEntry type="library" name="Maven: com.computablefacts:nona:1.12" level="project" />
     <orderEntry type="library" name="Maven: me.xdrop:fuzzywuzzy:1.2.0" level="project" />
     <orderEntry type="library" name="Maven: com.google.re2j:re2j:1.2" level="project" />
     <orderEntry type="library" name="Maven: com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.10.2" level="project" />
