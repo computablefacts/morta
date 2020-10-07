@@ -1,5 +1,7 @@
 package com.computablefacts.morta;
 
+import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -7,11 +9,41 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.computablefacts.nona.helpers.AsciiProgressBar;
+import com.computablefacts.nona.helpers.Codecs;
 import com.computablefacts.nona.helpers.ConfusionMatrix;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 
 public interface IGoldLabel<D> {
+
+  /**
+   * Load gold labels from a gzip file.
+   *
+   * @param file gold labels as JSON objects stored inside a gzip file.
+   * @return a list of {@link IGoldLabel}.
+   */
+  static List<IGoldLabel<String>> load(File file) {
+
+    Preconditions.checkNotNull(file, "file should not be null");
+    Preconditions.checkArgument(file.exists(), "file should exist : %s", file);
+
+    System.out.println("Loading gold labels...");
+
+    AsciiProgressBar.IndeterminateProgressBar bar = AsciiProgressBar.createIndeterminate();
+
+    List<IGoldLabel<String>> gls =
+        com.computablefacts.nona.helpers.Files.compressedLineStream(file, StandardCharsets.UTF_8)
+            .filter(e -> !Strings.isNullOrEmpty(e.getValue())).peek(e -> bar.update())
+            .map(e -> new GoldLabel(Codecs.asObject(e.getValue()))).collect(Collectors.toList());
+
+    bar.complete();
+
+    System.out.println(); // Cosmetic
+
+    return gls;
+  }
 
   /**
    * Split a set of gold labels i.e. reference labels into 3 subsets : dev, train and test. The dev
