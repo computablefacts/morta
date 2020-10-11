@@ -133,6 +133,11 @@
                                     <reason>Morta must not inherit from Decima</reason>
                                     <bannedImport>com.computablefacts.decima.**</bannedImport>
                                 </restrictImports>
+                                <restrictImports
+                                        implementation="de.skuzzle.enforcer.restrictimports.rule.RestrictImports">
+                                    <reason>Morta must not inherit from Jupiter</reason>
+                                    <bannedImport>com.computablefacts.jupiter.**</bannedImport>
+                                </restrictImports>
                             </rules>
                         </configuration>
                     </execution>
