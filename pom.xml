@@ -39,7 +39,7 @@
     </developers>
 
     <properties>
-        <nona.version>1.14</nona.version>
+        <nona.version>1.15</nona.version>
         <error-prone.version>2.3.1</error-prone.version>
         <junit.version>4.12</junit.version>
         <equalsverifier.version>3.4.2</equalsverifier.version>
