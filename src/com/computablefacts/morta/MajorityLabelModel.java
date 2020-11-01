@@ -4,6 +4,7 @@ import static com.computablefacts.morta.ILabelingFunction.ABSTAIN;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import com.google.common.base.Preconditions;
@@ -11,11 +12,39 @@ import com.google.errorprone.annotations.CheckReturnValue;
 import com.google.errorprone.annotations.Var;
 
 @CheckReturnValue
-final public class MajorityLabelModel {
+final public class MajorityLabelModel<T> extends AbstractLabelModel<T> {
 
-  private MajorityLabelModel() {}
+  private final eTieBreakPolicy tieBreakPolicy_;
+  private final double tolerance_;
 
-  public static List<FeatureVector<Double>> probabilities(Dictionary lfNames, Dictionary lfLabels,
+  public MajorityLabelModel(Dictionary lfNames, Dictionary lfLabels, List<ILabelingFunction<T>> lfs,
+      List<IGoldLabel<T>> goldLabels, eTieBreakPolicy tieBreakPolicy) {
+    this(lfNames, lfLabels, lfs, goldLabels, tieBreakPolicy, 0.00001);
+  }
+
+  private MajorityLabelModel(Dictionary lfNames, Dictionary lfLabels,
+      List<ILabelingFunction<T>> lfs, List<IGoldLabel<T>> goldLabels,
+      eTieBreakPolicy tieBreakPolicy, double tolerance) {
+
+    super(lfNames, lfLabels, lfs, goldLabels);
+
+    tieBreakPolicy_ = tieBreakPolicy == null ? eTieBreakPolicy.RANDOM : tieBreakPolicy;
+    tolerance_ = tolerance < 0 ? 0.00001 : tolerance;
+  }
+
+  /**
+   * Compute the probability of each label using a majority vote.
+   *
+   * @param lfNames mapping of the labeling function names to integers. Each integer represents the
+   *        position of the labeling function in the lfs list.
+   * @param lfLabels mapping of the labeling function outputs, i.e. labels, to integers. Each
+   *        integer represents a machine-friendly version of a human-readable label.
+   * @param instances output of the labeling functions for each datapoint.
+   * @return a {@link FeatureVector} for each data point. Each column of the {@link FeatureVector}
+   *         represents a distinct label. Thus, the {@link FeatureVector} length is equal to the
+   *         number of labels.
+   */
+  static List<FeatureVector<Double>> probabilities(Dictionary lfNames, Dictionary lfLabels,
       List<FeatureVector<Integer>> instances) {
 
     Preconditions.checkNotNull(lfNames, "lfNames should not be null");
@@ -91,16 +120,27 @@ final public class MajorityLabelModel {
     return yp;
   }
 
-  public static List<Integer> predictions(Dictionary lfNames, Dictionary lfLabels,
-      List<FeatureVector<Double>> instances, eTieBreakPolicy tieBreakPolicy, double tolerance) {
+  /**
+   * Try to predict the label associated with each data point using a majority vote.
+   *
+   * @param lfNames mapping of the labeling function names to integers. Each integer represents the
+   *        position of the labeling function in the lfs list.
+   * @param lfLabels mapping of the labeling function outputs, i.e. labels, to integers. Each
+   *        integer represents a machine-friendly version of a human-readable label.
+   * @param probabilities probabilities.
+   * @param tieBreakPolicy tie-break policy.
+   * @return a single label for each data point.
+   */
+  static List<Integer> predictions(Dictionary lfNames, Dictionary lfLabels,
+      List<FeatureVector<Double>> probabilities, eTieBreakPolicy tieBreakPolicy, double tolerance) {
 
     Preconditions.checkNotNull(lfNames, "lfNames should not be null");
     Preconditions.checkNotNull(lfLabels, "lfLabels should not be null");
-    Preconditions.checkNotNull(instances, "instances should not be null");
+    Preconditions.checkNotNull(probabilities, "probabilities should not be null");
     Preconditions.checkArgument(lfLabels.size() >= 2, "cardinality must be >= 2");
     Preconditions.checkArgument(tolerance >= 0, "tolerance must be >= 0");
 
-    List<FeatureVector<Double>> yp = instances;
+    List<FeatureVector<Double>> yp = probabilities;
 
     // diffs[n][k] with n = dataset.size() and k = the number of distinct labels i.e. the
     // cardinality. diffs[n][k] is the label with the highest probability.
@@ -156,6 +196,17 @@ final public class MajorityLabelModel {
       }
     }
     return predictions;
+  }
+
+  @Override
+  public void fit() {}
+
+  @Override
+  public List<Integer> predict() {
+    return predictions(
+        lfNames(), lfLabels(), probabilities(lfNames(), lfLabels(), Pipeline.on(goldLabels())
+            .transform(IGoldLabel::data).label(lfs()).transform(Map.Entry::getValue).collect()),
+        tieBreakPolicy_, tolerance_);
   }
 
   public enum eTieBreakPolicy {

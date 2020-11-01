@@ -2,6 +2,7 @@ package com.computablefacts.morta;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.junit.Assert;
@@ -47,8 +48,13 @@ public class DiscriminativeModelTest {
     };
 
     List<FeatureVector<Double>> insts = Pipeline.on(instances).transform(transform).collect();
-    List<Integer> preds = Pipeline.on(instances).predictions(lfNames, lfLabels, lfs,
-        MajorityLabelModel.eTieBreakPolicy.RANDOM);
+
+    List<FeatureVector<Double>> probs = MajorityLabelModel.probabilities(lfNames, lfLabels,
+        Pipeline.on(instances).label(lfs).transform(Map.Entry::getValue).collect());
+
+    List<Integer> preds = MajorityLabelModel.predictions(lfNames, lfLabels, probs,
+        MajorityLabelModel.eTieBreakPolicy.RANDOM, 0.00001);
+
     LogisticRegression logisticRegression =
         DiscriminativeModel.trainLogisticRegression(insts, preds);
 
