@@ -73,7 +73,7 @@ public abstract class AbstractLabelModel<T> {
    * 
    * @return a {@link Summary} object for each labeling function.
    */
-  public List<Summary> summary() {
+  public List<Summary> summarize() {
     return Summary.summarize(lfNames_, lfLabels_,
         Pipeline.on(goldLabels).transform(IGoldLabel::data).label(lfs_).collect(),
         Pipeline.on(goldLabels).transform(gl -> lfLabels_.id(gl.label())).collect());
