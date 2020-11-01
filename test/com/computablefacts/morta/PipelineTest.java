@@ -110,8 +110,8 @@ public class PipelineTest {
     lfs.add(x -> x % 2 == 0 ? 1 : 0);
     lfs.add(x -> x % 3 == 0 ? 1 : 0);
 
-    List<FeatureVector<Integer>> labels =
-        Pipeline.on(Lists.newArrayList(1, 2, 3, 4, 5, 6)).labels(lfs).collect();
+    List<FeatureVector<Integer>> labels = Pipeline.on(Lists.newArrayList(1, 2, 3, 4, 5, 6))
+        .label(lfs).transform(Map.Entry::getValue).collect();
 
     Assert.assertEquals(goldLabels, labels);
   }

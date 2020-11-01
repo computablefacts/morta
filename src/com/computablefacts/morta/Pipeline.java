@@ -112,20 +112,6 @@ final public class Pipeline {
     }
 
     /**
-     * For each data point, get the label output by each labeling functions.
-     *
-     * @param lfs labeling functions.
-     * @return a {@link FeatureVector} for each data point. Each column of the {@link FeatureVector}
-     *         represents a distinct labeling function output. The first feature is the output of
-     *         the first labeling function, the second feature is the output of the second labeling
-     *         function, etc. Thus, the {@link FeatureVector} length is equal to the number of
-     *         labeling functions.
-     */
-    public Builder<FeatureVector<Integer>> labels(List<ILabelingFunction<D>> lfs) {
-      return label(lfs).transform(Map.Entry::getValue);
-    }
-
-    /**
      * Compute the probability of each label using a majority vote.
      *
      * @param lfNames mapping of the labeling function names to integers. Each integer represents
@@ -139,7 +125,8 @@ final public class Pipeline {
      */
     public List<FeatureVector<Double>> probabilities(Dictionary lfNames, Dictionary lfLabels,
         List<ILabelingFunction<D>> lfs) {
-      return MajorityLabelModel.probabilities(lfNames, lfLabels, labels(lfs).collect());
+      return MajorityLabelModel.probabilities(lfNames, lfLabels,
+          label(lfs).transform(Map.Entry::getValue).collect());
     }
 
     /**
@@ -175,7 +162,7 @@ final public class Pipeline {
       Preconditions.checkNotNull(lfs, "lfs should not be null");
       Preconditions.checkNotNull(correlation, "correlation should not be null");
 
-      List<FeatureVector<Integer>> instances = labels(lfs).collect();
+      List<FeatureVector<Integer>> instances = label(lfs).transform(Map.Entry::getValue).collect();
       int nbLabelingFunctions = lfNames.size();
       List<double[]> matrix = new ArrayList<>(nbLabelingFunctions);
 
@@ -302,7 +289,7 @@ final public class Pipeline {
       Preconditions.checkNotNull(lfLabels, "lfLabels should not be null");
       Preconditions.checkNotNull(lfs, "lfs should not be null");
 
-      List<FeatureVector<Integer>> instances = labels(lfs).collect();
+      List<FeatureVector<Integer>> instances = label(lfs).transform(Map.Entry::getValue).collect();
       int nbLabelingFunctions = lfNames.size();
       List<Summary> summaries = new ArrayList<>(nbLabelingFunctions);
 
