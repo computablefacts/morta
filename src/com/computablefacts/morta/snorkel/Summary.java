@@ -1,6 +1,6 @@
-package com.computablefacts.morta;
+package com.computablefacts.morta.snorkel;
 
-import static com.computablefacts.morta.ILabelingFunction.ABSTAIN;
+import static com.computablefacts.morta.snorkel.ILabelingFunction.ABSTAIN;
 
 import java.util.ArrayList;
 import java.util.HashSet;

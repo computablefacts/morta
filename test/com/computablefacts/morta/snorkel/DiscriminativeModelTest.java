@@ -1,4 +1,4 @@
-package com.computablefacts.morta;
+package com.computablefacts.morta.snorkel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.computablefacts.morta.Pipeline;
 import com.computablefacts.nona.helpers.ConfusionMatrix;
 import com.google.common.collect.Lists;
 

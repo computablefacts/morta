@@ -1,4 +1,4 @@
-package com.computablefacts.morta;
+package com.computablefacts.morta.snorkel;
 
 import org.junit.Assert;
 import org.junit.Test;

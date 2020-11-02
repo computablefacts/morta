@@ -1,4 +1,4 @@
-package com.computablefacts.morta;
+package com.computablefacts.morta.snorkel;
 
 import java.util.HashMap;
 import java.util.List;

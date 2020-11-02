@@ -1,6 +1,6 @@
 package com.computablefacts.morta;
 
-import static com.computablefacts.morta.ILabelingFunction.ABSTAIN;
+import static com.computablefacts.morta.snorkel.ILabelingFunction.ABSTAIN;
 
 import java.util.AbstractMap;
 import java.util.List;
@@ -8,6 +8,10 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.computablefacts.morta.snorkel.FeatureVector;
+import com.computablefacts.morta.snorkel.ILabelingFunction;
+import com.computablefacts.morta.snorkel.ISlicingFunction;
+import com.computablefacts.morta.snorkel.ITransformationFunction;
 import com.google.common.base.Preconditions;
 import com.google.errorprone.annotations.CheckReturnValue;
 

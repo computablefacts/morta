@@ -1,4 +1,4 @@
-package com.computablefacts.morta;
+package com.computablefacts.morta.snorkel;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;

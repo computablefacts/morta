@@ -1,9 +1,10 @@
-package com.computablefacts.morta;
+package com.computablefacts.morta.snorkel;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.computablefacts.morta.Pipeline;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Table;
 import com.google.errorprone.annotations.CheckReturnValue;
@@ -94,8 +95,6 @@ public abstract class AbstractLabelModel<T> {
   protected List<IGoldLabel<T>> goldLabels() {
     return goldLabels;
   }
-
-  public abstract void fit();
 
   public abstract List<Integer> predict();
 }

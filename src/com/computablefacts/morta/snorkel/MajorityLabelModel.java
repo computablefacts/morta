@@ -1,12 +1,13 @@
-package com.computablefacts.morta;
+package com.computablefacts.morta.snorkel;
 
-import static com.computablefacts.morta.ILabelingFunction.ABSTAIN;
+import static com.computablefacts.morta.snorkel.ILabelingFunction.ABSTAIN;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import com.computablefacts.morta.Pipeline;
 import com.google.common.base.Preconditions;
 import com.google.errorprone.annotations.CheckReturnValue;
 import com.google.errorprone.annotations.Var;
@@ -197,9 +198,6 @@ final public class MajorityLabelModel<T> extends AbstractLabelModel<T> {
     }
     return predictions;
   }
-
-  @Override
-  public void fit() {}
 
   @Override
   public List<Integer> predict() {

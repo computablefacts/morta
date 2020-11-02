@@ -8,6 +8,8 @@ import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.computablefacts.morta.snorkel.FeatureVector;
+import com.computablefacts.morta.snorkel.ILabelingFunction;
 import com.google.common.collect.Lists;
 
 public class PipelineTest {
