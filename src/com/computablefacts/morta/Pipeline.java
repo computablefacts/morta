@@ -73,7 +73,8 @@ final public class Pipeline {
      *         output of the second labeling function, etc. Thus, the {@link FeatureVector} length
      *         is equal to the number of labeling functions.
      */
-    public Builder<Map.Entry<D, FeatureVector<Integer>>> label(List<ILabelingFunction<D>> lfs) {
+    public Builder<Map.Entry<D, FeatureVector<Integer>>> label(
+        List<? extends ILabelingFunction<D>> lfs) {
 
       Preconditions.checkNotNull(lfs, "lfs should not be null");
 
