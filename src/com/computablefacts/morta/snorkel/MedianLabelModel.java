@@ -14,7 +14,6 @@ import com.computablefacts.morta.Pipeline;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Table;
 import com.google.errorprone.annotations.CheckReturnValue;
-import com.google.errorprone.annotations.Var;
 
 import smile.stat.hypothesis.CorTest;
 
@@ -116,100 +115,24 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
       int label = label(goldLabel);
 
       if (label == LABEL_OK) {
-
-        List<Double> vector = new ArrayList<>();
-
-        // For each LF, compute the percentage of correct LABEL_OK/LABEL_KO matches
-        for (Map.Entry<? extends ILabelingFunction<T>, Summary> lfSummary : lfSummaries_) {
-
-          ILabelingFunction<T> lf = lfSummary.getKey();
-          Summary summary = lfSummary.getValue();
-
-          if (lf.apply(data) == LABEL_OK) {
-            vector.add(summary.correct() / (double) (summary.correct() + summary.incorrect()));
-          } else {
-            vector.add(0.0);
-          }
-        }
-
-        // For each LF, average the percentage of correct LABEL_OK/LABEL_KO matches
-        double average = vector.stream().mapToDouble(d -> d).average().orElse(0.0);
-        averagesOk.add(average);
+        averagesOk.add(average(lfSummaries_, LABEL_OK, data));
       } else if (label == LABEL_KO) {
-
-        List<Double> vector = new ArrayList<>();
-
-        // For each LF, compute the percentage of correct LABEL_OK/LABEL_KO matches
-        for (Map.Entry<? extends ILabelingFunction<T>, Summary> lfSummary : lfSummaries_) {
-
-          ILabelingFunction<T> lf = lfSummary.getKey();
-          Summary summary = lfSummary.getValue();
-
-          if (lf.apply(data) == LABEL_KO) {
-            vector.add(summary.correct() / (double) (summary.correct() + summary.incorrect()));
-          } else {
-            vector.add(0.0);
-          }
-        }
-
-        // For each LF, average the percentage of correct LABEL_OK/LABEL_KO matches
-        double average = vector.stream().mapToDouble(d -> d).average().orElse(0.0);
-        averagesKo.add(average);
+        averagesKo.add(average(lfSummaries_, LABEL_KO, data));
       }
       // else {
       // ABSTAIN
       // }
     }
 
-    // Compute threshold (median) above (resp. under) which a weighted vector should have output
-    // LABEL_OK (resp. LABEL_KO)
-    @Var
-    int size = averagesOk.size();
-    @Var
-    DoubleStream averagesSorted = averagesOk.stream().mapToDouble(a -> a).sorted();
-
-    thresholdOk_ = size % 2 == 0 ? averagesSorted.skip(size / 2 - 1).limit(2).average().orElse(0.0)
-        : averagesSorted.skip(size / 2).findFirst().orElse(0.0);
-
-    size = averagesKo.size();
-    averagesSorted = averagesKo.stream().mapToDouble(a -> a).sorted();
-
-    thresholdKo_ = size % 2 == 0 ? averagesSorted.skip(size / 2 - 1).limit(2).average().orElse(0.0)
-        : averagesSorted.skip(size / 2).findFirst().orElse(0.0);
+    // Compute threshold (median) above which a weighted vector should have output
+    // LABEL_OK or LABEL_KO
+    thresholdOk_ = median(averagesOk);
+    thresholdKo_ = median(averagesKo);
 
     // Make predictions!
-    return goldLabels().stream().map(IGoldLabel::data).map(data -> {
-
-      List<Double> vectorOk = new ArrayList<>();
-      List<Double> vectorKo = new ArrayList<>();
-
-      for (Map.Entry<? extends ILabelingFunction<T>, Summary> lfSummary : lfSummaries_) {
-
-        ILabelingFunction<T> lf = lfSummary.getKey();
-        Summary summary = lfSummary.getValue();
-        int label = lf.apply(data);
-
-        if (label == LABEL_OK) {
-          vectorOk.add(summary.correct() / (double) (summary.correct() + summary.incorrect()));
-        } else if (label == LABEL_KO) {
-          vectorKo.add(summary.correct() / (double) (summary.correct() + summary.incorrect()));
-        }
-        // else {
-        // ABSTAIN
-        // }
-      }
-
-      double averageOk = vectorOk.stream().mapToDouble(d -> d).average().orElse(0.0);
-      double averageKo = vectorKo.stream().mapToDouble(d -> d).average().orElse(0.0);
-
-      if (averageOk >= thresholdOk_ && averageKo < thresholdKo_) {
-        return LABEL_OK;
-      }
-      if (averageOk < thresholdOk_ && averageKo >= thresholdKo_) {
-        return LABEL_KO;
-      }
-      return ABSTAIN;
-    }).collect(Collectors.toList());
+    return goldLabels().stream().map(IGoldLabel::data)
+        .map(data -> predict(lfSummaries_, thresholdOk_, thresholdKo_, data))
+        .collect(Collectors.toList());
   }
 
   /**
@@ -218,10 +141,76 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
    * @param goldLabel gold label.
    * @return a binary class.
    */
-  protected int label(IGoldLabel<T> goldLabel) {
+  private int label(IGoldLabel<T> goldLabel) {
 
     Preconditions.checkNotNull(goldLabel, "goldLabel should not be null");
 
     return goldLabel.isTruePositive() || goldLabel.isFalseNegative() ? LABEL_OK : LABEL_KO;
+  }
+
+  private double average(List<Map.Entry<? extends ILabelingFunction<T>, Summary>> lfSummaries,
+      int label, T data) {
+
+    List<Double> vector = new ArrayList<>();
+
+    // For each LF, compute the percentage of correct matches
+    for (Map.Entry<? extends ILabelingFunction<T>, Summary> lfSummary : lfSummaries) {
+
+      ILabelingFunction<T> lf = lfSummary.getKey();
+      Summary summary = lfSummary.getValue();
+
+      if (lf.apply(data) == label) {
+        vector.add(summary.correct() / (double) (summary.correct() + summary.incorrect()));
+      } else {
+        vector.add(0.0);
+      }
+    }
+
+    // For each LF, average the percentage of correct matches above which "label" should be
+    // triggered
+    return vector.stream().mapToDouble(d -> d).average().orElse(0.0);
+  }
+
+  private double median(List<Double> averages) {
+
+    int size = averages.size();
+    DoubleStream averagesSorted = averages.stream().mapToDouble(a -> a).sorted();
+
+    return size % 2 == 0 ? averagesSorted.skip(size / 2 - 1).limit(2).average().orElse(0.0)
+        : averagesSorted.skip(size / 2).findFirst().orElse(0.0);
+  }
+
+  private int predict(List<Map.Entry<? extends ILabelingFunction<T>, Summary>> lfSummaries,
+      double thresholdOk, double thresholdKo, T data) {
+
+    List<Double> vectorOk = new ArrayList<>();
+    List<Double> vectorKo = new ArrayList<>();
+
+    for (Map.Entry<? extends ILabelingFunction<T>, Summary> lfSummary : lfSummaries) {
+
+      ILabelingFunction<T> lf = lfSummary.getKey();
+      Summary summary = lfSummary.getValue();
+      int label = lf.apply(data);
+
+      if (label == LABEL_OK) {
+        vectorOk.add(summary.correct() / (double) (summary.correct() + summary.incorrect()));
+      } else if (label == LABEL_KO) {
+        vectorKo.add(summary.correct() / (double) (summary.correct() + summary.incorrect()));
+      }
+      // else {
+      // ABSTAIN
+      // }
+    }
+
+    double averageOk = vectorOk.stream().mapToDouble(d -> d).average().orElse(0.0);
+    double averageKo = vectorKo.stream().mapToDouble(d -> d).average().orElse(0.0);
+
+    if (averageOk >= thresholdOk && averageKo < thresholdKo) {
+      return LABEL_OK;
+    }
+    if (averageOk < thresholdOk && averageKo >= thresholdKo) {
+      return LABEL_KO;
+    }
+    return ABSTAIN;
   }
 }
