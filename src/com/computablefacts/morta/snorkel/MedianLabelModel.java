@@ -31,6 +31,7 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
   public static final int LABEL_KO = 0;
   public static final int LABEL_OK = 1;
 
+  private List<Map.Entry<? extends ILabelingFunction<T>, Summary>> lfSummaries_;
   private double thresholdOk_;
   private double thresholdKo_;
 
@@ -92,17 +93,16 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
     // Map each LF to its summary
     List<Summary> summaries = summarize();
 
-    List<Map.Entry<? extends ILabelingFunction<T>, Summary>> lfSummaries =
-        lfs().stream().map(lf -> {
+    lfSummaries_ = lfs().stream().map(lf -> {
 
-          Optional<Summary> summary = summaries.stream()
-              .filter(s -> s.label().equals(((AbstractLabelingFunction<T>) lf).name())).findFirst();
+      Optional<Summary> summary = summaries.stream()
+          .filter(s -> s.label().equals(((AbstractLabelingFunction<T>) lf).name())).findFirst();
 
-          Preconditions.checkState(summary.isPresent(),
-              "Inconsistent state reached between LF and Summaries");
+      Preconditions.checkState(summary.isPresent(),
+          "Inconsistent state reached between LF and Summaries");
 
-          return new AbstractMap.SimpleEntry<>(lf, summary.get());
-        }).collect(Collectors.toList());
+      return new AbstractMap.SimpleEntry<>(lf, summary.get());
+    }).collect(Collectors.toList());
 
     // Weight each LF
     List<? extends IGoldLabel<T>> goldLabels = goldLabels();
@@ -120,7 +120,7 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
         List<Double> vector = new ArrayList<>();
 
         // For each LF, compute the percentage of correct LABEL_OK/LABEL_KO matches
-        for (Map.Entry<? extends ILabelingFunction<T>, Summary> lfSummary : lfSummaries) {
+        for (Map.Entry<? extends ILabelingFunction<T>, Summary> lfSummary : lfSummaries_) {
 
           ILabelingFunction<T> lf = lfSummary.getKey();
           Summary summary = lfSummary.getValue();
@@ -140,7 +140,7 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
         List<Double> vector = new ArrayList<>();
 
         // For each LF, compute the percentage of correct LABEL_OK/LABEL_KO matches
-        for (Map.Entry<? extends ILabelingFunction<T>, Summary> lfSummary : lfSummaries) {
+        for (Map.Entry<? extends ILabelingFunction<T>, Summary> lfSummary : lfSummaries_) {
 
           ILabelingFunction<T> lf = lfSummary.getKey();
           Summary summary = lfSummary.getValue();
@@ -183,7 +183,7 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
       List<Double> vectorOk = new ArrayList<>();
       List<Double> vectorKo = new ArrayList<>();
 
-      for (Map.Entry<? extends ILabelingFunction<T>, Summary> lfSummary : lfSummaries) {
+      for (Map.Entry<? extends ILabelingFunction<T>, Summary> lfSummary : lfSummaries_) {
 
         ILabelingFunction<T> lf = lfSummary.getKey();
         Summary summary = lfSummary.getValue();
