@@ -96,5 +96,7 @@ public abstract class AbstractLabelModel<T> {
     return goldLabels;
   }
 
+  public abstract void fit();
+
   public abstract List<Integer> predict();
 }

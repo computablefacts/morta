@@ -82,6 +82,9 @@ public class AbstractLabelModelTest {
     return new AbstractLabelModel<String>(lfNames(), lfLabels(), lfs(), goldLabels()) {
 
       @Override
+      public void fit() {}
+
+      @Override
       public List<Integer> predict() {
         return new ArrayList<>();
       }

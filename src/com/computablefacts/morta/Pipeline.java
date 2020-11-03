@@ -5,6 +5,7 @@ import static com.computablefacts.morta.snorkel.ILabelingFunction.ABSTAIN;
 import java.util.AbstractMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -61,6 +62,13 @@ final public class Pipeline {
       Preconditions.checkNotNull(transform, "transform should not be null");
 
       return new Builder<>(stream_.map(transform));
+    }
+
+    public Builder<D> peek(Consumer<D> action) {
+
+      Preconditions.checkNotNull(action, "action should not be null");
+
+      return new Builder<>(stream_.peek(action));
     }
 
     /**

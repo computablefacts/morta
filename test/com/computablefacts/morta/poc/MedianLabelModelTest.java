@@ -1,4 +1,4 @@
-package com.computablefacts.morta.snorkel;
+package com.computablefacts.morta.poc;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -8,6 +8,11 @@ import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.computablefacts.morta.snorkel.AbstractLabelingFunction;
+import com.computablefacts.morta.snorkel.FeatureVector;
+import com.computablefacts.morta.snorkel.GoldLabel;
+import com.computablefacts.morta.snorkel.IGoldLabel;
+import com.computablefacts.morta.snorkel.Summary;
 import com.computablefacts.nona.helpers.ConfusionMatrix;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;

@@ -200,6 +200,9 @@ final public class MajorityLabelModel<T> extends AbstractLabelModel<T> {
   }
 
   @Override
+  public void fit() {}
+
+  @Override
   public List<Integer> predict() {
     return predictions(
         lfNames(), lfLabels(), probabilities(lfNames(), lfLabels(), Pipeline.on(goldLabels())
