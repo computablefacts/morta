@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 
 import com.computablefacts.morta.Pipeline;
+import com.computablefacts.nona.helpers.ConfusionMatrix;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Table;
 import com.google.errorprone.annotations.CheckReturnValue;
@@ -124,8 +125,7 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
       // }
     }
 
-    // Compute threshold (median) above which a weighted vector should have output
-    // LABEL_OK or LABEL_KO
+    // Compute threshold (median) above which weighted LF should have output LABEL_OK or LABEL_KO
     thresholdOk_ = median(averagesOk);
     thresholdKo_ = median(averagesKo);
 
@@ -133,6 +133,17 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
     return goldLabels().stream().map(IGoldLabel::data)
         .map(data -> predict(lfSummaries_, thresholdOk_, thresholdKo_, data))
         .collect(Collectors.toList());
+  }
+
+  public ConfusionMatrix confusionMatrix() {
+
+    List<Integer> actual = goldLabels().stream().map(this::label).collect(Collectors.toList());
+    List<Integer> predicted = predict();
+
+    ConfusionMatrix matrix = new ConfusionMatrix();
+    matrix.addAll(actual, predicted, LABEL_OK, LABEL_KO);
+
+    return matrix;
   }
 
   /**
@@ -150,6 +161,11 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
 
   private double average(List<Map.Entry<? extends ILabelingFunction<T>, Summary>> lfSummaries,
       int label, T data) {
+
+    Preconditions.checkNotNull(lfSummaries, "lfSummaries should not be null");
+    Preconditions.checkArgument(label == ABSTAIN || label == LABEL_OK || label == LABEL_KO,
+        "unknown label class");
+    Preconditions.checkNotNull(data, "data should not be null");
 
     List<Double> vector = new ArrayList<>();
 
@@ -171,10 +187,12 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
     return vector.stream().mapToDouble(d -> d).average().orElse(0.0);
   }
 
-  private double median(List<Double> averages) {
+  private double median(List<Double> list) {
 
-    int size = averages.size();
-    DoubleStream averagesSorted = averages.stream().mapToDouble(a -> a).sorted();
+    Preconditions.checkNotNull(list, "list should not be null");
+
+    int size = list.size();
+    DoubleStream averagesSorted = list.stream().mapToDouble(a -> a).sorted();
 
     return size % 2 == 0 ? averagesSorted.skip(size / 2 - 1).limit(2).average().orElse(0.0)
         : averagesSorted.skip(size / 2).findFirst().orElse(0.0);
@@ -182,6 +200,10 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
 
   private int predict(List<Map.Entry<? extends ILabelingFunction<T>, Summary>> lfSummaries,
       double thresholdOk, double thresholdKo, T data) {
+
+    Preconditions.checkNotNull(lfSummaries, "lfSummaries should not be null");
+    Preconditions.checkArgument(thresholdOk >= 0.0, "threshold OK must be >= 0");
+    Preconditions.checkArgument(thresholdKo >= 0.0, "threshold KO must be >= 0");
 
     List<Double> vectorOk = new ArrayList<>();
     List<Double> vectorKo = new ArrayList<>();
