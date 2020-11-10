@@ -24,7 +24,7 @@ public interface IGoldLabel<D> {
    * @param file gold labels as JSON objects stored inside a gzip file.
    * @return a list of {@link IGoldLabel}.
    */
-  static List<IGoldLabel<String>> load(File file) {
+  static List<IGoldLabel<String>> load(File file, String label) {
 
     Preconditions.checkNotNull(file, "file should not be null");
     Preconditions.checkArgument(file.exists(), "file should exist : %s", file);
@@ -36,7 +36,8 @@ public interface IGoldLabel<D> {
     List<IGoldLabel<String>> gls =
         com.computablefacts.nona.helpers.Files.compressedLineStream(file, StandardCharsets.UTF_8)
             .filter(e -> !Strings.isNullOrEmpty(e.getValue())).peek(e -> bar.update())
-            .map(e -> new GoldLabel(Codecs.asObject(e.getValue()))).collect(Collectors.toList());
+            .map(e -> new GoldLabel(Codecs.asObject(e.getValue())))
+            .filter(gl -> label == null || label.equals(gl.label())).collect(Collectors.toList());
 
     bar.complete();
 

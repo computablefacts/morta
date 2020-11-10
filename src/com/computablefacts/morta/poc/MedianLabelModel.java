@@ -74,7 +74,7 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
    * @param goldLabel gold label.
    * @return a binary class.
    */
-  private static <T> int label(IGoldLabel<T> goldLabel) {
+  static <T> int label(IGoldLabel<T> goldLabel) {
 
     Preconditions.checkNotNull(goldLabel, "goldLabel should not be null");
 

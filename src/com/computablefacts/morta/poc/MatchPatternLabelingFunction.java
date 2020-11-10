@@ -14,8 +14,8 @@ import com.google.errorprone.annotations.CheckReturnValue;
 final public class MatchPatternLabelingFunction extends AbstractLabelingFunction<String> {
 
   private final Languages.eLanguage language_;
-  private final Function<String, List<String>> sentenceSplitter_;
-  private final Function<String, List<String>> wordSplitter_;
+  private Function<String, List<String>> sentenceSplitter_;
+  private Function<String, List<String>> wordSplitter_;
 
   public MatchPatternLabelingFunction(Languages.eLanguage language, String pattern) {
 
@@ -24,8 +24,6 @@ final public class MatchPatternLabelingFunction extends AbstractLabelingFunction
     Preconditions.checkNotNull(language, "language should not be null");
 
     language_ = language;
-    sentenceSplitter_ = Helpers.sentenceSplitter();
-    wordSplitter_ = Helpers.wordSplitter(language);
   }
 
   @Override
@@ -33,7 +31,7 @@ final public class MatchPatternLabelingFunction extends AbstractLabelingFunction
 
     // Tokenize text
     List<String> sentences =
-        sentenceSplitter_.apply(text).stream().map(sentence -> wordSplitter_.apply(sentence))
+        sentenceSplitter().apply(text).stream().map(sentence -> wordSplitter().apply(sentence))
             .map(words -> Joiner.on(' ').join(words)).collect(Collectors.toList());
 
     // Find matching patterns
@@ -43,5 +41,19 @@ final public class MatchPatternLabelingFunction extends AbstractLabelingFunction
       }
     }
     return MedianLabelModel.LABEL_KO;
+  }
+
+  public Function<String, List<String>> sentenceSplitter() {
+    if (sentenceSplitter_ == null) {
+      sentenceSplitter_ = Helpers.sentenceSplitter();
+    }
+    return sentenceSplitter_;
+  }
+
+  public Function<String, List<String>> wordSplitter() {
+    if (wordSplitter_ == null) {
+      wordSplitter_ = Helpers.wordSplitter(language_);
+    }
+    return wordSplitter_;
   }
 }
