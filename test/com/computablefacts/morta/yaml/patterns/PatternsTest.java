@@ -14,6 +14,43 @@ import com.google.common.collect.Lists;
 public class PatternsTest {
 
   @Test
+  public void testDump() throws IOException {
+
+    Pattern[] patterns = new Pattern[1];
+    patterns[0] = new Pattern();
+
+    patterns[0].name_ = "SINGLE_WORD";
+    patterns[0].pattern_ = "\\p{L}+";
+    patterns[0].shouldMatch_ = new String[2];
+    patterns[0].shouldMatch_[0] = "WORD";
+    patterns[0].shouldMatch_[1] = "word";
+
+    patterns[0].shouldNotMatch_ = new String[2];
+    patterns[0].shouldNotMatch_[0] = "two words";
+    patterns[0].shouldNotMatch_[1] = "word-with-hyphen";
+
+    // Dump YAML
+    Path file = Files.createTempFile("patterns-", ".yml");
+
+    Assert.assertTrue(Patterns.dump(file.toFile(), patterns));
+
+    // Try to reload the dumped file
+    Pattern[] patternz = Patterns.load(file.toFile(), true);
+
+    Assert.assertEquals(1, patterns.length);
+
+    Assert.assertEquals("SINGLE_WORD", patterns[0].name_);
+    Assert.assertNull(patterns[0].description_);
+    Assert.assertEquals("\\p{L}+", patterns[0].pattern_);
+    Assert.assertEquals(2, patterns[0].shouldMatch_.length);
+    Assert.assertEquals("WORD", patterns[0].shouldMatch_[0]);
+    Assert.assertEquals("word", patterns[0].shouldMatch_[1]);
+    Assert.assertEquals(2, patterns[0].shouldNotMatch_.length);
+    Assert.assertEquals("two words", patterns[0].shouldNotMatch_[0]);
+    Assert.assertEquals("word-with-hyphen", patterns[0].shouldNotMatch_[1]);
+  }
+
+  @Test
   public void testPatterns() throws IOException {
 
     String yaml = "patterns:\n" + "  - name: SINGLE_WORD\n" + "    pattern: \\p{L}+\n"

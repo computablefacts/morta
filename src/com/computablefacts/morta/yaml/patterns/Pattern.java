@@ -46,7 +46,7 @@ final public class Pattern {
   @JsonProperty("should_not_match")
   String[] shouldNotMatch_;
 
-  Pattern() {}
+  public Pattern() {}
 
   public boolean isValid() {
 

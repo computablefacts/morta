@@ -125,6 +125,39 @@ final public class Patterns {
     return null;
   }
 
+  /**
+   * Write YAML file.
+   *
+   * @param file YAML file to be written.
+   * @param patterns a list of patterns.
+   * @return true on success, false otherwise.
+   */
+  public static boolean dump(File file, Pattern[] patterns) {
+
+    Preconditions.checkNotNull(file, "file should not be null");
+    Preconditions.checkNotNull(patterns, "patterns should not be null");
+
+    Patterns patternz = new Patterns();
+    patternz.patterns_ = patterns;
+
+    if (!patternz.isValid()) {
+      return false;
+    }
+
+    try {
+      YAMLFactory yamlFactory = new YAMLFactory();
+      YAMLMapper yamlMapper = new YAMLMapper(yamlFactory);
+      yamlMapper.writeValue(file, Patterns.class);
+
+      return true;
+    } catch (JsonProcessingException e) {
+      logger_.error(LogFormatter.create().message(e).formatError());
+    } catch (IOException e) {
+      logger_.error(LogFormatter.create().message(e).formatError());
+    }
+    return false;
+  }
+
   private boolean isValid() {
     for (int i = 0; patterns_ != null && i < patterns_.length; i++) {
       if (!patterns_[i].isValid()) {
