@@ -138,7 +138,7 @@ public class MajorityLabelModelTest {
   public void testLabelingFunctionsCorrelations() {
 
     Table<String, String, CorTest> matrix =
-        labelModel().labelingFunctionsCorrelations(Summary.eCorrelation.PEARSON);
+        labelModel().labelingFunctionsCorrelations(goldLabels(), Summary.eCorrelation.PEARSON);
 
     Assert.assertEquals(Sets.newHashSet("isDivisibleBy2", "isDivisibleBy3", "isDivisibleBy6"),
         matrix.rowKeySet());
@@ -162,7 +162,7 @@ public class MajorityLabelModelTest {
   public void testExplore() {
 
     Table<String, Summary.eStatus, List<Map.Entry<String, FeatureVector<Integer>>>> table =
-        labelModel().explore();
+        labelModel().explore(goldLabels());
 
     Assert.assertEquals(Sets.newHashSet("isDivisibleBy2", "isDivisibleBy3", "isDivisibleBy6"),
         table.rowKeySet());
@@ -188,7 +188,7 @@ public class MajorityLabelModelTest {
   @Test
   public void testSummarize() {
 
-    List<Summary> list = labelModel().summarize();
+    List<Summary> list = labelModel().summarize(goldLabels());
 
     Assert.assertEquals(summaries(), list);
   }
@@ -196,14 +196,13 @@ public class MajorityLabelModelTest {
   @Test
   public void testPredict() {
 
-    List<Integer> list = labelModel().predict();
+    List<Integer> list = labelModel().predict(goldLabels());
 
     Assert.assertEquals(Lists.newArrayList(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1), list);
   }
 
   private MajorityLabelModel<String> labelModel() {
-    return new MajorityLabelModel<>(lfNames(), lfLabels(), lfs(), goldLabels(),
-        MajorityLabelModel.eTieBreakPolicy.RANDOM);
+    return new MajorityLabelModel<>(lfNames(), lfLabels(), lfs());
   }
 
   private Dictionary lfNames() {

@@ -21,7 +21,7 @@ public class AbstractLabelModelTest {
 
     AbstractLabelModel<String> labelModel = labelModel();
     Table<String, String, CorTest> matrix =
-        labelModel.labelingFunctionsCorrelations(Summary.eCorrelation.PEARSON);
+        labelModel.labelingFunctionsCorrelations(goldLabels(), Summary.eCorrelation.PEARSON);
 
     Assert.assertEquals(Sets.newHashSet("isDivisibleBy2", "isDivisibleBy3", "isDivisibleBy6"),
         matrix.rowKeySet());
@@ -46,7 +46,7 @@ public class AbstractLabelModelTest {
 
     AbstractLabelModel<String> labelModel = labelModel();
     Table<String, Summary.eStatus, List<Map.Entry<String, FeatureVector<Integer>>>> table =
-        labelModel.explore();
+        labelModel.explore(goldLabels());
 
     Assert.assertEquals(Sets.newHashSet("isDivisibleBy2", "isDivisibleBy3", "isDivisibleBy6"),
         table.rowKeySet());
@@ -73,19 +73,19 @@ public class AbstractLabelModelTest {
   public void testSummarize() {
 
     AbstractLabelModel<String> labelModel = labelModel();
-    List<Summary> list = labelModel.summarize();
+    List<Summary> list = labelModel.summarize(goldLabels());
 
     Assert.assertEquals(summaries(), list);
   }
 
   private AbstractLabelModel<String> labelModel() {
-    return new AbstractLabelModel<String>(lfNames(), lfLabels(), lfs(), goldLabels()) {
+    return new AbstractLabelModel<String>(lfNames(), lfLabels(), lfs()) {
 
       @Override
-      public void fit() {}
+      public void fit(List<? extends IGoldLabel<String>> goldLabels) {}
 
       @Override
-      public List<Integer> predict() {
+      public List<Integer> predict(List<? extends IGoldLabel<String>> goldLabels) {
         return new ArrayList<>();
       }
     };
@@ -114,21 +114,21 @@ public class AbstractLabelModelTest {
 
     List<AbstractLabelingFunction<String>> lfs = new ArrayList<>();
 
-    lfs.add(new AbstractLabelingFunction<String>("lf_mod_2") {
+    lfs.add(new AbstractLabelingFunction<String>("isDivisibleBy2") {
 
       @Override
       public Integer apply(String x) {
         return Integer.parseInt(x, 10) % 2 == 0 ? 1 : 0;
       }
     });
-    lfs.add(new AbstractLabelingFunction<String>("lf_mod_3") {
+    lfs.add(new AbstractLabelingFunction<String>("isDivisibleBy3") {
 
       @Override
       public Integer apply(String x) {
         return Integer.parseInt(x, 10) % 3 == 0 ? 1 : 0;
       }
     });
-    lfs.add(new AbstractLabelingFunction<String>("lf_mod_6") {
+    lfs.add(new AbstractLabelingFunction<String>("isDivisibleBy6") {
 
       @Override
       public Integer apply(String x) {

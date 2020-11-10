@@ -26,7 +26,7 @@ public class MedianLabelModelTest {
   public void testLabelingFunctionsCorrelations() {
 
     Table<String, String, CorTest> matrix =
-        labelModel().labelingFunctionsCorrelations(Summary.eCorrelation.PEARSON);
+        labelModel().labelingFunctionsCorrelations(goldLabels(), Summary.eCorrelation.PEARSON);
 
     Assert.assertEquals(Sets.newHashSet("isDivisibleBy2", "isDivisibleBy3", "isDivisibleBy6"),
         matrix.rowKeySet());
@@ -50,7 +50,7 @@ public class MedianLabelModelTest {
   public void testExplore() {
 
     Table<String, Summary.eStatus, List<Map.Entry<String, FeatureVector<Integer>>>> table =
-        labelModel().explore();
+        labelModel().explore(goldLabels());
 
     Assert.assertEquals(Sets.newHashSet("isDivisibleBy2", "isDivisibleBy3", "isDivisibleBy6"),
         table.rowKeySet());
@@ -76,7 +76,7 @@ public class MedianLabelModelTest {
   @Test
   public void testSummarize() {
 
-    List<Summary> list = labelModel().summarize();
+    List<Summary> list = labelModel().summarize(goldLabels());
 
     Assert.assertEquals(summaries(), list);
   }
@@ -84,7 +84,10 @@ public class MedianLabelModelTest {
   @Test
   public void testPredict() {
 
-    List<Integer> list = labelModel().predict();
+    MedianLabelModel<String> labelModel = labelModel();
+    labelModel.fit(goldLabels());
+
+    List<Integer> list = labelModel.predict(goldLabels());
 
     Assert.assertEquals(Lists.newArrayList(0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1), list);
   }
@@ -92,7 +95,10 @@ public class MedianLabelModelTest {
   @Test
   public void testConfusionMatrix() {
 
-    ConfusionMatrix matrix = labelModel().confusionMatrix();
+    MedianLabelModel<String> labelModel = labelModel();
+    labelModel.fit(goldLabels());
+
+    ConfusionMatrix matrix = labelModel.confusionMatrix(goldLabels());
 
     Assert.assertEquals(4, matrix.nbTruePositives());
     Assert.assertEquals(8, matrix.nbTrueNegatives());
@@ -101,7 +107,7 @@ public class MedianLabelModelTest {
   }
 
   private MedianLabelModel<String> labelModel() {
-    return new MedianLabelModel<>(lfs(), goldLabels());
+    return new MedianLabelModel<>(lfs());
   }
 
   private List<AbstractLabelingFunction<String>> lfs() {

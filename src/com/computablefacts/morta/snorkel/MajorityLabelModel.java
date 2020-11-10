@@ -18,17 +18,21 @@ final public class MajorityLabelModel<T> extends AbstractLabelModel<T> {
   private final eTieBreakPolicy tieBreakPolicy_;
   private final double tolerance_;
 
+  public MajorityLabelModel(MajorityLabelModel<T> labelModel) {
+    this(labelModel.lfNames(), labelModel.lfLabels(), labelModel.lfs(), labelModel.tieBreakPolicy(),
+        labelModel.tolerance());
+  }
+
   public MajorityLabelModel(Dictionary lfNames, Dictionary lfLabels,
-      List<? extends AbstractLabelingFunction<T>> lfs, List<? extends IGoldLabel<T>> goldLabels,
-      eTieBreakPolicy tieBreakPolicy) {
-    this(lfNames, lfLabels, lfs, goldLabels, tieBreakPolicy, 0.00001);
+      List<? extends AbstractLabelingFunction<T>> lfs) {
+    this(lfNames, lfLabels, lfs, eTieBreakPolicy.RANDOM, 0.00001);
   }
 
   private MajorityLabelModel(Dictionary lfNames, Dictionary lfLabels,
-      List<? extends AbstractLabelingFunction<T>> lfs, List<? extends IGoldLabel<T>> goldLabels,
-      eTieBreakPolicy tieBreakPolicy, double tolerance) {
+      List<? extends AbstractLabelingFunction<T>> lfs, eTieBreakPolicy tieBreakPolicy,
+      double tolerance) {
 
-    super(lfNames, lfLabels, lfs, goldLabels);
+    super(lfNames, lfLabels, lfs);
 
     tieBreakPolicy_ = tieBreakPolicy == null ? eTieBreakPolicy.RANDOM : tieBreakPolicy;
     tolerance_ = tolerance < 0 ? 0.00001 : tolerance;
@@ -201,14 +205,25 @@ final public class MajorityLabelModel<T> extends AbstractLabelModel<T> {
   }
 
   @Override
-  public void fit() {}
+  public void fit(List<? extends IGoldLabel<T>> goldLabels) {}
 
   @Override
-  public List<Integer> predict() {
+  public List<Integer> predict(List<? extends IGoldLabel<T>> goldLabels) {
+
+    Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
+
     return predictions(
-        lfNames(), lfLabels(), probabilities(lfNames(), lfLabels(), Pipeline.on(goldLabels())
+        lfNames(), lfLabels(), probabilities(lfNames(), lfLabels(), Pipeline.on(goldLabels)
             .transform(IGoldLabel::data).label(lfs()).transform(Map.Entry::getValue).collect()),
         tieBreakPolicy_, tolerance_);
+  }
+
+  public eTieBreakPolicy tieBreakPolicy() {
+    return tieBreakPolicy_;
+  }
+
+  public double tolerance() {
+    return tolerance_;
   }
 
   public enum eTieBreakPolicy {

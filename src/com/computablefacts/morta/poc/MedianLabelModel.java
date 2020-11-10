@@ -44,28 +44,21 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
   private double thresholdOk_;
   private double thresholdKo_;
 
-  public MedianLabelModel(List<AbstractLabelingFunction<T>> lfs,
-      List<? extends IGoldLabel<T>> goldLabels) {
-
-    super(labelingFunctionNamesPrivate(lfs), labelingFunctionLabelsPrivate(), lfs, goldLabels);
-
-    Preconditions.checkArgument(
-        goldLabels.stream().allMatch(gl -> gl.label().equals(goldLabels.get(0).label())),
-        "Labels must be all the same");
-
-    fit();
+  public MedianLabelModel(MedianLabelModel<T> labelModel) {
+    this(labelModel.lfs(), labelModel.lfSummaries(), labelModel.thresholdOk(),
+        labelModel.thresholdKo());
   }
 
-  public MedianLabelModel(List<AbstractLabelingFunction<T>> lfs,
-      List<? extends IGoldLabel<T>> goldLabels,
+  public MedianLabelModel(List<AbstractLabelingFunction<T>> lfs) {
+    super(lfsNames(lfs), lfsLabels(), lfs);
+  }
+
+  private MedianLabelModel(List<? extends AbstractLabelingFunction<T>> lfs,
       List<Map.Entry<? extends AbstractLabelingFunction<T>, Summary>> lfSummaries,
       double thresholdOk, double thresholdKo) {
 
-    super(labelingFunctionNamesPrivate(lfs), labelingFunctionLabelsPrivate(), lfs, goldLabels);
+    super(lfsNames(lfs), lfsLabels(), lfs);
 
-    Preconditions.checkArgument(
-        goldLabels.stream().allMatch(gl -> gl.label().equals(goldLabels.get(0).label())),
-        "Labels must be all the same");
     Preconditions.checkNotNull(lfSummaries, "lfSummaries should not be null");
     Preconditions.checkArgument(thresholdOk >= 0.0, "threshold OK must be >= 0");
     Preconditions.checkArgument(thresholdKo >= 0.0, "threshold KO must be >= 0");
@@ -75,8 +68,20 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
     thresholdKo_ = thresholdKo;
   }
 
-  private static <T> Dictionary labelingFunctionNamesPrivate(
-      List<? extends AbstractLabelingFunction<T>> lfs) {
+  /**
+   * Returns the binary class i.e. LABEL_OK or LABEL_KO, associated with a gold label.
+   *
+   * @param goldLabel gold label.
+   * @return a binary class.
+   */
+  private static <T> int label(IGoldLabel<T> goldLabel) {
+
+    Preconditions.checkNotNull(goldLabel, "goldLabel should not be null");
+
+    return goldLabel.isTruePositive() || goldLabel.isFalseNegative() ? LABEL_OK : LABEL_KO;
+  }
+
+  private static <T> Dictionary lfsNames(List<? extends AbstractLabelingFunction<T>> lfs) {
 
     Preconditions.checkNotNull(lfs, "lfs should not be null");
 
@@ -88,7 +93,7 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
     return lfNames;
   }
 
-  private static Dictionary labelingFunctionLabelsPrivate() {
+  private static Dictionary lfsLabels() {
 
     Dictionary lfOutputs = new Dictionary();
     lfOutputs.put("KO", LABEL_KO);
@@ -99,50 +104,59 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
 
   @Override
   public Table<String, String, CorTest> labelingFunctionsCorrelations(
-      Summary.eCorrelation correlation) {
+      List<? extends IGoldLabel<T>> goldLabels, Summary.eCorrelation correlation) {
+
+    Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
+    Preconditions.checkNotNull(correlation, "correlation should not be null");
 
     AtomicInteger count = new AtomicInteger(0);
     AsciiProgressBar.ProgressBar bar = AsciiProgressBar.create();
 
     return Summary.labelingFunctionsCorrelations(lfNames(), lfLabels(),
-        Pipeline
-            .on(goldLabels()).transform(IGoldLabel::data).peek(d -> bar
-                .update(count.incrementAndGet(), goldLabels().size(), "Computing correlations..."))
+        Pipeline.on(goldLabels).transform(IGoldLabel::data)
+            .peek(d -> bar.update(count.incrementAndGet(), goldLabels.size(), "Correlating..."))
             .label(lfs()).collect(),
         correlation);
   }
 
   @Override
-  public Table<String, Summary.eStatus, List<Map.Entry<T, FeatureVector<Integer>>>> explore() {
+  public Table<String, Summary.eStatus, List<Map.Entry<T, FeatureVector<Integer>>>> explore(
+      List<? extends IGoldLabel<T>> goldLabels) {
+
+    Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
 
     AtomicInteger count = new AtomicInteger(0);
     AsciiProgressBar.ProgressBar bar = AsciiProgressBar.create();
 
     return Summary.explore(lfNames(), lfLabels(),
-        Pipeline.on(goldLabels()).transform(IGoldLabel::data)
-            .peek(d -> bar.update(count.incrementAndGet(), goldLabels().size(), "Exploring..."))
+        Pipeline.on(goldLabels).transform(IGoldLabel::data)
+            .peek(d -> bar.update(count.incrementAndGet(), goldLabels.size(), "Exploring..."))
             .label(lfs()).collect(),
-        Pipeline.on(goldLabels()).transform(this::label).collect());
+        Pipeline.on(goldLabels).transform(MedianLabelModel::label).collect());
   }
 
   @Override
-  public List<Summary> summarize() {
+  public List<Summary> summarize(List<? extends IGoldLabel<T>> goldLabels) {
+
+    Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
 
     AtomicInteger count = new AtomicInteger(0);
     AsciiProgressBar.ProgressBar bar = AsciiProgressBar.create();
 
     return Summary.summarize(lfNames(), lfLabels(),
-        Pipeline.on(goldLabels()).transform(IGoldLabel::data)
-            .peek(d -> bar.update(count.incrementAndGet(), goldLabels().size(), "Summarizing..."))
+        Pipeline.on(goldLabels).transform(IGoldLabel::data)
+            .peek(d -> bar.update(count.incrementAndGet(), goldLabels.size(), "Summarizing..."))
             .label(lfs()).collect(),
-        Pipeline.on(goldLabels()).transform(this::label).collect());
+        Pipeline.on(goldLabels).transform(MedianLabelModel::label).collect());
   }
 
   @Override
-  public void fit() {
+  public void fit(List<? extends IGoldLabel<T>> goldLabels) {
+
+    Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
 
     // Map each LF to its summary
-    List<Summary> summaries = summarize();
+    List<Summary> summaries = summarize(goldLabels);
 
     lfSummaries_ = lfs().stream().map(lf -> {
 
@@ -157,7 +171,6 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
 
     // Weight each LF
     AsciiProgressBar.ProgressBar bar = AsciiProgressBar.create();
-    List<? extends IGoldLabel<T>> goldLabels = goldLabels();
     List<Double> averagesOk = new ArrayList<>(goldLabels.size());
     List<Double> averagesKo = new ArrayList<>(goldLabels.size());
 
@@ -185,26 +198,17 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
   }
 
   @Override
-  public List<Integer> predict() {
-    return goldLabels().stream().map(IGoldLabel::data)
+  public List<Integer> predict(List<? extends IGoldLabel<T>> goldLabels) {
+
+    Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
+
+    return goldLabels.stream().map(IGoldLabel::data)
         .map(data -> predict(lfSummaries_, thresholdOk_, thresholdKo_, data))
         .collect(Collectors.toList());
   }
 
   public List<Map.Entry<? extends AbstractLabelingFunction<T>, Summary>> lfSummaries() {
     return lfSummaries_;
-  }
-
-  protected List<? extends AbstractLabelingFunction<T>> labelingFunctions() {
-    return lfs();
-  }
-
-  public Dictionary labelingFunctionNames() {
-    return labelingFunctionNamesPrivate(labelingFunctions());
-  }
-
-  public Dictionary labelingFunctionLabels() {
-    return labelingFunctionLabelsPrivate();
   }
 
   public double thresholdOk() {
@@ -215,28 +219,18 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
     return thresholdKo_;
   }
 
-  public ConfusionMatrix confusionMatrix() {
+  public ConfusionMatrix confusionMatrix(List<? extends IGoldLabel<T>> goldLabels) {
 
-    List<Integer> actual = goldLabels().stream().map(this::label).collect(Collectors.toList());
-    List<Integer> predicted = predict();
+    Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
+
+    List<Integer> actual =
+        goldLabels.stream().map(MedianLabelModel::label).collect(Collectors.toList());
+    List<Integer> predicted = predict(goldLabels);
 
     ConfusionMatrix matrix = new ConfusionMatrix();
     matrix.addAll(actual, predicted, LABEL_OK, LABEL_KO);
 
     return matrix;
-  }
-
-  /**
-   * Returns the binary class i.e. LABEL_OK or LABEL_KO, associated with a gold label.
-   *
-   * @param goldLabel gold label.
-   * @return a binary class.
-   */
-  private int label(IGoldLabel<T> goldLabel) {
-
-    Preconditions.checkNotNull(goldLabel, "goldLabel should not be null");
-
-    return goldLabel.isTruePositive() || goldLabel.isFalseNegative() ? LABEL_OK : LABEL_KO;
   }
 
   private double average(
