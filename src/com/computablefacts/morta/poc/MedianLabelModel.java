@@ -186,9 +186,15 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
       int label = label(goldLabel);
 
       if (label == LABEL_OK) {
-        averagesOk.add(average(lfSummaries_, LABEL_OK, data));
+        double avg = average(lfSummaries_, LABEL_OK, data);
+        // if (avg > 0.0) { // no LF outputs a label
+        averagesOk.add(avg);
+        // }
       } else if (label == LABEL_KO) {
-        averagesKo.add(average(lfSummaries_, LABEL_KO, data));
+        double avg = average(lfSummaries_, LABEL_KO, data);
+        // if (avg > 0.0) { // no LF outputs a label
+        averagesKo.add(avg);
+        // }
       }
       // else {
       // ABSTAIN
@@ -223,6 +229,31 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
 
   public double thresholdKo() {
     return thresholdKo_;
+  }
+
+  public List<Map.Entry<T, FeatureVector<Integer>>> vectors(
+      List<? extends IGoldLabel<T>> goldLabels) {
+
+    Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
+
+    return Pipeline.on(goldLabels).transform(IGoldLabel::data).label(lfs()).collect();
+  }
+
+  public List<String> actual(List<? extends IGoldLabel<T>> goldLabels) {
+
+    Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
+
+    return Pipeline.on(goldLabels).transform(MedianLabelModel::label)
+        .transform(pred -> labelingFunctionLabels().label(pred)).collect();
+  }
+
+  public List<String> predicted(List<? extends IGoldLabel<T>> goldLabels) {
+
+    Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
+
+    return predict(goldLabels).stream()
+        .map(pred -> pred == ABSTAIN ? "ABSTAIN" : labelingFunctionLabels().label(pred))
+        .collect(Collectors.toList());
   }
 
   public ConfusionMatrix confusionMatrix(List<? extends IGoldLabel<T>> goldLabels) {
