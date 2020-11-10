@@ -163,8 +163,8 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
 
     lfSummaries_ = lfs().stream().map(lf -> {
 
-      Optional<Summary> summary = summaries.stream()
-          .filter(s -> s.label().equals(((AbstractLabelingFunction<T>) lf).name())).findFirst();
+      Optional<Summary> summary =
+          summaries.stream().filter(s -> s.label().equals(lf.name())).findFirst();
 
       Preconditions.checkState(summary.isPresent(),
           "Inconsistent state reached between LF and Summaries");
