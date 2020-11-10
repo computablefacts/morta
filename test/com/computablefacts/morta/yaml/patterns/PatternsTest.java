@@ -149,4 +149,28 @@ public class PatternsTest {
     Assert.assertEquals(1, patterns[0].shouldMatch_.length);
     Assert.assertEquals("La garantie de la Société est acquise", patterns[0].shouldMatch_[0]);
   }
+
+  @Test
+  public void testWildcard() throws IOException {
+
+    String yaml = "patterns:\n" + "  - name: DATE_YYYY_MM_DD\n" + "    pattern: ????-??-??\n"
+        + "    is_wildcard: true\n" + "    should_match:\n" + "      - 2020-11-10\n"
+        + "    should_not_match:\n" + "      - 2020/11/10\n";
+
+    Path file = Files.createTempFile("patterns-", ".yml");
+    java.nio.file.Files.write(file, Lists.newArrayList(yaml), StandardCharsets.UTF_8,
+        StandardOpenOption.CREATE);
+
+    Pattern[] patterns = Patterns.load(file.toFile(), true);
+
+    Assert.assertEquals(1, patterns.length);
+
+    Assert.assertEquals("DATE_YYYY_MM_DD", patterns[0].name_);
+    Assert.assertNull(patterns[0].description_);
+    Assert.assertEquals("????-??-??", patterns[0].pattern_);
+    Assert.assertEquals(1, patterns[0].shouldMatch_.length);
+    Assert.assertEquals("2020-11-10", patterns[0].shouldMatch_[0]);
+    Assert.assertEquals(1, patterns[0].shouldNotMatch_.length);
+    Assert.assertEquals("2020/11/10", patterns[0].shouldNotMatch_[0]);
+  }
 }

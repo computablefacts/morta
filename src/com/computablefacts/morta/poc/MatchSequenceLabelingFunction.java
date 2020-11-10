@@ -11,13 +11,13 @@ import com.google.common.base.Preconditions;
 import com.google.errorprone.annotations.CheckReturnValue;
 
 @CheckReturnValue
-final public class MatchPatternLabelingFunction extends AbstractLabelingFunction<String> {
+final public class MatchSequenceLabelingFunction extends AbstractLabelingFunction<String> {
 
   private final Languages.eLanguage language_;
   private Function<String, List<String>> sentenceSplitter_;
   private Function<String, List<String>> wordSplitter_;
 
-  public MatchPatternLabelingFunction(Languages.eLanguage language, String pattern) {
+  public MatchSequenceLabelingFunction(Languages.eLanguage language, String pattern) {
 
     super(pattern);
 
