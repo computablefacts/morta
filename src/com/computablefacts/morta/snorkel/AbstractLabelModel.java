@@ -48,10 +48,11 @@ public abstract class AbstractLabelModel<T> {
   }
 
   public static <U extends AbstractLabelModel<?>> void serialize(String path, String filename,
-      U u) {
+      U labelModel) {
 
     Preconditions.checkNotNull(path, "path should not be null");
     Preconditions.checkNotNull(filename, "filename should not be null");
+    Preconditions.checkNotNull(labelModel, "labelModel should not be null");
 
     XStream xStream = Helpers.xStream();
 
@@ -60,7 +61,7 @@ public abstract class AbstractLabelModel<T> {
     @Var
     File output = new File(path + "\\label_model_" + filename + ".xml.gz");
 
-    com.computablefacts.nona.helpers.Files.create(input, xStream.toXML(u));
+    com.computablefacts.nona.helpers.Files.create(input, xStream.toXML(labelModel));
     com.computablefacts.nona.helpers.Files.gzip(input, output);
     com.computablefacts.nona.helpers.Files.delete(input);
   }
