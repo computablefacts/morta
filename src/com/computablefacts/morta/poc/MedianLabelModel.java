@@ -49,7 +49,7 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
         labelModel.thresholdKo());
   }
 
-  public MedianLabelModel(List<AbstractLabelingFunction<T>> lfs) {
+  public MedianLabelModel(List<? extends AbstractLabelingFunction<T>> lfs) {
     super(lfsNames(lfs), lfsLabels(), lfs);
   }
 
