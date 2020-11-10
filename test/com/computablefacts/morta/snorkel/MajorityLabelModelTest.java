@@ -196,7 +196,10 @@ public class MajorityLabelModelTest {
   @Test
   public void testPredict() {
 
-    List<Integer> list = labelModel().predict(goldLabels());
+    MajorityLabelModel<String> labelModel = labelModel();
+    labelModel.fit(goldLabels());
+
+    List<Integer> list = labelModel.predict(goldLabels());
 
     Assert.assertEquals(Lists.newArrayList(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1), list);
   }
