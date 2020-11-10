@@ -154,6 +154,9 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
   public void fit(List<? extends IGoldLabel<T>> goldLabels) {
 
     Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
+    Preconditions.checkArgument(
+        goldLabels.stream().allMatch(gl -> gl.label().equals(goldLabels.get(0).label())),
+        "gold labels must be identical");
 
     // Map each LF to its summary
     List<Summary> summaries = summarize(goldLabels);
@@ -201,6 +204,9 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
   public List<Integer> predict(List<? extends IGoldLabel<T>> goldLabels) {
 
     Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
+    Preconditions.checkArgument(
+        goldLabels.stream().allMatch(gl -> gl.label().equals(goldLabels.get(0).label())),
+        "gold labels must be identical");
 
     return goldLabels.stream().map(IGoldLabel::data)
         .map(data -> predict(lfSummaries_, thresholdOk_, thresholdKo_, data))
