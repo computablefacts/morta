@@ -93,8 +93,8 @@ final public class GuesstimateLabelingFunctions extends CommandLine {
 
       System.out.println("Saving patterns...");
 
-      List<MatchPatternLabelingFunction> lfs = labels.stream()
-          .map(lbl -> new MatchPatternLabelingFunction(Languages.eLanguage.valueOf(language),
+      List<MatchSequenceLabelingFunction> lfs = labels.stream()
+          .map(lbl -> new MatchSequenceLabelingFunction(Languages.eLanguage.valueOf(language),
               lbl.getKey()))
           .collect(Collectors.toList());
 
