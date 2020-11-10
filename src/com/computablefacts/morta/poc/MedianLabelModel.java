@@ -40,14 +40,14 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
   public static final int LABEL_KO = 0;
   public static final int LABEL_OK = 1;
 
-  private List<Map.Entry<? extends ILabelingFunction<T>, Summary>> lfSummaries_;
+  private List<Map.Entry<? extends AbstractLabelingFunction<T>, Summary>> lfSummaries_;
   private double thresholdOk_;
   private double thresholdKo_;
 
   public MedianLabelModel(List<AbstractLabelingFunction<T>> lfs,
       List<? extends IGoldLabel<T>> goldLabels) {
 
-    super(labelingFunctionNames(lfs), labelingFunctionLabels(), lfs, goldLabels);
+    super(labelingFunctionNamesPrivate(lfs), labelingFunctionLabelsPrivate(), lfs, goldLabels);
 
     Preconditions.checkArgument(
         goldLabels.stream().allMatch(gl -> gl.label().equals(goldLabels.get(0).label())),
@@ -58,10 +58,10 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
 
   public MedianLabelModel(List<AbstractLabelingFunction<T>> lfs,
       List<? extends IGoldLabel<T>> goldLabels,
-      List<Map.Entry<? extends ILabelingFunction<T>, Summary>> lfSummaries, double thresholdOk,
-      double thresholdKo) {
+      List<Map.Entry<? extends AbstractLabelingFunction<T>, Summary>> lfSummaries,
+      double thresholdOk, double thresholdKo) {
 
-    super(labelingFunctionNames(lfs), labelingFunctionLabels(), lfs, goldLabels);
+    super(labelingFunctionNamesPrivate(lfs), labelingFunctionLabelsPrivate(), lfs, goldLabels);
 
     Preconditions.checkArgument(
         goldLabels.stream().allMatch(gl -> gl.label().equals(goldLabels.get(0).label())),
@@ -75,7 +75,8 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
     thresholdKo_ = thresholdKo;
   }
 
-  public static <T> Dictionary labelingFunctionNames(List<AbstractLabelingFunction<T>> lfs) {
+  private static <T> Dictionary labelingFunctionNamesPrivate(
+      List<? extends AbstractLabelingFunction<T>> lfs) {
 
     Preconditions.checkNotNull(lfs, "lfs should not be null");
 
@@ -87,7 +88,7 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
     return lfNames;
   }
 
-  public static Dictionary labelingFunctionLabels() {
+  private static Dictionary labelingFunctionLabelsPrivate() {
 
     Dictionary lfOutputs = new Dictionary();
     lfOutputs.put("KO", LABEL_KO);
@@ -190,8 +191,20 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
         .collect(Collectors.toList());
   }
 
-  public List<Map.Entry<? extends ILabelingFunction<T>, Summary>> lfSummaries() {
+  public List<Map.Entry<? extends AbstractLabelingFunction<T>, Summary>> lfSummaries() {
     return lfSummaries_;
+  }
+
+  protected List<? extends AbstractLabelingFunction<T>> labelingFunctions() {
+    return lfs();
+  }
+
+  public Dictionary labelingFunctionNames() {
+    return labelingFunctionNamesPrivate(labelingFunctions());
+  }
+
+  public Dictionary labelingFunctionLabels() {
+    return labelingFunctionLabelsPrivate();
   }
 
   public double thresholdOk() {
@@ -226,8 +239,9 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
     return goldLabel.isTruePositive() || goldLabel.isFalseNegative() ? LABEL_OK : LABEL_KO;
   }
 
-  private double average(List<Map.Entry<? extends ILabelingFunction<T>, Summary>> lfSummaries,
-      int label, T data) {
+  private double average(
+      List<Map.Entry<? extends AbstractLabelingFunction<T>, Summary>> lfSummaries, int label,
+      T data) {
 
     Preconditions.checkNotNull(lfSummaries, "lfSummaries should not be null");
     Preconditions.checkArgument(label == ABSTAIN || label == LABEL_OK || label == LABEL_KO,
@@ -265,7 +279,7 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
         : averagesSorted.skip(size / 2).findFirst().orElse(0.0);
   }
 
-  private int predict(List<Map.Entry<? extends ILabelingFunction<T>, Summary>> lfSummaries,
+  private int predict(List<Map.Entry<? extends AbstractLabelingFunction<T>, Summary>> lfSummaries,
       double thresholdOk, double thresholdKo, T data) {
 
     Preconditions.checkNotNull(lfSummaries, "lfSummaries should not be null");
