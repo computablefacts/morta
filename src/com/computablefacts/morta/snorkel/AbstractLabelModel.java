@@ -16,7 +16,7 @@ public abstract class AbstractLabelModel<T> {
 
   private final Dictionary lfNames_;
   private final Dictionary lfLabels_;
-  private final List<? extends ILabelingFunction<T>> lfs_;
+  private final List<? extends AbstractLabelingFunction<T>> lfs_;
   private final List<? extends IGoldLabel<T>> goldLabels;
 
   /**
@@ -30,7 +30,7 @@ public abstract class AbstractLabelModel<T> {
    * @param goldLabels gold labels.
    */
   public AbstractLabelModel(Dictionary lfNames, Dictionary lfLabels,
-      List<? extends ILabelingFunction<T>> lfs, List<? extends IGoldLabel<T>> goldLabels) {
+      List<? extends AbstractLabelingFunction<T>> lfs, List<? extends IGoldLabel<T>> goldLabels) {
 
     Preconditions.checkNotNull(lfNames, "lfNames should not be null");
     Preconditions.checkNotNull(lfLabels, "lfLabels should not be null");
@@ -88,7 +88,7 @@ public abstract class AbstractLabelModel<T> {
     return lfLabels_;
   }
 
-  protected List<? extends ILabelingFunction<T>> lfs() {
+  protected List<? extends AbstractLabelingFunction<T>> lfs() {
     return lfs_;
   }
 

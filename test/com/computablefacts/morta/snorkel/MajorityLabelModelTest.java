@@ -225,13 +225,31 @@ public class MajorityLabelModelTest {
     return lfLabels;
   }
 
-  private List<ILabelingFunction<String>> lfs() {
+  private List<? extends AbstractLabelingFunction<String>> lfs() {
 
-    List<ILabelingFunction<String>> lfs = new ArrayList<>();
-    lfs.add(x -> Integer.parseInt(x, 10) % 2 == 0 ? 1 : 0);
-    lfs.add(x -> Integer.parseInt(x, 10) % 3 == 0 ? 1 : 0);
-    lfs.add(x -> Integer.parseInt(x, 10) % 6 == 0 ? 1 : 0);
+    List<AbstractLabelingFunction<String>> lfs = new ArrayList<>();
 
+    lfs.add(new AbstractLabelingFunction<String>("lf_mod_2") {
+
+      @Override
+      public Integer apply(String x) {
+        return Integer.parseInt(x, 10) % 2 == 0 ? 1 : 0;
+      }
+    });
+    lfs.add(new AbstractLabelingFunction<String>("lf_mod_3") {
+
+      @Override
+      public Integer apply(String x) {
+        return Integer.parseInt(x, 10) % 3 == 0 ? 1 : 0;
+      }
+    });
+    lfs.add(new AbstractLabelingFunction<String>("lf_mod_6") {
+
+      @Override
+      public Integer apply(String x) {
+        return Integer.parseInt(x, 10) % 6 == 0 ? 1 : 0;
+      }
+    });
     return lfs;
   }
 

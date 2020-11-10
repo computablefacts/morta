@@ -18,13 +18,14 @@ final public class MajorityLabelModel<T> extends AbstractLabelModel<T> {
   private final eTieBreakPolicy tieBreakPolicy_;
   private final double tolerance_;
 
-  public MajorityLabelModel(Dictionary lfNames, Dictionary lfLabels, List<ILabelingFunction<T>> lfs,
-      List<IGoldLabel<T>> goldLabels, eTieBreakPolicy tieBreakPolicy) {
+  public MajorityLabelModel(Dictionary lfNames, Dictionary lfLabels,
+      List<? extends AbstractLabelingFunction<T>> lfs, List<? extends IGoldLabel<T>> goldLabels,
+      eTieBreakPolicy tieBreakPolicy) {
     this(lfNames, lfLabels, lfs, goldLabels, tieBreakPolicy, 0.00001);
   }
 
   private MajorityLabelModel(Dictionary lfNames, Dictionary lfLabels,
-      List<ILabelingFunction<T>> lfs, List<IGoldLabel<T>> goldLabels,
+      List<? extends AbstractLabelingFunction<T>> lfs, List<? extends IGoldLabel<T>> goldLabels,
       eTieBreakPolicy tieBreakPolicy, double tolerance) {
 
     super(lfNames, lfLabels, lfs, goldLabels);
