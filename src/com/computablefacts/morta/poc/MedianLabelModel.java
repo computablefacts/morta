@@ -317,27 +317,8 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
     Preconditions.checkArgument(thresholdOk >= 0.0, "threshold OK must be >= 0");
     Preconditions.checkArgument(thresholdKo >= 0.0, "threshold KO must be >= 0");
 
-    List<Double> vectorOk = new ArrayList<>();
-    List<Double> vectorKo = new ArrayList<>();
-
-    for (Map.Entry<? extends ILabelingFunction<T>, Summary> lfSummary : lfSummaries) {
-
-      ILabelingFunction<T> lf = lfSummary.getKey();
-      Summary summary = lfSummary.getValue();
-      int label = lf.apply(data);
-
-      if (label == LABEL_OK) {
-        vectorOk.add(summary.correct() / (double) (summary.correct() + summary.incorrect()));
-      } else if (label == LABEL_KO) {
-        vectorKo.add(summary.correct() / (double) (summary.correct() + summary.incorrect()));
-      }
-      // else {
-      // ABSTAIN
-      // }
-    }
-
-    double averageOk = vectorOk.stream().mapToDouble(d -> d).average().orElse(0.0);
-    double averageKo = vectorKo.stream().mapToDouble(d -> d).average().orElse(0.0);
+    double averageOk = average(lfSummaries, LABEL_OK, data);
+    double averageKo = average(lfSummaries, LABEL_KO, data);
 
     if (averageOk >= thresholdOk && averageKo < thresholdKo) {
       return LABEL_OK;
