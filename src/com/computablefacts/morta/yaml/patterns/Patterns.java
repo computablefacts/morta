@@ -37,7 +37,6 @@ import com.google.errorprone.annotations.Var;
  * patterns:
  *   - name: SINGLE_WORD
  *     pattern: \p{L}+
- *     is_case_insensitive: true
  *     should_match:
  *       - word
  *       - WORD
@@ -48,7 +47,6 @@ import com.google.errorprone.annotations.Var;
  *
  *   - name: MORE_THAN_ONE_WORD
  *     pattern: \p{L}+([-\s]\p{L}+)+
- *     is_case_insensitive: true
  *     should_match:
  *       - two words
  *       - word-with-hyphen

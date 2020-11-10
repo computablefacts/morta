@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.computablefacts.logfmt.LogFormatter;
+import com.computablefacts.nona.helpers.WildcardMatcher;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.errorprone.annotations.CheckReturnValue;
 
@@ -13,7 +14,7 @@ import com.google.errorprone.annotations.CheckReturnValue;
  * <pre>
  * - name: SINGLE_WORD
  *   pattern: \p{L}+
- *   is_case_insensitive: true
+ *   is_case_sensitive: true
  *   should_match:
  *     - word
  *     - WORD
@@ -37,8 +38,11 @@ final public class Pattern {
   @JsonProperty("pattern")
   public String pattern_;
 
-  @JsonProperty("is_case_insensitive")
-  public Boolean isCaseInsensitive_;
+  @JsonProperty("is_case_sensitive")
+  public Boolean isCaseSensitive_;
+
+  @JsonProperty("is_wildcard")
+  public Boolean isWildcard_;
 
   @JsonProperty("should_match")
   public String[] shouldMatch_;
@@ -50,30 +54,54 @@ final public class Pattern {
 
   public boolean isValid() {
 
-    com.google.re2j.Pattern pattern = compile();
+    if (isWildcard_ == null || !isWildcard_) {
 
-    for (int i = 0; shouldMatch_ != null && i < shouldMatch_.length; i++) {
-      if (!pattern.matches(shouldMatch_[i])) {
-        logger_.error(LogFormatter.create()
-            .message("Pattern \"" + name_ + "\" should match \"" + shouldMatch_[i] + "\"")
-            .formatError());
-        return false;
+      com.google.re2j.Pattern pattern = compile();
+
+      for (int i = 0; shouldMatch_ != null && i < shouldMatch_.length; i++) {
+        if (!pattern.matches(shouldMatch_[i])) {
+          logger_.error(LogFormatter.create()
+              .message("Pattern \"" + name_ + "\" should match \"" + shouldMatch_[i] + "\"")
+              .formatError());
+          return false;
+        }
       }
-    }
 
-    for (int i = 0; shouldNotMatch_ != null && i < shouldNotMatch_.length; i++) {
-      if (pattern.matches(shouldNotMatch_[i])) {
-        logger_.error(LogFormatter.create()
-            .message("Pattern \"" + name_ + "\" should not match \"" + shouldNotMatch_[i] + "\"")
-            .formatError());
-        return false;
+      for (int i = 0; shouldNotMatch_ != null && i < shouldNotMatch_.length; i++) {
+        if (pattern.matches(shouldNotMatch_[i])) {
+          logger_.error(LogFormatter.create()
+              .message("Pattern \"" + name_ + "\" should not match \"" + shouldNotMatch_[i] + "\"")
+              .formatError());
+          return false;
+        }
+      }
+    } else {
+
+      String pattern = WildcardMatcher.compact(pattern_);
+
+      for (int i = 0; shouldMatch_ != null && i < shouldMatch_.length; i++) {
+        if (!WildcardMatcher.match(shouldMatch_[i], pattern)) {
+          logger_.error(LogFormatter.create()
+              .message("Pattern \"" + name_ + "\" should match \"" + shouldMatch_[i] + "\"")
+              .formatError());
+          return false;
+        }
+      }
+
+      for (int i = 0; shouldNotMatch_ != null && i < shouldNotMatch_.length; i++) {
+        if (WildcardMatcher.match(shouldNotMatch_[i], pattern)) {
+          logger_.error(LogFormatter.create()
+              .message("Pattern \"" + name_ + "\" should not match \"" + shouldNotMatch_[i] + "\"")
+              .formatError());
+          return false;
+        }
       }
     }
     return true;
   }
 
   private com.google.re2j.Pattern compile() {
-    if (isCaseInsensitive_ == null || isCaseInsensitive_) {
+    if (isCaseSensitive_ == null || !isCaseSensitive_) {
       return com.google.re2j.Pattern.compile("^" + pattern_ + "$",
           com.google.re2j.Pattern.CASE_INSENSITIVE);
     }
