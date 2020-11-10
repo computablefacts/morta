@@ -29,22 +29,22 @@ final public class Pattern {
   private static final Logger logger_ = LoggerFactory.getLogger(Pattern.class);
 
   @JsonProperty("name")
-  String name_;
+  public String name_;
 
   @JsonProperty("description")
-  String description_;
+  public String description_;
 
   @JsonProperty("pattern")
-  String pattern_;
+  public String pattern_;
 
   @JsonProperty("is_case_insensitive")
-  Boolean isCaseInsensitive_;
+  public Boolean isCaseInsensitive_;
 
   @JsonProperty("should_match")
-  String[] shouldMatch_;
+  public String[] shouldMatch_;
 
   @JsonProperty("should_not_match")
-  String[] shouldNotMatch_;
+  public String[] shouldNotMatch_;
 
   public Pattern() {}
 
