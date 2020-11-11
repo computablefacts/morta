@@ -3,7 +3,6 @@ package com.computablefacts.morta.poc;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.computablefacts.morta.snorkel.IGoldLabel;
@@ -43,39 +42,30 @@ final public class GuesstimateLabelingFunctions extends CommandLine {
     // Pages for which LF must return LABEL_OK
     System.out.println("Building dataset for LABEL_OK...");
 
-    List<String> pagesOkTmp =
+    List<String> pagesOk =
         gls.stream().filter(gl -> MedianLabelModel.label(gl) == MedianLabelModel.LABEL_OK)
             .map(IGoldLabel::data).collect(Collectors.toList());
-    Set<String> pagesOk = Sets.newHashSet(pagesOkTmp);
 
-    System.out.printf("%d pages found (%d duplicates)\n", pagesOkTmp.size(),
-        pagesOkTmp.size() - pagesOk.size());
-
-    pagesOkTmp.clear(); // Cleanup
+    System.out.printf("%d pages found (%d duplicates)\n", pagesOk.size(),
+        pagesOk.size() - Sets.newHashSet(pagesOk).size());
 
     // Pages for which LF must return LABEL_KO
     System.out.println("Building dataset for LABEL_KO...");
 
-    List<String> pagesKoTmp =
+    List<String> pagesKo =
         gls.stream().filter(gl -> MedianLabelModel.label(gl) == MedianLabelModel.LABEL_KO)
             .map(IGoldLabel::data).collect(Collectors.toList());
-    Set<String> pagesKo = Sets.newHashSet(pagesKoTmp);
 
-    System.out.printf("%d pages found (%d duplicates)\n", pagesKoTmp.size(),
-        pagesKoTmp.size() - pagesKo.size());
-
-    pagesKoTmp.clear(); // Cleanup
+    System.out.printf("%d pages found (%d duplicates)\n", pagesKo.size(),
+        pagesKo.size() - Sets.newHashSet(pagesKo).size());
 
     // All pages
     System.out.println("Building the whole dataset...");
 
-    List<String> pagesTmp = gls.stream().map(IGoldLabel::data).collect(Collectors.toList());
-    Set<String> pages = Sets.newHashSet(pagesTmp);
+    List<String> pages = gls.stream().map(IGoldLabel::data).collect(Collectors.toList());
 
-    System.out.printf("%d pages found (%d duplicates)\n", pagesTmp.size(),
-        pagesTmp.size() - pages.size());
-
-    pagesTmp.clear(); // Cleanup
+    System.out.printf("%d pages found (%d duplicates)\n", pages.size(),
+        pages.size() - Sets.newHashSet(pages).size());
 
     // Guesstimate LF
     TfIdfDocSetLabeler docSetLabeler =

@@ -1,6 +1,5 @@
 package com.computablefacts.morta.poc;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -12,9 +11,9 @@ import org.tartarus.snowball.SnowballStemmer;
 
 import com.computablefacts.nona.helpers.AsciiProgressBar;
 import com.computablefacts.nona.helpers.BagOfTexts;
-import com.computablefacts.nona.helpers.DocSetLabeler;
 import com.computablefacts.nona.helpers.IBagOfTexts;
 import com.computablefacts.nona.helpers.Languages;
+import com.computablefacts.nona.helpers.Strings;
 import com.computablefacts.nona.helpers.Text;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -48,13 +47,13 @@ final public class TfIdfDocSetLabeler extends DocSetLabeler {
       if (stemmer_.stem()) {
         return stemmer_.getCurrent();
       }
-      return stopword;
+      return Helpers.normalize(stopword);
     }).collect(Collectors.toSet());
   }
 
   @Override
-  protected void init(@NotNull Set<String> corpus, @NotNull Set<String> subsetOk,
-      @NotNull Set<String> subsetKo) {
+  protected void init(@NotNull List<String> corpus, @NotNull List<String> subsetOk,
+      @NotNull List<String> subsetKo) {
     if (bagCorpus_ == null) {
 
       AtomicInteger count = new AtomicInteger(0);
@@ -108,49 +107,71 @@ final public class TfIdfDocSetLabeler extends DocSetLabeler {
   }
 
   @Override
-  protected Set<String> candidates(@NotNull Set<String> corpus, @NotNull Set<String> subsetOk,
-      @NotNull Set<String> subsetKo, String text) {
+  protected Set<String> candidates(@NotNull List<String> corpus, @NotNull List<String> subsetOk,
+      @NotNull List<String> subsetKo, String text) {
 
-    Set<List<String>> unigrams = corpusTextUnigrams(text);
-    Set<List<String>> bigrams = corpusTextBigrams(text, unigrams);
-    Set<List<String>> trigrams = corpusTextTrigrams(text, unigrams);
+    Set<List<String>> ngrams = Sets
+        .union(corpusTextUnigrams(text),
+            Sets.union(corpusTextBigrams(text), corpusTextTrigrams(text)))
+        .stream().filter(ngram -> {
 
-    return Sets.union(unigrams, Sets.union(bigrams, trigrams)).stream().filter(ngram -> {
+          // Discard ngrams with very small words on boundaries
+          return ngram.get(0).length() >= 3 && ngram.get(ngram.size() - 1).length() >= 3;
+        }).filter(ngram -> {
 
-      // Discard ngrams that do not belong to the OK subset
-      if (ngram.size() == 1) {
-        return bagSubsetOk_.bagOfWords().count(ngram.get(0)) > 0;
-      }
-      if (ngram.size() == 2) {
-        return bagSubsetOk_.bagOfBigrams().count(ngram) > 0;
-      }
-      if (ngram.size() == 3) {
-        return bagSubsetOk_.bagOfTrigrams().count(ngram) > 0;
-      }
-      return false;
-    }).filter(ngram -> {
+          // Discard ngrams with stopwords on boundaries
+          return !stopwords_.contains(ngram.get(0))
+              && !stopwords_.contains(ngram.get(ngram.size() - 1));
+        }).filter(ngram -> {
 
-      double freq;
+          // Discard ngrams that contain numbers
+          return ngram.stream().noneMatch(Strings::isNumber);
+        }).filter(ngram -> {
 
-      if (ngram.size() == 1) {
-        freq = bagCorpus_.documentFrequency(ngram.get(0));
-      } else if (ngram.size() == 2) {
-        freq = bagCorpus_.documentFrequency(ngram.get(0), ngram.get(1));
-      } else if (ngram.size() == 3) {
-        freq = bagCorpus_.documentFrequency(ngram.get(0), ngram.get(1), ngram.get(2));
-      } else {
-        freq = 0.0;
-      }
+          // Discard ngrams that do not belong to the OK subset
+          if (ngram.size() == 1) {
+            return bagSubsetOk_.bagOfWords().count(ngram.get(0)) > 0;
+          }
+          if (ngram.size() == 2) {
+            return bagSubsetOk_.bagOfBigrams().count(ngram) > 0;
+          }
+          if (ngram.size() == 3) {
+            return bagSubsetOk_.bagOfTrigrams().count(ngram) > 0;
+          }
+          return false;
+        }).collect(Collectors.toSet());
 
-      // Remove ngrams that appear in less than 1% of all documents
-      // Remove ngrams that appear in more than 50% of all documents
-      return freq > 0.01 && freq < 0.50;
-    }).map(ngram -> Joiner.on(' ').join(ngram)).collect(Collectors.toSet());
+    Set<List<String>> unigrams =
+        ngrams.stream().filter(ngram -> ngram.size() == 1).collect(Collectors.toSet());
+
+    Set<List<String>> bigrams = ngrams.stream().filter(ngram -> ngram.size() == 2).peek(ngram -> {
+
+      // Discard unigrams that belong to at least one bigram
+      unigrams.removeIf(n -> ngram.get(0).equals(n.get(0)) || ngram.get(1).equals(n.get(0)));
+    }).collect(Collectors.toSet());
+
+    Set<List<String>> trigrams = ngrams.stream().filter(ngram -> ngram.size() == 3).peek(ngram -> {
+
+      String word0 = ngram.get(0);
+      String word1 = ngram.get(1);
+      String word2 = ngram.get(2);
+
+      // Discard unigrams that belong to at least one trigram
+      unigrams.removeIf(
+          n -> word0.equals(n.get(0)) || word1.equals(n.get(0)) || word2.equals(n.get(0)));
+
+      // Discard bigrams that belong to at least one trigram
+      bigrams.removeIf(n -> (word0.equals(n.get(0)) && word1.equals(n.get(1)))
+          || (word1.equals(n.get(0)) && word2.equals(n.get(1))));
+    }).collect(Collectors.toSet());
+
+    return Sets.union(unigrams, Sets.union(bigrams, trigrams)).stream()
+        .map(ngram -> Joiner.on(' ').join(ngram)).collect(Collectors.toSet());
   }
 
   @Override
-  protected double computeX(@NotNull Set<String> corpus, @NotNull Set<String> subsetOk,
-      @NotNull Set<String> subsetKo, Set<String> candidates, String text, String candidate) {
+  protected double computeX(@NotNull List<String> corpus, @NotNull List<String> subsetOk,
+      @NotNull List<String> subsetKo, Set<String> candidates, String text, String candidate) {
 
     List<String> words = Splitter.on(' ').trimResults().omitEmptyStrings().splitToList(candidate);
 
@@ -185,8 +206,8 @@ final public class TfIdfDocSetLabeler extends DocSetLabeler {
   }
 
   @Override
-  protected double computeY(@NotNull Set<String> corpus, @NotNull Set<String> subsetOk,
-      @NotNull Set<String> subsetKo, Set<String> candidates, String text, String candidate) {
+  protected double computeY(@NotNull List<String> corpus, @NotNull List<String> subsetOk,
+      @NotNull List<String> subsetKo, Set<String> candidates, String text, String candidate) {
 
     List<String> words = Splitter.on(' ').trimResults().omitEmptyStrings().splitToList(candidate);
 
@@ -216,19 +237,8 @@ final public class TfIdfDocSetLabeler extends DocSetLabeler {
 
     Preconditions.checkNotNull(text, "text should not be null");
 
-    return bagCorpus_.text(text).bagOfWords().elementSet().stream().filter(word -> {
-
-      // Remove stopwords
-      return !stopwords_.contains(word);
-    }).filter(word -> {
-
-      // Remove very small words
-      return word.length() >= 3;
-    }).filter(word -> {
-
-      // Remove numbers
-      return !com.computablefacts.nona.helpers.Strings.isNumber(word);
-    }).map(word -> Lists.newArrayList(word)).collect(Collectors.toSet());
+    return bagCorpus_.text(text).bagOfWords().elementSet().stream()
+        .map(word -> Lists.newArrayList(word)).collect(Collectors.toSet());
   }
 
   /**
@@ -237,23 +247,15 @@ final public class TfIdfDocSetLabeler extends DocSetLabeler {
    * @param text text.
    * @return distinct bigrams.
    */
-  private Set<List<String>> corpusTextBigrams(String text, Set<List<String>> unigrams) {
+  private Set<List<String>> corpusTextBigrams(String text) {
 
     Preconditions.checkNotNull(text, "text should not be null");
-    Preconditions.checkNotNull(unigrams, "unigrams should not be null");
-
-    Set<List<String>> bigrams = new HashSet<>();
 
     Text txt = bagCorpus_.text(text);
 
-    for (List<String> unigram1 : unigrams) {
-      for (List<String> unigram2 : unigrams) {
-        txt.bigrams(unigram1.get(0), unigram2.get(0), '¤').entrySet()
-            .forEach(trigram -> bigrams.add(Splitter.on('¤').trimResults().omitEmptyStrings()
-                .splitToList(trigram.getElement())));
-      }
-    }
-    return bigrams;
+    return txt.bigrams(null, null, '¤').stream()
+        .map(bigram -> Splitter.on('¤').trimResults().omitEmptyStrings().splitToList(bigram))
+        .collect(Collectors.toSet());
   }
 
   /**
@@ -262,28 +264,15 @@ final public class TfIdfDocSetLabeler extends DocSetLabeler {
    * @param text text.
    * @return distinct trigrams.
    */
-  private Set<List<String>> corpusTextTrigrams(String text, Set<List<String>> unigrams) {
+  private Set<List<String>> corpusTextTrigrams(String text) {
 
     Preconditions.checkNotNull(text, "text should not be null");
-    Preconditions.checkNotNull(unigrams, "unigrams should not be null");
-
-    Set<List<String>> trigrams = new HashSet<>();
 
     Text txt = bagCorpus_.text(text);
 
-    for (List<String> unigram1 : unigrams) {
-      for (List<String> unigram2 : unigrams) {
-        txt.trigrams(unigram1.get(0), null, unigram2.get(0), '¤').entrySet()
-            .forEach(trigram -> trigrams.add(Splitter.on('¤').trimResults().omitEmptyStrings()
-                .splitToList(trigram.getElement())));
-      }
-    }
-    return trigrams.stream().filter(ngram -> {
-
-      // Ignore trigrams whose middle word is a number
-      return ngram.size() == 2 || (ngram.size() == 3
-          && !com.computablefacts.nona.helpers.Strings.isNumber(ngram.get(1)));
-    }).collect(Collectors.toSet());
+    return txt.trigrams(null, null, null, '¤').stream()
+        .map(trigram -> Splitter.on('¤').trimResults().omitEmptyStrings().splitToList(trigram))
+        .collect(Collectors.toSet());
   }
 
   /**

@@ -185,20 +185,18 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
       T data = goldLabel.data();
       int label = label(goldLabel);
 
+      double avgOk = average(lfSummaries_, LABEL_OK, data);
+      double avgKo = average(lfSummaries_, LABEL_KO, data);
+
       if (label == LABEL_OK) {
-        double avg = average(lfSummaries_, LABEL_OK, data);
-        // if (avg > 0.0) { // no LF outputs a label
-        averagesOk.add(avg);
-        // }
+        if (avgOk > 0.0) {
+          averagesOk.add(avgOk);
+        }
       } else if (label == LABEL_KO) {
-        double avg = average(lfSummaries_, LABEL_KO, data);
-        // if (avg > 0.0) { // no LF outputs a label
-        averagesKo.add(avg);
-        // }
+        if (avgKo > 0.0) {
+          averagesKo.add(avgKo);
+        }
       }
-      // else {
-      // ABSTAIN
-      // }
     }
 
     // Compute threshold (median) above which weighted LF should have output LABEL_OK or LABEL_KO
@@ -288,10 +286,11 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
       Summary summary = lfSummary.getValue();
 
       if (lf.apply(data) == label) {
-        vector.add(summary.correct() / (double) (summary.correct() + summary.incorrect()));
-      } else {
-        vector.add(0.0);
+        vector.add((double) summary.correct() / (double) (summary.correct() + summary.incorrect()));
       }
+      // else {
+      // vector.add(0.0);
+      // }
     }
 
     // For each LF, average the percentage of correct matches above which "label" should be
@@ -320,11 +319,19 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
     double averageOk = average(lfSummaries, LABEL_OK, data);
     double averageKo = average(lfSummaries, LABEL_KO, data);
 
-    if (averageOk >= thresholdOk && averageKo < thresholdKo) {
+    if (0.0 < averageOk && thresholdOk <= averageOk) {
       return LABEL_OK;
     }
-    if (averageOk < thresholdOk && averageKo >= thresholdKo) {
+    if (0.0 < averageKo && thresholdKo <= averageKo) {
       return LABEL_KO;
+    }
+    if (0.0 < averageOk && 0.0 < averageKo) {
+      if (Math.abs(thresholdOk - averageOk) < Math.abs(thresholdKo - averageKo)) {
+        return LABEL_OK;
+      }
+      if (Math.abs(thresholdOk - averageOk) > Math.abs(thresholdKo - averageKo)) {
+        return LABEL_KO;
+      }
     }
     return ABSTAIN;
   }
