@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import com.computablefacts.morta.snorkel.IGoldLabel;
 import com.computablefacts.nona.helpers.CommandLine;
 import com.computablefacts.nona.helpers.Languages;
+import com.computablefacts.nona.helpers.WildcardMatcher;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
@@ -25,7 +26,6 @@ final public class GuesstimateLabelingFunctions extends CommandLine {
     File goldLabels = getFileCommand(args, "gold_labels", null);
     int nbCandidatesToConsider = getIntCommand(args, "nb_candidates_to_consider", 100);
     int nbLabelsToReturn = getIntCommand(args, "nb_labels_to_return", 50);
-    int nbLabelingFunctions = getIntCommand(args, "nb_labeling_functions", 10);
     boolean dryRun = getBooleanCommand(args, "dry_run", true);
     String outputDirectory = getStringCommand(args, "output_directory", null);
 
@@ -36,7 +36,6 @@ final public class GuesstimateLabelingFunctions extends CommandLine {
     System.out.printf("The number of candidates to consider (DocSetLabeler) is %d\n",
         nbCandidatesToConsider);
     System.out.printf("The number of labels to return (DocSetLabeler) is %d\n", nbLabelsToReturn);
-    System.out.printf("The number of Labeling Functions to output is %d\n", nbLabelingFunctions);
 
     // Load gold labels for a given label
     List<IGoldLabel<String>> gls = IGoldLabel.load(goldLabels, label);
@@ -93,9 +92,9 @@ final public class GuesstimateLabelingFunctions extends CommandLine {
 
       System.out.println("Saving patterns...");
 
-      List<MatchSequenceLabelingFunction> lfs = labels.stream()
-          .map(lbl -> new MatchSequenceLabelingFunction(Languages.eLanguage.valueOf(language),
-              lbl.getKey()))
+      List<MatchWildcardLabelingFunction> lfs = labels.stream()
+          .map(lbl -> new MatchWildcardLabelingFunction(
+              WildcardMatcher.compact("*" + lbl.getKey().replace(' ', '*') + "*")))
           .collect(Collectors.toList());
 
       XStream xStream = Helpers.xStream();

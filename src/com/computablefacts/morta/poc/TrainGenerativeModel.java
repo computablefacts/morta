@@ -35,6 +35,7 @@ final public class TrainGenerativeModel extends CommandLine {
     File goldLabels = getFileCommand(args, "gold_labels", null);
     File labelingFunctions = getFileCommand(args, "labeling_functions", null);
     boolean dryRun = getBooleanCommand(args, "dry_run", true);
+    boolean verbose = getBooleanCommand(args, "verbose", false);
     String outputDirectory = getStringCommand(args, "output_directory", null);
 
     // Load gold labels
@@ -59,7 +60,7 @@ final public class TrainGenerativeModel extends CommandLine {
 
     XStream xStream = Helpers.xStream();
 
-    List<MatchSequenceLabelingFunction> lfs = (List<MatchSequenceLabelingFunction>) xStream
+    List<MatchWildcardLabelingFunction> lfs = (List<MatchWildcardLabelingFunction>) xStream
         .fromXML(Files.compressedLineStream(labelingFunctions, StandardCharsets.UTF_8)
             .map(Map.Entry::getValue).collect(Collectors.joining("\n")));
 
@@ -75,24 +76,30 @@ final public class TrainGenerativeModel extends CommandLine {
 
     System.out.println(); // Cosmetic
 
-    labelModel.lfSummaries().stream().map(Map.Entry::getValue)
-        .sorted((o1, o2) -> Ints.compare(o2.correct(), o1.correct())) // Sort summaries by
-                                                                      // decreasing number of
-                                                                      // correct labels
-        .forEach(summary -> System.out.println("  " + summary.toString()));
+    if (verbose) {
 
-    System.out.println("Building correlation matrix for labeling functions...");
+      labelModel.lfSummaries().stream().map(Map.Entry::getValue)
+          .sorted((o1, o2) -> Ints.compare(o2.correct(), o1.correct())) // Sort summaries by
+          // decreasing number of
+          // correct labels
+          .forEach(summary -> System.out.println("  " + summary.toString()));
 
-    Table<String, String, CorTest> lfCorrelations =
-        labelModel.labelingFunctionsCorrelations(train, Summary.eCorrelation.PEARSON);
+      System.out.println("Building correlation matrix for labeling functions...");
 
-    System.out.println(); // Cosmetic
-    System.out.print(AsciiTable.format(Helpers.correlations(lfCorrelations), true));
+      Table<String, String, CorTest> lfCorrelations =
+          labelModel.labelingFunctionsCorrelations(train, Summary.eCorrelation.PEARSON);
 
-    System.out.println("Exploring vectors...");
+      System.out.println(); // Cosmetic
+      System.out.print(AsciiTable.format(Helpers.correlations(lfCorrelations), true));
 
-    System.out.print(AsciiTable.format(Helpers.vectors(labelModel.lfNames(), labelModel.lfLabels(),
-        labelModel.vectors(train), labelModel.actual(train), labelModel.predicted(train)), true));
+      System.out.println("Exploring vectors...");
+
+      System.out
+          .print(AsciiTable.format(
+              Helpers.vectors(labelModel.lfNames(), labelModel.lfLabels(),
+                  labelModel.vectors(train), labelModel.actual(train), labelModel.predicted(train)),
+              true));
+    }
 
     // Build alphabet (ngrams from 1 included to 6 excluded)
     System.out.println("Building alphabet...");
@@ -107,14 +114,17 @@ final public class TrainGenerativeModel extends CommandLine {
     System.out.printf("\nAlphabet size is %d\n", alphabet.size());
 
     // Compute model accuracy
-    System.out.print("Computing confusion matrix for the TRAIN dataset...");
-    System.out.println(labelModel.confusionMatrix(train));
+    if (verbose) {
 
-    System.out.print("Computing confusion matrix for the TEST dataset...");
-    System.out.println(labelModel.confusionMatrix(test));
+      System.out.print("Computing confusion matrix for the TRAIN dataset...");
+      System.out.println(labelModel.confusionMatrix(train));
 
-    System.out.print("Computing confusion matrix for the WHOLE dataset...");
-    System.out.println(labelModel.confusionMatrix(gls));
+      System.out.print("Computing confusion matrix for the TEST dataset...");
+      System.out.println(labelModel.confusionMatrix(test));
+
+      System.out.print("Computing confusion matrix for the WHOLE dataset...");
+      System.out.println(labelModel.confusionMatrix(gls));
+    }
 
     if (!dryRun) {
       // TODO

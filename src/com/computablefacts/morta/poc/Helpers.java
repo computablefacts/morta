@@ -217,7 +217,7 @@ final public class Helpers {
     return rows;
   }
 
-  private static String normalize(String text) {
+  public static String normalize(String text) {
 
     Preconditions.checkNotNull(text, "text should not be null");
 
