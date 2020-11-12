@@ -4,12 +4,13 @@ import static com.computablefacts.morta.snorkel.ILabelingFunction.ABSTAIN;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-import java.util.stream.DoubleStream;
 
 import com.computablefacts.morta.Pipeline;
 import com.computablefacts.morta.snorkel.AbstractLabelModel;
@@ -22,8 +23,11 @@ import com.computablefacts.morta.snorkel.Summary;
 import com.computablefacts.nona.helpers.AsciiProgressBar;
 import com.computablefacts.nona.helpers.ConfusionMatrix;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
+import com.google.common.primitives.Doubles;
 import com.google.errorprone.annotations.CheckReturnValue;
+import com.google.errorprone.annotations.Var;
 
 import smile.stat.hypothesis.CorTest;
 
@@ -41,12 +45,13 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
   public static final int LABEL_OK = 1;
 
   private List<Map.Entry<? extends AbstractLabelingFunction<T>, Summary>> lfSummaries_;
-  private double thresholdOk_;
-  private double thresholdKo_;
+  private List<Integer> lfsOk_;
+  private List<Integer> lfsKo_;
+  private Set<Integer> lfsShared_;
 
   public MedianLabelModel(MedianLabelModel<T> labelModel) {
-    this(labelModel.lfs(), labelModel.lfSummaries(), labelModel.thresholdOk(),
-        labelModel.thresholdKo());
+    this(labelModel.lfs(), labelModel.lfSummaries(), labelModel.lfsOk(), labelModel.lfsKo(),
+        labelModel.lfsShared());
   }
 
   public MedianLabelModel(List<? extends AbstractLabelingFunction<T>> lfs) {
@@ -55,17 +60,19 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
 
   private MedianLabelModel(List<? extends AbstractLabelingFunction<T>> lfs,
       List<Map.Entry<? extends AbstractLabelingFunction<T>, Summary>> lfSummaries,
-      double thresholdOk, double thresholdKo) {
+      List<Integer> lfsOk, List<Integer> lfsKo, Set<Integer> lfsShared) {
 
     super(lfsNames(lfs), lfsLabels(), lfs);
 
     Preconditions.checkNotNull(lfSummaries, "lfSummaries should not be null");
-    Preconditions.checkArgument(thresholdOk >= 0.0, "threshold OK must be >= 0");
-    Preconditions.checkArgument(thresholdKo >= 0.0, "threshold KO must be >= 0");
+    Preconditions.checkNotNull(lfsOk, "lfsOk should not be null");
+    Preconditions.checkNotNull(lfsKo, "lfsKo should not be null");
+    Preconditions.checkNotNull(lfsShared, "lfsShared should not be null");
 
     lfSummaries_ = new ArrayList<>(lfSummaries);
-    thresholdOk_ = thresholdOk;
-    thresholdKo_ = thresholdKo;
+    lfsOk_ = new ArrayList<>(lfsOk);
+    lfsKo_ = new ArrayList<>(lfsKo);
+    lfsShared_ = new HashSet<>(lfsShared);
   }
 
   /**
@@ -174,8 +181,9 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
 
     // Weight each LF
     AsciiProgressBar.ProgressBar bar = AsciiProgressBar.create();
-    List<Double> averagesOk = new ArrayList<>(goldLabels.size());
-    List<Double> averagesKo = new ArrayList<>(goldLabels.size());
+    List<List<Double>> scoresOk = new ArrayList<>(goldLabels.size());
+    List<List<Double>> scoresKo = new ArrayList<>(goldLabels.size());
+    List<List<Double>> scoresAbs = new ArrayList<>(goldLabels.size());
 
     for (int i = 0; i < goldLabels.size(); i++) {
 
@@ -185,23 +193,22 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
       T data = goldLabel.data();
       int label = label(goldLabel);
 
-      double avgOk = average(lfSummaries_, LABEL_OK, data);
-      double avgKo = average(lfSummaries_, LABEL_KO, data);
+      List<Double> ok = score(lfSummaries_, LABEL_OK, data);
+      List<Double> ko = score(lfSummaries_, LABEL_KO, data);
+      List<Double> abs = score(lfSummaries_, ABSTAIN, data);
 
       if (label == LABEL_OK) {
-        if (avgOk > 0.0) {
-          averagesOk.add(avgOk);
-        }
+        scoresOk.add(ok);
       } else if (label == LABEL_KO) {
-        if (avgKo > 0.0) {
-          averagesKo.add(avgKo);
-        }
+        scoresKo.add(ko);
+      } else {
+        scoresAbs.add(abs);
       }
     }
 
-    // Compute threshold (median) above which weighted LF should have output LABEL_OK or LABEL_KO
-    thresholdOk_ = median(averagesOk);
-    thresholdKo_ = median(averagesKo);
+    lfsOk_ = bestLabelingFunctions(scoresOk);
+    lfsKo_ = bestLabelingFunctions(scoresKo);
+    lfsShared_ = Sets.intersection(Sets.newHashSet(lfsOk_), Sets.newHashSet(lfsKo_));
   }
 
   @Override
@@ -212,8 +219,7 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
         goldLabels.stream().allMatch(gl -> gl.label().equals(goldLabels.get(0).label())),
         "gold labels must be identical");
 
-    return goldLabels.stream().map(IGoldLabel::data)
-        .map(data -> predict(lfSummaries_, thresholdOk_, thresholdKo_, data))
+    return goldLabels.stream().map(IGoldLabel::data).map(data -> predict(data))
         .collect(Collectors.toList());
   }
 
@@ -221,12 +227,16 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
     return lfSummaries_;
   }
 
-  public double thresholdOk() {
-    return thresholdOk_;
+  public List<Integer> lfsOk() {
+    return lfsOk_;
   }
 
-  public double thresholdKo() {
-    return thresholdKo_;
+  public List<Integer> lfsKo() {
+    return lfsKo_;
+  }
+
+  public Set<Integer> lfsShared() {
+    return lfsShared_;
   }
 
   public List<Map.Entry<T, FeatureVector<Integer>>> vectors(
@@ -268,7 +278,7 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
     return matrix;
   }
 
-  private double average(
+  private List<Double> score(
       List<Map.Entry<? extends AbstractLabelingFunction<T>, Summary>> lfSummaries, int label,
       T data) {
 
@@ -279,59 +289,127 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
 
     List<Double> vector = new ArrayList<>();
 
-    // For each LF, compute the percentage of correct matches
     for (Map.Entry<? extends ILabelingFunction<T>, Summary> lfSummary : lfSummaries) {
 
       ILabelingFunction<T> lf = lfSummary.getKey();
-      Summary summary = lfSummary.getValue();
+      // Summary summary = lfSummary.getValue();
 
       if (lf.apply(data) == label) {
-        vector.add((double) summary.correct() / (double) (summary.correct() + summary.incorrect()));
+        vector.add(1.0);
+      } else {
+        vector.add(0.0);
       }
-      // else {
-      // vector.add(0.0);
-      // }
+    }
+    return vector;
+  }
+
+  private List<Integer> bestLabelingFunctions(List<List<Double>> scores) {
+
+    Preconditions.checkNotNull(scores, "scores should not be null");
+
+    // Get the list of triggered LF for each instance
+    List<Map.Entry<Integer, Set<Integer>>> lfsTriggered = new ArrayList<>();
+
+    for (int i = 0; i < scores.size(); i++) {
+
+      Set<Integer> lfs = new HashSet<>();
+
+      for (int j = 0; j < scores.get(i).size(); j++) {
+        if (scores.get(i).get(j) > 0) {
+          lfs.add(j);
+        }
+      }
+
+      lfsTriggered.add(new AbstractMap.SimpleEntry<>(i, lfs));
     }
 
-    // For each LF, average the percentage of correct matches above which "label" should be
-    // triggered
-    return vector.stream().mapToDouble(d -> d).average().orElse(0.0);
+    lfsTriggered.sort((o1, o2) -> Doubles.compare(o1.getValue().size(), o2.getValue().size()));
+
+    // Get the list of tagged instances for each LF
+    List<Map.Entry<Integer, Set<Integer>>> instancesTagged = new ArrayList<>();
+
+    for (int i = 0; i < scores.get(0).size(); i++) {
+
+      Set<Integer> instances = new HashSet<>();
+
+      for (int j = 0; j < scores.size(); j++) {
+        if (scores.get(j).get(i) > 0) {
+          instances.add(j);
+        }
+      }
+
+      instancesTagged.add(new AbstractMap.SimpleEntry<>(i, instances));
+    }
+
+    instancesTagged.sort((o1, o2) -> Doubles.compare(o1.getValue().size(), o2.getValue().size()));
+
+    // Find the minimum number of LF needed to tag all instances
+    @Var
+    int subset = -1;
+
+    for (int i = 0; i < instancesTagged.size(); i++) {
+
+      @Var
+      Set<Integer> instances = new HashSet<>();
+
+      for (int j = 0; j <= i; j++) {
+        instances = Sets.union(instances, instancesTagged.get(j).getValue());
+      }
+
+      if (instances.size() == scores.size()) {
+        subset = i;
+        break;
+      }
+    }
+    return subset <= 0 ? new ArrayList<>()
+        : instancesTagged.stream().limit(subset).map(i -> i.getKey()).collect(Collectors.toList());
   }
 
-  private double median(List<Double> list) {
+  private int predict(T data) {
 
-    Preconditions.checkNotNull(list, "list should not be null");
+    Preconditions.checkNotNull(data, "data should not be null");
 
-    int size = list.size();
-    DoubleStream averagesSorted = list.stream().mapToDouble(a -> a).sorted();
+    List<Double> ok = score(lfSummaries_, LABEL_OK, data);
+    List<Double> ko = score(lfSummaries_, LABEL_KO, data);
+    List<Double> abs = score(lfSummaries_, ABSTAIN, data);
 
-    return size % 2 == 0 ? averagesSorted.skip(size / 2 - 1).limit(2).average().orElse(0.0)
-        : averagesSorted.skip(size / 2).findFirst().orElse(0.0);
-  }
+    List<Integer> lfsOk = new ArrayList<>();
 
-  private int predict(List<Map.Entry<? extends AbstractLabelingFunction<T>, Summary>> lfSummaries,
-      double thresholdOk, double thresholdKo, T data) {
+    for (int i = 0; i < ok.size(); i++) {
+      if (ok.get(i) > 0 && lfsOk_.contains(i)) {
+        lfsOk.add(i);
+      }
+    }
 
-    Preconditions.checkNotNull(lfSummaries, "lfSummaries should not be null");
-    Preconditions.checkArgument(thresholdOk >= 0.0, "threshold OK must be >= 0");
-    Preconditions.checkArgument(thresholdKo >= 0.0, "threshold KO must be >= 0");
+    List<Integer> lfsKo = new ArrayList<>();
 
-    double averageOk = average(lfSummaries, LABEL_OK, data);
-    double averageKo = average(lfSummaries, LABEL_KO, data);
+    for (int i = 0; i < ko.size(); i++) {
+      if (ko.get(i) > 0 && lfsKo_.contains(i)) {
+        lfsKo.add(i);
+      }
+    }
 
-    if (0.0 < averageOk && thresholdOk <= averageOk) {
+    if (!lfsOk.isEmpty() && lfsKo.isEmpty()) {
       return LABEL_OK;
     }
-    if (0.0 < averageKo && thresholdKo <= averageKo) {
+    if (lfsOk.isEmpty() && !lfsKo.isEmpty()) {
       return LABEL_KO;
     }
-    if (0.0 < averageOk && 0.0 < averageKo) {
-      if (Math.abs(thresholdOk - averageOk) < Math.abs(thresholdKo - averageKo)) {
-        return LABEL_OK;
-      }
-      if (Math.abs(thresholdOk - averageOk) > Math.abs(thresholdKo - averageKo)) {
-        return LABEL_KO;
-      }
+
+    Set<Integer> lfsOkMinusShared = Sets.difference(Sets.newHashSet(lfsOk), lfsShared_);
+    Set<Integer> lfsKoMinusShared = Sets.difference(Sets.newHashSet(lfsKo), lfsShared_);
+
+    if (!lfsOkMinusShared.isEmpty() && lfsKoMinusShared.isEmpty()) {
+      return LABEL_OK;
+    }
+    if (lfsOkMinusShared.isEmpty() && !lfsKoMinusShared.isEmpty()) {
+      return LABEL_KO;
+    }
+    if (lfsOkMinusShared.size() > lfsKoMinusShared.size()) {
+      return LABEL_OK;
+    }
+    if (lfsOkMinusShared.size() < lfsKoMinusShared.size()) {
+      return LABEL_KO;
     }
     return ABSTAIN;
   }
