@@ -1,6 +1,9 @@
 package com.computablefacts.morta.poc;
 
+import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -21,6 +24,7 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.errorprone.annotations.CheckReturnValue;
+import com.google.errorprone.annotations.Var;
 
 /**
  * Guesstimate interesting patterns from positively/negatively annotated texts.
@@ -211,6 +215,7 @@ final public class TfIdfDocSetLabeler extends DocSetLabeler {
 
     List<String> words = Splitter.on(' ').trimResults().omitEmptyStrings().splitToList(candidate);
 
+    // the higher, the better
     double tfIdf;
 
     if (words.size() == 1) {
@@ -222,9 +227,90 @@ final public class TfIdfDocSetLabeler extends DocSetLabeler {
     }
 
     if (!Double.isFinite(tfIdf) || tfIdf == 0.0) {
-      return 0.0;
+      return 1.0;
     }
     return tfIdf;
+  }
+
+  @Override
+  protected List<Map.Entry<String, Double>> filter(
+      @NotNull List<Map.Entry<String, Double>> candidates) {
+
+    List<Map.Entry<List<String>, Double>> candidatesNew = candidates.stream()
+        .map(candidate -> new AbstractMap.SimpleEntry<>(
+            Splitter.on(' ').trimResults().omitEmptyStrings().splitToList(candidate.getKey()),
+            candidate.getValue()))
+        .collect(Collectors.toList());
+
+    List<Map.Entry<List<String>, Double>> candidatesFiltered = new ArrayList<>();
+
+    for (int i = 0; i < candidatesNew.size(); i++) {
+
+      List<String> candidate1 = candidatesNew.get(i).getKey();
+      int middle = (candidate1.size() / 2) + 1;
+
+      for (int j = i + 1; j < candidatesNew.size();) {
+
+        List<String> candidate2 = candidatesNew.get(j).getKey();
+        List<List<String>> overlaps1 = overlaps(candidate1, candidate2);
+        List<List<String>> overlaps2 = overlaps(candidate2, candidate1);
+
+        int max1 = overlaps1.stream().mapToInt(List::size).max().orElse(0);
+        int max2 = overlaps2.stream().mapToInt(List::size).max().orElse(0);
+        int max = Math.max(max1, max2);
+
+        if (max >= middle) {
+          candidatesNew.remove(j);
+        } else {
+          j++;
+        }
+      }
+
+      candidatesFiltered.add(candidatesNew.get(i));
+    }
+    return candidatesFiltered.stream()
+        .map(candidate -> new AbstractMap.SimpleEntry<>(Joiner.on(' ').join(candidate.getKey()),
+            candidate.getValue()))
+        .collect(Collectors.toList());
+  }
+
+  /**
+   * Returns all suffixes of list1 that are also a prefix of list2.
+   *
+   * @param list1 first list.
+   * @param list2 second list.
+   * @return overlapping elements.
+   */
+  private List<List<String>> overlaps(List<String> list1, List<String> list2) {
+
+    Preconditions.checkNotNull(list1, "list1 should not be null");
+    Preconditions.checkNotNull(list2, "list2 should not be null");
+
+    List<List<String>> overlaps = new ArrayList<>();
+
+    for (int j = 0; j < list2.size(); j++) {
+
+      if (list1.size() - 1 - j < 0) {
+        return overlaps;
+      }
+
+      @Var
+      boolean overlap = true;
+      List<String> suffix = list1.subList(list1.size() - 1 - j, list1.size());
+      List<String> prefix = list2.subList(0, j + 1);
+
+      for (int k = 0; k < suffix.size(); k++) {
+        if (!suffix.get(k).equals(prefix.get(k))) {
+          overlap = false;
+          break;
+        }
+      }
+
+      if (overlap) {
+        overlaps.add(prefix);
+      }
+    }
+    return overlaps;
   }
 
   /**
