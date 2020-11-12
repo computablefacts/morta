@@ -48,6 +48,10 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
   private List<Integer> lfsOk_;
   private List<Integer> lfsKo_;
   private Set<Integer> lfsShared_;
+  private double avgNbOfLfsTriggeredOk_;
+  private double avgNbOfLfsTriggeredKo_;
+  private double avgNbOfBestLfsTriggeredOk_;
+  private double avgNbOfBestLfsTriggeredKo_;
 
   public MedianLabelModel(MedianLabelModel<T> labelModel) {
     this(labelModel.lfs(), labelModel.lfSummaries(), labelModel.lfsOk(), labelModel.lfsKo(),
@@ -206,9 +210,15 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
       }
     }
 
-    lfsOk_ = bestLabelingFunctions(scoresOk);
-    lfsKo_ = bestLabelingFunctions(scoresKo);
+    lfsOk_ = bestLfsForTagging(scoresOk);
+    lfsKo_ = bestLfsForTagging(scoresKo);
     lfsShared_ = Sets.intersection(Sets.newHashSet(lfsOk_), Sets.newHashSet(lfsKo_));
+
+    avgNbOfLfsTriggeredOk_ = avgNbOfLfsTriggered(scoresOk);
+    avgNbOfLfsTriggeredKo_ = avgNbOfLfsTriggered(scoresKo);
+
+    avgNbOfBestLfsTriggeredOk_ = avgNbOfBestLfsTriggered(scoresOk, lfsOk_);
+    avgNbOfBestLfsTriggeredKo_ = avgNbOfBestLfsTriggered(scoresKo, lfsKo_);
   }
 
   @Override
@@ -303,7 +313,7 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
     return vector;
   }
 
-  private List<Integer> bestLabelingFunctions(List<List<Double>> scores) {
+  private List<Integer> bestLfsForTagging(List<List<Double>> scores) {
 
     Preconditions.checkNotNull(scores, "scores should not be null");
 
@@ -365,13 +375,62 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
         : instancesTagged.stream().limit(subset).map(i -> i.getKey()).collect(Collectors.toList());
   }
 
+  private double avgNbOfBestLfsTriggered(List<List<Double>> scores,
+      List<Integer> bestLfsForTagging) {
+
+    Preconditions.checkNotNull(scores, "scores should not be null");
+    Preconditions.checkNotNull(bestLfsForTagging, "bestLfsForTagging should not be null");
+
+    List<Double> nbOfLfsTriggered = new ArrayList<>();
+
+    for (int i = 0; i < scores.size(); i++) {
+
+      @Var
+      double sum = 0.0;
+
+      for (int j = 0; j < scores.get(i).size(); j++) {
+        if (scores.get(i).get(j) > 0 && bestLfsForTagging.contains(j)) {
+          sum += 1.0;
+        }
+      }
+
+      nbOfLfsTriggered.add(sum);
+    }
+    return nbOfLfsTriggered.stream().mapToDouble(d -> d).average().orElse(0.0);
+  }
+
+  private double avgNbOfLfsTriggered(List<List<Double>> scores) {
+
+    Preconditions.checkNotNull(scores, "scores should not be null");
+
+    // Get the list of triggered LF for each instance
+    List<Map.Entry<Integer, Set<Integer>>> lfsTriggered = new ArrayList<>();
+
+    for (int i = 0; i < scores.size(); i++) {
+
+      Set<Integer> lfs = new HashSet<>();
+
+      for (int j = 0; j < scores.get(i).size(); j++) {
+        if (scores.get(i).get(j) > 0) {
+          lfs.add(j);
+        }
+      }
+
+      lfsTriggered.add(new AbstractMap.SimpleEntry<>(i, lfs));
+    }
+
+    lfsTriggered.sort((o1, o2) -> Doubles.compare(o1.getValue().size(), o2.getValue().size()));
+
+    // Find the average number of triggered LF
+    return lfsTriggered.stream().mapToDouble(lfs -> lfs.getValue().size()).average().orElse(0.0);
+  }
+
   private int predict(T data) {
 
     Preconditions.checkNotNull(data, "data should not be null");
 
     List<Double> ok = score(lfSummaries_, LABEL_OK, data);
     List<Double> ko = score(lfSummaries_, LABEL_KO, data);
-    List<Double> abs = score(lfSummaries_, ABSTAIN, data);
 
     List<Integer> lfsOk = new ArrayList<>();
 
@@ -399,18 +458,19 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
     Set<Integer> lfsOkMinusShared = Sets.difference(Sets.newHashSet(lfsOk), lfsShared_);
     Set<Integer> lfsKoMinusShared = Sets.difference(Sets.newHashSet(lfsKo), lfsShared_);
 
+    double distOk = Math.abs(ok.stream().mapToDouble(d -> d).sum() - avgNbOfLfsTriggeredOk_);
+    double distKo = Math.abs(ko.stream().mapToDouble(d -> d).sum() - avgNbOfLfsTriggeredKo_);
+
+    double distLfsOk = Math.abs(lfsOk.size() - avgNbOfBestLfsTriggeredOk_);
+    double distLfsKo = Math.abs(lfsKo.size() - avgNbOfBestLfsTriggeredKo_);
+
     if (!lfsOkMinusShared.isEmpty() && lfsKoMinusShared.isEmpty()) {
-      return LABEL_OK;
+      return distOk < distKo ? LABEL_OK : LABEL_KO;
     }
     if (lfsOkMinusShared.isEmpty() && !lfsKoMinusShared.isEmpty()) {
-      return LABEL_KO;
+      return distOk > distKo ? LABEL_KO : LABEL_OK;
     }
-    if (lfsOkMinusShared.size() > lfsKoMinusShared.size()) {
-      return LABEL_OK;
-    }
-    if (lfsOkMinusShared.size() < lfsKoMinusShared.size()) {
-      return LABEL_KO;
-    }
-    return ABSTAIN;
+    return lfsOkMinusShared.size() > lfsKoMinusShared.size() && distOk < distKo
+        && distLfsOk < distLfsKo ? LABEL_OK : LABEL_KO;
   }
 }
