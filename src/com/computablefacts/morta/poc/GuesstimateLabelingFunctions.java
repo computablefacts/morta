@@ -68,8 +68,7 @@ final public class GuesstimateLabelingFunctions extends CommandLine {
         pages.size() - Sets.newHashSet(pages).size());
 
     // Guesstimate LF
-    TfIdfDocSetLabeler docSetLabeler =
-        new TfIdfDocSetLabeler(Languages.eLanguage.valueOf(language));
+    DocSetLabelerImpl docSetLabeler = new DocSetLabelerImpl(Languages.eLanguage.valueOf(language));
 
     System.out.println("Starting DocSetLabeler...");
 

@@ -30,7 +30,7 @@ import com.google.errorprone.annotations.Var;
  * Guesstimate interesting patterns from positively/negatively annotated texts.
  */
 @CheckReturnValue
-final public class TfIdfDocSetLabeler extends DocSetLabeler {
+final public class DocSetLabelerImpl extends DocSetLabeler {
 
   private final Languages.eLanguage language_;
   private final SnowballStemmer stemmer_;
@@ -40,7 +40,7 @@ final public class TfIdfDocSetLabeler extends DocSetLabeler {
   private IBagOfTexts bagSubsetOk_ = null;
   private IBagOfTexts bagSubsetKo_ = null;
 
-  public TfIdfDocSetLabeler(Languages.eLanguage language) {
+  public DocSetLabelerImpl(Languages.eLanguage language) {
 
     Preconditions.checkNotNull(language, "language should not be null");
 
