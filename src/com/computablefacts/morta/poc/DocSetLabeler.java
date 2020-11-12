@@ -161,14 +161,13 @@ public abstract class DocSetLabeler {
 
     uinit();
 
-    // For each candidate keyword compute the information gain and keep the keywords with the
-    // highest information gain
+    // For each candidate keyword compute the information gain
     List<Map.Entry<String, Double>> candidates = pos.values().stream().flatMap(Collection::stream)
         .map(candidate -> new AbstractMap.SimpleEntry<>(candidate, calcScore(candidate, pos, neg)))
         .sorted(byScoreDesc).distinct().collect(Collectors.toList());
 
-    // TODO : remove ngrams sharing at least (ngram.length() / 2) consecutive characters
-    return candidates.stream().limit(nbLabelsToReturn).collect(Collectors.toList());
+    // Keep the keywords with the highest information gain
+    return filter(candidates).stream().limit(nbLabelsToReturn).collect(Collectors.toList());
   }
 
   protected void init(@NotNull List<String> corpus, @NotNull List<String> subsetOk,
@@ -184,6 +183,11 @@ public abstract class DocSetLabeler {
 
   protected abstract double computeY(@NotNull List<String> corpus, @NotNull List<String> subsetOk,
       @NotNull List<String> subsetKo, Set<String> candidates, String text, String candidate);
+
+  protected List<Map.Entry<String, Double>> filter(
+      @NotNull List<Map.Entry<String, Double>> candidates) {
+    return candidates;
+  }
 
   private double calcScore(String candidate, Map<String, Set<String>> pos,
       Map<String, Set<String>> neg) {
