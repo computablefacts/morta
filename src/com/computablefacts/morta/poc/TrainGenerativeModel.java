@@ -21,6 +21,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Table;
 import com.google.common.primitives.Ints;
 import com.google.errorprone.annotations.CheckReturnValue;
+import com.google.errorprone.annotations.Var;
 import com.thoughtworks.xstream.XStream;
 
 import smile.stat.hypothesis.CorTest;
@@ -127,7 +128,30 @@ final public class TrainGenerativeModel extends CommandLine {
     }
 
     if (!dryRun) {
-      // TODO
+
+      System.out.println("Saving alphabet...");
+
+      @Var
+      File input = new File(
+          outputDirectory + File.separator + "alphabet_for_" + label + "_" + language + ".xml");
+      @Var
+      File output = new File(
+          outputDirectory + File.separator + "alphabet_for_" + label + "_" + language + ".xml.gz");
+
+      com.computablefacts.nona.helpers.Files.create(input, xStream.toXML(alphabet));
+      com.computablefacts.nona.helpers.Files.gzip(input, output);
+      com.computablefacts.nona.helpers.Files.delete(input);
+
+      System.out.println("Saving label model...");
+
+      input = new File(
+          outputDirectory + File.separator + "label_model_for_" + label + "_" + language + ".xml");
+      output = new File(outputDirectory + File.separator + "label_model_for_" + label + "_"
+          + language + ".xml.gz");
+
+      com.computablefacts.nona.helpers.Files.create(input, xStream.toXML(labelModel));
+      com.computablefacts.nona.helpers.Files.gzip(input, output);
+      com.computablefacts.nona.helpers.Files.delete(input);
     }
   }
 }
