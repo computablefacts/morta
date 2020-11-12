@@ -27,6 +27,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
 import com.google.errorprone.annotations.CheckReturnValue;
+import com.google.errorprone.annotations.Var;
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.security.NoTypePermission;
 import com.thoughtworks.xstream.security.NullPermission;
@@ -199,22 +200,40 @@ final public class Helpers {
       rows[0][i + 2] = lfNames.label(i);
     }
 
+    @Var
+    int u = 1;
+
     for (int i = 0; i < instances.size(); i++) {
 
       String actual = lfActualLabels.get(i);
       String predicted = lfPredictedLabels.get(i);
+
+      if (actual.equals(predicted)) {
+        continue; // discard instance when the prediction matches the actual
+      }
+
       FeatureVector<Integer> vector = instances.get(i).getValue();
 
       Preconditions.checkState(lfNames.size() == vector.size());
 
-      rows[i + 1][0] = actual;
-      rows[i + 1][1] = predicted;
+      rows[u][0] = actual;
+      rows[u][1] = predicted;
 
       for (int k = 0; k < lfNames.size(); k++) {
-        rows[i + 1][k + 2] = lfLabels.label(vector.get(k));
+        rows[u][k + 2] = lfLabels.label(vector.get(k));
+      }
+
+      u++;
+    }
+
+    String[][] rowsNew = new String[u][instances.get(0).getValue().size() + 2];
+
+    for (int i = 0; i < u; i++) {
+      for (int j = 0; j < rows[i].length; j++) {
+        rowsNew[i][j] = rows[i][j];
       }
     }
-    return rows;
+    return rowsNew;
   }
 
   public static String normalize(String text) {
