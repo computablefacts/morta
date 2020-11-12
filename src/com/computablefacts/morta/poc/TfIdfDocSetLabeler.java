@@ -111,10 +111,8 @@ final public class TfIdfDocSetLabeler extends DocSetLabeler {
   }
 
   @Override
-  protected Set<String> candidates(@NotNull List<String> corpus, @NotNull List<String> subsetOk,
-      @NotNull List<String> subsetKo, String text) {
-
-    Set<List<String>> ngrams = Sets
+  protected Set<String> candidates(String text) {
+    return Sets
         .union(corpusTextUnigrams(text),
             Sets.union(corpusTextBigrams(text), corpusTextTrigrams(text)))
         .stream().filter(ngram -> {
@@ -143,93 +141,49 @@ final public class TfIdfDocSetLabeler extends DocSetLabeler {
             return bagSubsetOk_.bagOfTrigrams().count(ngram) > 0;
           }
           return false;
-        }).collect(Collectors.toSet());
-
-    Set<List<String>> unigrams =
-        ngrams.stream().filter(ngram -> ngram.size() == 1).collect(Collectors.toSet());
-
-    Set<List<String>> bigrams = ngrams.stream().filter(ngram -> ngram.size() == 2).peek(ngram -> {
-
-      // Discard unigrams that belong to at least one bigram
-      unigrams.removeIf(n -> ngram.get(0).equals(n.get(0)) || ngram.get(1).equals(n.get(0)));
-    }).collect(Collectors.toSet());
-
-    Set<List<String>> trigrams = ngrams.stream().filter(ngram -> ngram.size() == 3).peek(ngram -> {
-
-      String word0 = ngram.get(0);
-      String word1 = ngram.get(1);
-      String word2 = ngram.get(2);
-
-      // Discard unigrams that belong to at least one trigram
-      unigrams.removeIf(
-          n -> word0.equals(n.get(0)) || word1.equals(n.get(0)) || word2.equals(n.get(0)));
-
-      // Discard bigrams that belong to at least one trigram
-      bigrams.removeIf(n -> (word0.equals(n.get(0)) && word1.equals(n.get(1)))
-          || (word1.equals(n.get(0)) && word2.equals(n.get(1))));
-    }).collect(Collectors.toSet());
-
-    return Sets.union(unigrams, Sets.union(bigrams, trigrams)).stream()
-        .map(ngram -> Joiner.on(' ').join(ngram)).collect(Collectors.toSet());
+        }).map(ngram -> Joiner.on(' ').join(ngram)).collect(Collectors.toSet());
   }
 
   @Override
-  protected double computeX(@NotNull List<String> corpus, @NotNull List<String> subsetOk,
-      @NotNull List<String> subsetKo, Set<String> candidates, String text, String candidate) {
+  protected double computeX(String text, String candidate) {
 
     List<String> words = Splitter.on(' ').trimResults().omitEmptyStrings().splitToList(candidate);
 
     double freqOk; // the higher, the better
 
     if (words.size() == 1) {
-      freqOk = bagSubsetOk_.normalizedFrequency(words.get(0));
+      freqOk = bagSubsetOk_.documentFrequency(words.get(0));
     } else if (words.size() == 2) {
-      freqOk = bagSubsetOk_.normalizedFrequency(words.toArray(new String[0]));
+      freqOk = bagSubsetOk_.documentFrequency(words.get(0), words.get(1));
     } else { // if (words.size() == 3) {
-      freqOk = bagSubsetOk_.normalizedFrequency(words.toArray(new String[0]));
+      freqOk = bagSubsetOk_.documentFrequency(words.get(0), words.get(1), words.get(2));
     }
 
     if (!Double.isFinite(freqOk) || freqOk == 0.0) {
-      return 0.0;
+      return 0.0000001;
     }
+    return freqOk; // the higher, the better
+  }
+
+  @Override
+  protected double computeY(String text, String candidate) {
+
+    List<String> words = Splitter.on(' ').trimResults().omitEmptyStrings().splitToList(candidate);
 
     double freqKo; // the lower, the better
 
     if (words.size() == 1) {
-      freqKo = bagSubsetKo_.normalizedFrequency(words.get(0));
+      freqKo = bagSubsetKo_.documentFrequency(words.get(0));
     } else if (words.size() == 2) {
-      freqKo = bagSubsetKo_.normalizedFrequency(words.toArray(new String[0]));
+      freqKo = bagSubsetKo_.documentFrequency(words.get(0), words.get(1));
     } else { // if (words.size() == 3) {
-      freqKo = bagSubsetKo_.normalizedFrequency(words.toArray(new String[0]));
+      freqKo = bagSubsetKo_.documentFrequency(words.get(0), words.get(1), words.get(2));
     }
 
     if (!Double.isFinite(freqKo) || freqKo == 0.0) {
-      return freqOk;
-    }
-    return freqOk / freqKo;
-  }
-
-  @Override
-  protected double computeY(@NotNull List<String> corpus, @NotNull List<String> subsetOk,
-      @NotNull List<String> subsetKo, Set<String> candidates, String text, String candidate) {
-
-    List<String> words = Splitter.on(' ').trimResults().omitEmptyStrings().splitToList(candidate);
-
-    // the higher, the better
-    double tfIdf;
-
-    if (words.size() == 1) {
-      tfIdf = tfIdf(bagCorpus_, text, words.get(0), null, null);
-    } else if (words.size() == 2) {
-      tfIdf = tfIdf(bagCorpus_, text, words.get(0), words.get(1), null);
-    } else { // if (words.size() == 3) {
-      tfIdf = tfIdf(bagCorpus_, text, words.get(0), words.get(1), words.get(2));
-    }
-
-    if (!Double.isFinite(tfIdf) || tfIdf == 0.0) {
       return 1.0;
     }
-    return tfIdf;
+    return 1.0 - freqKo; // the higher, the better
   }
 
   @Override
@@ -247,11 +201,13 @@ final public class TfIdfDocSetLabeler extends DocSetLabeler {
     for (int i = 0; i < candidatesNew.size(); i++) {
 
       List<String> candidate1 = candidatesNew.get(i).getKey();
-      int middle = (candidate1.size() / 2) + 1;
+      int middle1 = (candidate1.size() / 2) + 1;
 
       for (int j = i + 1; j < candidatesNew.size();) {
 
         List<String> candidate2 = candidatesNew.get(j).getKey();
+        int middle2 = (candidate2.size() / 2) + 1;
+
         List<List<String>> overlaps1 = overlaps(candidate1, candidate2);
         List<List<String>> overlaps2 = overlaps(candidate2, candidate1);
 
@@ -259,7 +215,7 @@ final public class TfIdfDocSetLabeler extends DocSetLabeler {
         int max2 = overlaps2.stream().mapToInt(List::size).max().orElse(0);
         int max = Math.max(max1, max2);
 
-        if (max >= middle) {
+        if (max >= middle1 || max >= middle2) {
           candidatesNew.remove(j);
         } else {
           j++;

@@ -128,18 +128,18 @@ public abstract class DocSetLabeler {
       }
 
       List<Map.Entry<String, Double>> weights = new ArrayList<>();
-      Set<String> candidates = candidates(corpus, subsetOk, subsetKo, text);
+      Set<String> candidates = candidates(text);
 
       for (String candidate : candidates) {
 
-        double x = computeX(corpus, subsetOk, subsetKo, candidates, text, candidate);
-        double y = computeY(corpus, subsetOk, subsetKo, candidates, text, candidate);
-        double weight = (2 * x * y) / (x + y);
+        double x = computeX(text, candidate);
+        double y = computeY(text, candidate);
+        double weight = (2.0 * x * y) / (x + y);
 
-        // Preconditions.checkState(0.0 <= x && x <= 1.0, "x should be such as 0.0 <= x <= 1.0 :
-        // %s", x);
-        // Preconditions.checkState(0.0 <= y && y <= 1.0, "y should be such as 0.0 <= y <= 1.0 :
-        // %s", y);
+        Preconditions.checkState(0.0 <= x && x <= 1.0, "x should be such as 0.0 <= x <= 1.0 : %s",
+            x);
+        Preconditions.checkState(0.0 <= y && y <= 1.0, "y should be such as 0.0 <= y <= 1.0 : %s",
+            y);
 
         weights.add(new AbstractMap.SimpleEntry<>(candidate, weight));
       }
@@ -175,14 +175,11 @@ public abstract class DocSetLabeler {
 
   protected void uinit() {}
 
-  protected abstract Set<String> candidates(@NotNull List<String> corpus,
-      @NotNull List<String> subsetOk, @NotNull List<String> subsetKo, String text);
+  protected abstract Set<String> candidates(String text);
 
-  protected abstract double computeX(@NotNull List<String> corpus, @NotNull List<String> subsetOk,
-      @NotNull List<String> subsetKo, Set<String> candidates, String text, String candidate);
+  protected abstract double computeX(String text, String candidate);
 
-  protected abstract double computeY(@NotNull List<String> corpus, @NotNull List<String> subsetOk,
-      @NotNull List<String> subsetKo, Set<String> candidates, String text, String candidate);
+  protected abstract double computeY(String text, String candidate);
 
   protected List<Map.Entry<String, Double>> filter(
       @NotNull List<Map.Entry<String, Double>> candidates) {
