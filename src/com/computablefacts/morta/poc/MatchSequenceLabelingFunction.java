@@ -40,7 +40,7 @@ final public class MatchSequenceLabelingFunction extends AbstractLabelingFunctio
         return MedianLabelModel.LABEL_OK;
       }
     }
-    return MedianLabelModel.LABEL_KO;
+    return ABSTAIN;
   }
 
   public Function<String, List<String>> sentenceSplitter() {

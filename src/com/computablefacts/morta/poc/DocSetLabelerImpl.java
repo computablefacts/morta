@@ -327,6 +327,7 @@ final public class DocSetLabelerImpl extends DocSetLabeler {
    * @param word3 third word.
    * @return TF-IDF.
    */
+  @Deprecated
   private double tfIdf(IBagOfTexts bag, String text, String word1, String word2, String word3) {
 
     Preconditions.checkNotNull(bag, "bag should not be null");

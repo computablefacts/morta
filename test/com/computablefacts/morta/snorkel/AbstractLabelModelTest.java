@@ -220,9 +220,13 @@ public class AbstractLabelModelTest {
   private List<Summary> summaries() {
     return Lists.newArrayList(
         new Summary("isDivisibleBy2", Sets.newHashSet("OK", "KO"), 1.0, 0.6666666666666666, 0.5, 7,
-            5),
+            5, 0, Sets.newHashSet("isDivisibleBy6", "isDivisibleBy3"),
+            Sets.newHashSet("isDivisibleBy6", "isDivisibleBy3")),
         new Summary("isDivisibleBy3", Sets.newHashSet("OK", "KO"), 1.0, 0.8333333333333334, 0.5, 9,
-            3),
-        new Summary("isDivisibleBy6", Sets.newHashSet("OK", "KO"), 1.0, 1.0, 0.5, 9, 3));
+            3, 0, Sets.newHashSet("isDivisibleBy6", "isDivisibleBy2"),
+            Sets.newHashSet("isDivisibleBy6", "isDivisibleBy2")),
+        new Summary("isDivisibleBy6", Sets.newHashSet("OK", "KO"), 1.0, 1.0, 0.5, 9, 3, 0,
+            Sets.newHashSet("isDivisibleBy2", "isDivisibleBy3"),
+            Sets.newHashSet("isDivisibleBy2", "isDivisibleBy3")));
   }
 }

@@ -200,10 +200,10 @@ public class SummaryTest {
     List<Summary> summaries =
         Summary.summarize(lfNames, lfLabels, Pipeline.on(instances).label(lfs).collect(), null);
 
-    Summary summaryIsDivisibleBy2 =
-        new Summary("isDivisibleBy2", Sets.newHashSet("OK", "KO"), 1.0, 0.5, 0.5, -1, -1);
-    Summary summaryIsDivisibleBy3 =
-        new Summary("isDivisibleBy3", Sets.newHashSet("OK", "KO"), 1.0, 0.5, 0.5, -1, -1);
+    Summary summaryIsDivisibleBy2 = new Summary("isDivisibleBy2", Sets.newHashSet("OK", "KO"), 1.0,
+        0.5, 0.5, -1, -1, -1, Sets.newHashSet("isDivisibleBy3"), Sets.newHashSet("isDivisibleBy3"));
+    Summary summaryIsDivisibleBy3 = new Summary("isDivisibleBy3", Sets.newHashSet("OK", "KO"), 1.0,
+        0.5, 0.5, -1, -1, -1, Sets.newHashSet("isDivisibleBy2"), Sets.newHashSet("isDivisibleBy2"));
 
     Assert.assertEquals(lfNames.size(), summaries.size());
     Assert.assertEquals(summaryIsDivisibleBy2, summaries.get(0));
@@ -236,11 +236,14 @@ public class SummaryTest {
     List<Summary> summaries = Summary.summarize(lfNames, lfLabels,
         Pipeline.on(Lists.newArrayList(1, 2, 3, 4, 5, 6)).label(lfs).collect(), goldLabels);
     Summary summaryIsDivisibleBy2 = new Summary("isDivisibleBy2", Sets.newHashSet("OK", "KO"), 1.0,
-        0.6666666666666666, 0.5, 4, 2);
+        0.6666666666666666, 0.5, 4, 2, 0, Sets.newHashSet("isDivisibleBy6", "isDivisibleBy3"),
+        Sets.newHashSet("isDivisibleBy6", "isDivisibleBy3"));
     Summary summaryIsDivisibleBy3 = new Summary("isDivisibleBy3", Sets.newHashSet("OK", "KO"), 1.0,
-        0.8333333333333334, 0.5, 5, 1);
-    Summary summaryIsDivisibleBy6 =
-        new Summary("isDivisibleBy6", Sets.newHashSet("OK", "KO"), 1.0, 1.0, 0.5, 6, 0);
+        0.8333333333333334, 0.5, 5, 1, 0, Sets.newHashSet("isDivisibleBy6", "isDivisibleBy2"),
+        Sets.newHashSet("isDivisibleBy6", "isDivisibleBy2"));
+    Summary summaryIsDivisibleBy6 = new Summary("isDivisibleBy6", Sets.newHashSet("OK", "KO"), 1.0,
+        1.0, 0.5, 6, 0, 0, Sets.newHashSet("isDivisibleBy3", "isDivisibleBy2"),
+        Sets.newHashSet("isDivisibleBy3", "isDivisibleBy2"));
 
     Assert.assertEquals(lfNames.size(), summaries.size());
     Assert.assertEquals(summaryIsDivisibleBy2, summaries.get(0));

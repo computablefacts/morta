@@ -3,6 +3,7 @@ package com.computablefacts.morta.snorkel;
 import static com.computablefacts.morta.snorkel.ILabelingFunction.ABSTAIN;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -24,14 +25,18 @@ final public class Summary {
 
   private final String label_;
   private final Set<String> polarity_;
+  private final Set<String> overlapsWith_;
+  private final Set<String> conflictsWith_;
   private final double coverage_;
   private final double overlaps_;
   private final double conflicts_;
   private final int correct_;
   private final int incorrect_;
+  private final int abstain_;
 
   public Summary(String label, Set<String> polarity, double coverage, double overlaps,
-      double conflicts, int correct, int incorrect) {
+      double conflicts, int correct, int incorrect, int abstain, Set<String> overlapsWith,
+      Set<String> conflictsWith) {
 
     label_ = Preconditions.checkNotNull(label, "label should not be null");
     polarity_ = Preconditions.checkNotNull(polarity, "polarity should not be null");
@@ -40,6 +45,9 @@ final public class Summary {
     conflicts_ = conflicts;
     correct_ = correct;
     incorrect_ = incorrect;
+    abstain_ = abstain;
+    overlapsWith_ = overlapsWith == null ? new HashSet<>() : new HashSet<>(overlapsWith);
+    conflictsWith_ = conflictsWith == null ? new HashSet<>() : new HashSet<>(conflictsWith);
   }
 
   /**
@@ -200,6 +208,8 @@ final public class Summary {
 
       String labelingFunctionName = lfNames.label(i);
       Set<String> labels = new HashSet<>();
+      Map<String, Set<String>> overlapsWith = new HashMap<>();
+      Map<String, Set<String>> conflictsWith = new HashMap<>();
       @Var
       double nbLabelled = 0;
       @Var
@@ -212,6 +222,8 @@ final public class Summary {
       int nbCorrect = goldLabels == null ? -1 : 0;
       @Var
       int nbIncorrect = goldLabels == null ? -1 : 0;
+      @Var
+      int nbAbstain = goldLabels == null ? -1 : 0;
 
       for (int j = 0; j < instances.size(); j++) {
 
@@ -244,30 +256,47 @@ final public class Summary {
           @Var
           boolean hasConflict = false;
 
-          for (int k = 0; (!hasOverlap || !hasConflict) && k < nbLabelingFunctions; k++) {
+          for (int k = 0; /* (!hasOverlap || !hasConflict) && */ k < nbLabelingFunctions; k++) {
             if (k != i) {
 
               int lfv = featureVector.getValue().get(k);
+              String lfn = lfNames.label(k);
 
-              if (!hasOverlap && lfv > ABSTAIN && lfv == lfValue) {
-                nbOverlaps += 1.0;
-                hasOverlap = true;
+              if (lfv > ABSTAIN && lfv == lfValue) {
+                if (!hasOverlap) {
+                  nbOverlaps += 1.0;
+                  hasOverlap = true;
+                }
+                if (!overlapsWith.containsKey(lfName)) {
+                  overlapsWith.put(lfName, new HashSet<>());
+                }
+                overlapsWith.get(lfName).add(lfn);
               }
-              if (!hasConflict && lfv > ABSTAIN && lfv != lfValue) {
-                nbConflicts += 1.0;
-                hasConflict = true;
+              if (lfv > ABSTAIN && lfv != lfValue) {
+                if (!hasConflict) {
+                  nbConflicts += 1.0;
+                  hasConflict = true;
+                }
+                if (!conflictsWith.containsKey(lfName)) {
+                  conflictsWith.put(lfName, new HashSet<>());
+                }
+                conflictsWith.get(lfName).add(lfn);
               }
             }
           }
+        } else {
+          nbAbstain++;
         }
       }
 
-      Preconditions.checkState(goldLabels == null || nbCorrect + nbIncorrect == instances.size(),
+      Preconditions.checkState(
+          goldLabels == null || nbCorrect + nbIncorrect + nbAbstain == instances.size(),
           "Mismatch between the number of correct/incorrect labels and the number of instances : %s found vs %s expected",
-          nbCorrect + nbIncorrect, instances.size());
+          nbCorrect + nbIncorrect + nbAbstain, instances.size());
 
       summaries.add(new Summary(labelingFunctionName, labels, nbLabelled / nbDataPoints,
-          nbOverlaps / nbLabelled, nbConflicts / nbLabelled, nbCorrect, nbIncorrect));
+          nbOverlaps / nbLabelled, nbConflicts / nbLabelled, nbCorrect, nbIncorrect, nbAbstain,
+          overlapsWith.get(labelingFunctionName), conflictsWith.get(labelingFunctionName)));
     }
     return summaries;
   }
@@ -277,7 +306,8 @@ final public class Summary {
   public String toString() {
     return MoreObjects.toStringHelper(this).add("label", label_).add("polarity", polarity_)
         .add("coverage", coverage_).add("overlaps", overlaps_).add("conflicts", conflicts_)
-        .add("correct", correct_).add("incorrect", incorrect_).toString();
+        .add("correct", correct_).add("incorrect", incorrect_).add("abstain", abstain_)
+        .add("overlaps_with", overlapsWith_).add("conflicts_with", conflictsWith_).toString();
   }
 
   @Override
@@ -294,13 +324,16 @@ final public class Summary {
         && Objects.equal(overlaps_, summary.overlaps_)
         && Objects.equal(conflicts_, summary.conflicts_)
         && Objects.equal(correct_, summary.correct_)
-        && Objects.equal(incorrect_, summary.incorrect_);
+        && Objects.equal(incorrect_, summary.incorrect_)
+        && Objects.equal(abstain_, summary.abstain_)
+        && Objects.equal(overlapsWith_, summary.overlapsWith_)
+        && Objects.equal(conflictsWith_, summary.conflictsWith_);
   }
 
   @Override
   public int hashCode() {
     return Objects.hashCode(label_, polarity_, coverage_, overlaps_, conflicts_, correct_,
-        incorrect_);
+        incorrect_, abstain_, overlapsWith_, conflictsWith_);
   }
 
   /**
@@ -314,7 +347,7 @@ final public class Summary {
   }
 
   /**
-   * Polarity: The set of unique labels this LF outputs (excluding abstains)
+   * Polarity: The set of unique labels this LF outputs (excluding abstains).
    *
    * @return polarity
    */
@@ -324,7 +357,7 @@ final public class Summary {
   }
 
   /**
-   * Coverage: The fraction of the dataset this LF labels
+   * Coverage: The fraction of the dataset this LF labels.
    *
    * @return coverage
    */
@@ -334,7 +367,7 @@ final public class Summary {
   }
 
   /**
-   * Overlaps: The fraction of the dataset where this LF and at least one other LF label
+   * Overlaps: The fraction of the dataset where this LF and at least one other LF label.
    *
    * @return overlaps
    */
@@ -344,8 +377,18 @@ final public class Summary {
   }
 
   /**
+   * List of LF this LF overlaps with.
+   *
+   * @return overlapping LF
+   */
+  @Generated
+  public Set<String> overlapsWith() {
+    return overlapsWith_;
+  }
+
+  /**
    * Conflicts: The fraction of the dataset where this LF and at least one other LF label and
-   * disagree
+   * disagree.
    *
    * @return conflicts
    */
@@ -355,7 +398,17 @@ final public class Summary {
   }
 
   /**
-   * Correct: The number of data points this LF labels correctly (if gold labels are provided)
+   * List of LF this LF conflicts with.
+   *
+   * @return conflicting LF
+   */
+  @Generated
+  public Set<String> conflictsWith() {
+    return conflictsWith_;
+  }
+
+  /**
+   * Correct: The number of data points this LF labels correctly (if gold labels are provided).
    *
    * @return correct
    */
@@ -365,13 +418,23 @@ final public class Summary {
   }
 
   /**
-   * Incorrect: The number of data points this LF labels incorrectly (if gold labels are provided)
+   * Incorrect: The number of data points this LF labels incorrectly (if gold labels are provided).
    *
    * @return incorrect
    */
   @Generated
   public int incorrect() {
     return incorrect_;
+  }
+
+  /**
+   * Abstain: The number of data points this LF has abstained (if gold labels are provided).
+   *
+   * @return abstain
+   */
+  @Generated
+  public int abstain() {
+    return abstain_;
   }
 
   // TODO : compute empirical accuracy

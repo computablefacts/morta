@@ -4,11 +4,9 @@ import static com.computablefacts.morta.snorkel.ILabelingFunction.ABSTAIN;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -20,14 +18,13 @@ import com.computablefacts.morta.snorkel.FeatureVector;
 import com.computablefacts.morta.snorkel.IGoldLabel;
 import com.computablefacts.morta.snorkel.ILabelingFunction;
 import com.computablefacts.morta.snorkel.Summary;
+import com.computablefacts.nona.Generated;
 import com.computablefacts.nona.helpers.AsciiProgressBar;
 import com.computablefacts.nona.helpers.ConfusionMatrix;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
-import com.google.common.primitives.Doubles;
+import com.google.common.math.Quantiles;
 import com.google.errorprone.annotations.CheckReturnValue;
-import com.google.errorprone.annotations.Var;
 
 import smile.stat.hypothesis.CorTest;
 
@@ -45,17 +42,17 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
   public static final int LABEL_OK = 1;
 
   private List<Map.Entry<? extends AbstractLabelingFunction<T>, Summary>> lfSummaries_;
-  private List<Integer> lfsOk_;
-  private List<Integer> lfsKo_;
-  private Set<Integer> lfsShared_;
-  private double avgNbOfLfsTriggeredOk_;
-  private double avgNbOfLfsTriggeredKo_;
-  private double avgNbOfBestLfsTriggeredOk_;
-  private double avgNbOfBestLfsTriggeredKo_;
+  private double[] lfMediansOk_;
+  private double[] lfMinsOk_;
+  private double medianOk_;
+  private double minOk_;
+  private double[] lfMediansKo_;
+  private double[] lfMinsKo_;
+  private double medianKo_;
+  private double minKo_;
 
   public MedianLabelModel(MedianLabelModel<T> labelModel) {
-    this(labelModel.lfs(), labelModel.lfSummaries(), labelModel.lfsOk(), labelModel.lfsKo(),
-        labelModel.lfsShared());
+    this(labelModel.lfs(), labelModel.lfSummaries());
   }
 
   public MedianLabelModel(List<? extends AbstractLabelingFunction<T>> lfs) {
@@ -63,20 +60,13 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
   }
 
   private MedianLabelModel(List<? extends AbstractLabelingFunction<T>> lfs,
-      List<Map.Entry<? extends AbstractLabelingFunction<T>, Summary>> lfSummaries,
-      List<Integer> lfsOk, List<Integer> lfsKo, Set<Integer> lfsShared) {
+      List<Map.Entry<? extends AbstractLabelingFunction<T>, Summary>> lfSummaries) {
 
     super(lfsNames(lfs), lfsLabels(), lfs);
 
     Preconditions.checkNotNull(lfSummaries, "lfSummaries should not be null");
-    Preconditions.checkNotNull(lfsOk, "lfsOk should not be null");
-    Preconditions.checkNotNull(lfsKo, "lfsKo should not be null");
-    Preconditions.checkNotNull(lfsShared, "lfsShared should not be null");
 
     lfSummaries_ = new ArrayList<>(lfSummaries);
-    lfsOk_ = new ArrayList<>(lfsOk);
-    lfsKo_ = new ArrayList<>(lfsKo);
-    lfsShared_ = new HashSet<>(lfsShared);
   }
 
   /**
@@ -185,9 +175,8 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
 
     // Weight each LF
     AsciiProgressBar.ProgressBar bar = AsciiProgressBar.create();
-    List<List<Double>> scoresOk = new ArrayList<>(goldLabels.size());
-    List<List<Double>> scoresKo = new ArrayList<>(goldLabels.size());
-    List<List<Double>> scoresAbs = new ArrayList<>(goldLabels.size());
+    List<List<Double>> ok = new ArrayList<>(goldLabels.size());
+    List<List<Double>> ko = new ArrayList<>(goldLabels.size());
 
     for (int i = 0; i < goldLabels.size(); i++) {
 
@@ -197,30 +186,23 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
       T data = goldLabel.data();
       int label = label(goldLabel);
 
-      List<Double> ok = score(lfSummaries_, LABEL_OK, data);
-      List<Double> ko = score(lfSummaries_, LABEL_KO, data);
-      List<Double> abs = score(lfSummaries_, ABSTAIN, data);
-
       if (label == LABEL_OK) {
-        scoresOk.add(ok);
+        ok.add(score(lfSummaries_, label, data));
       } else if (label == LABEL_KO) {
-        scoresKo.add(ko);
-      } else {
-        scoresAbs.add(abs);
-      }
+        ko.add(score(lfSummaries_, label, data));
+      } // discard ABSTAIN
     }
 
-    lfsOk_ = bestLfsForTagging(scoresOk);
-    lfsKo_ = bestLfsForTagging(scoresKo);
-    lfsShared_ = Sets.intersection(Sets.newHashSet(lfsOk_), Sets.newHashSet(lfsKo_));
-
-    avgNbOfLfsTriggeredOk_ = avgNbOfLfsTriggered(scoresOk);
-    avgNbOfLfsTriggeredKo_ = avgNbOfLfsTriggered(scoresKo);
-
-    avgNbOfBestLfsTriggeredOk_ = avgNbOfBestLfsTriggered(scoresOk, lfsOk_);
-    avgNbOfBestLfsTriggeredKo_ = avgNbOfBestLfsTriggered(scoresKo, lfsKo_);
+    initOkParameters(ok);
+    initKoParameters(ko);
   }
 
+  /**
+   * Make predictions. All predictions MUST BE in {LABEL_OK, LABEL_KO}.
+   *
+   * @param goldLabels gold labels.
+   * @return output a prediction for each gold label.
+   */
   @Override
   public List<Integer> predict(List<? extends IGoldLabel<T>> goldLabels) {
 
@@ -233,20 +215,9 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
         .collect(Collectors.toList());
   }
 
+  @Generated
   public List<Map.Entry<? extends AbstractLabelingFunction<T>, Summary>> lfSummaries() {
     return lfSummaries_;
-  }
-
-  public List<Integer> lfsOk() {
-    return lfsOk_;
-  }
-
-  public List<Integer> lfsKo() {
-    return lfsKo_;
-  }
-
-  public Set<Integer> lfsShared() {
-    return lfsShared_;
   }
 
   public List<Map.Entry<T, FeatureVector<Integer>>> vectors(
@@ -288,6 +259,16 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
     return matrix;
   }
 
+  /**
+   * Evaluate each LF against a given label. Each vector entry is a number in [-1, 1] where 1 means
+   * "the LF totally agrees with the given label", 0 means "the LF abstained" and -1 means "the LF
+   * totally disagrees with the given label".
+   *
+   * @param lfSummaries
+   * @param label
+   * @param data
+   * @return vector
+   */
   private List<Double> score(
       List<Map.Entry<? extends AbstractLabelingFunction<T>, Summary>> lfSummaries, int label,
       T data) {
@@ -302,127 +283,84 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
     for (Map.Entry<? extends ILabelingFunction<T>, Summary> lfSummary : lfSummaries) {
 
       ILabelingFunction<T> lf = lfSummary.getKey();
-      // Summary summary = lfSummary.getValue();
+      Summary summary = lfSummary.getValue();
+      int lbl = lf.apply(data);
 
-      if (lf.apply(data) == label) {
-        vector.add(1.0);
-      } else {
+      if (lbl == label) {
+        vector.add(1.0 * (summary.correct() + summary.abstain())
+            / (summary.correct() + summary.incorrect() + summary.abstain()));
+      } else if (lbl == ABSTAIN) {
         vector.add(0.0);
+      } else {
+        vector.add(-1.0 * (summary.incorrect() + summary.abstain())
+            / (summary.correct() + summary.incorrect() + summary.abstain()));
       }
     }
     return vector;
   }
 
-  private List<Integer> bestLfsForTagging(List<List<Double>> scores) {
+  private void initOkParameters(List<List<Double>> ok) {
 
-    Preconditions.checkNotNull(scores, "scores should not be null");
+    Preconditions.checkNotNull(ok, "ok should not be null");
 
-    // Get the list of triggered LF for each instance
-    List<Map.Entry<Integer, Set<Integer>>> lfsTriggered = new ArrayList<>();
+    List<Double>[] weights = new List[lfSummaries_.size()]; // transpose scores
 
-    for (int i = 0; i < scores.size(); i++) {
-
-      Set<Integer> lfs = new HashSet<>();
-
-      for (int j = 0; j < scores.get(i).size(); j++) {
-        if (scores.get(i).get(j) > 0) {
-          lfs.add(j);
-        }
-      }
-
-      lfsTriggered.add(new AbstractMap.SimpleEntry<>(i, lfs));
+    for (int k = 0; k < lfSummaries_.size(); k++) {
+      weights[k] = new ArrayList<>();
     }
 
-    lfsTriggered.sort((o1, o2) -> Doubles.compare(o1.getValue().size(), o2.getValue().size()));
-
-    // Get the list of tagged instances for each LF
-    List<Map.Entry<Integer, Set<Integer>>> instancesTagged = new ArrayList<>();
-
-    for (int i = 0; i < scores.get(0).size(); i++) {
-
-      Set<Integer> instances = new HashSet<>();
-
-      for (int j = 0; j < scores.size(); j++) {
-        if (scores.get(j).get(i) > 0) {
-          instances.add(j);
-        }
-      }
-
-      instancesTagged.add(new AbstractMap.SimpleEntry<>(i, instances));
-    }
-
-    instancesTagged.sort((o1, o2) -> Doubles.compare(o1.getValue().size(), o2.getValue().size()));
-
-    // Find the minimum number of LF needed to tag all instances
-    @Var
-    int subset = -1;
-
-    for (int i = 0; i < instancesTagged.size(); i++) {
-
-      @Var
-      Set<Integer> instances = new HashSet<>();
-
-      for (int j = 0; j <= i; j++) {
-        instances = Sets.union(instances, instancesTagged.get(j).getValue());
-      }
-
-      if (instances.size() == scores.size()) {
-        subset = i;
-        break;
+    for (int i = 0; i < ok.size(); i++) {
+      for (int k = 0; k < ok.get(i).size(); k++) {
+        weights[k].add(ok.get(i).get(k));
       }
     }
-    return subset <= 0 ? new ArrayList<>()
-        : instancesTagged.stream().limit(subset).map(i -> i.getKey()).collect(Collectors.toList());
+
+    // Compute thresholds
+    lfMediansOk_ = new double[lfSummaries_.size()];
+    lfMinsOk_ = new double[lfSummaries_.size()];
+
+    for (int k = 0; k < lfSummaries_.size(); k++) {
+      lfMediansOk_[k] = Quantiles.median().compute(weights[k]);
+      lfMinsOk_[k] = weights[k].stream().mapToDouble(d -> d).min().orElse(Double.MAX_VALUE);
+    }
+
+    medianOk_ = Quantiles.median().compute(
+        ok.stream().map(s -> s.stream().mapToDouble(v -> v).sum()).collect(Collectors.toList()));
+
+    minOk_ = ok.stream().mapToDouble(s -> s.stream().mapToDouble(v -> v).sum()).min()
+        .orElse(Double.MAX_VALUE);
   }
 
-  private double avgNbOfBestLfsTriggered(List<List<Double>> scores,
-      List<Integer> bestLfsForTagging) {
+  private void initKoParameters(List<List<Double>> ko) {
 
-    Preconditions.checkNotNull(scores, "scores should not be null");
-    Preconditions.checkNotNull(bestLfsForTagging, "bestLfsForTagging should not be null");
+    Preconditions.checkNotNull(ko, "ok should not be null");
 
-    List<Double> nbOfLfsTriggered = new ArrayList<>();
+    List<Double>[] weights = new List[lfSummaries_.size()]; // transpose scores
 
-    for (int i = 0; i < scores.size(); i++) {
-
-      @Var
-      double sum = 0.0;
-
-      for (int j = 0; j < scores.get(i).size(); j++) {
-        if (scores.get(i).get(j) > 0 && bestLfsForTagging.contains(j)) {
-          sum += 1.0;
-        }
-      }
-
-      nbOfLfsTriggered.add(sum);
-    }
-    return nbOfLfsTriggered.stream().mapToDouble(d -> d).average().orElse(0.0);
-  }
-
-  private double avgNbOfLfsTriggered(List<List<Double>> scores) {
-
-    Preconditions.checkNotNull(scores, "scores should not be null");
-
-    // Get the list of triggered LF for each instance
-    List<Map.Entry<Integer, Set<Integer>>> lfsTriggered = new ArrayList<>();
-
-    for (int i = 0; i < scores.size(); i++) {
-
-      Set<Integer> lfs = new HashSet<>();
-
-      for (int j = 0; j < scores.get(i).size(); j++) {
-        if (scores.get(i).get(j) > 0) {
-          lfs.add(j);
-        }
-      }
-
-      lfsTriggered.add(new AbstractMap.SimpleEntry<>(i, lfs));
+    for (int k = 0; k < lfSummaries_.size(); k++) {
+      weights[k] = new ArrayList<>();
     }
 
-    lfsTriggered.sort((o1, o2) -> Doubles.compare(o1.getValue().size(), o2.getValue().size()));
+    for (int i = 0; i < ko.size(); i++) {
+      for (int k = 0; k < ko.get(i).size(); k++) {
+        weights[k].add(ko.get(i).get(k));
+      }
+    }
 
-    // Find the average number of triggered LF
-    return lfsTriggered.stream().mapToDouble(lfs -> lfs.getValue().size()).average().orElse(0.0);
+    // Compute thresholds
+    lfMediansKo_ = new double[lfSummaries_.size()];
+    lfMinsKo_ = new double[lfSummaries_.size()];
+
+    for (int k = 0; k < lfSummaries_.size(); k++) {
+      lfMediansKo_[k] = Quantiles.median().compute(weights[k]);
+      lfMinsKo_[k] = weights[k].stream().mapToDouble(d -> d).min().orElse(Double.MAX_VALUE);
+    }
+
+    medianKo_ = Quantiles.median().compute(
+        ko.stream().map(s -> s.stream().mapToDouble(v -> v).sum()).collect(Collectors.toList()));
+
+    minKo_ = ko.stream().mapToDouble(s -> s.stream().mapToDouble(v -> v).sum()).min()
+        .orElse(Double.MAX_VALUE);
   }
 
   private int predict(T data) {
@@ -432,45 +370,49 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
     List<Double> ok = score(lfSummaries_, LABEL_OK, data);
     List<Double> ko = score(lfSummaries_, LABEL_KO, data);
 
-    List<Integer> lfsOk = new ArrayList<>();
-
-    for (int i = 0; i < ok.size(); i++) {
-      if (ok.get(i) > 0 && lfsOk_.contains(i)) {
-        lfsOk.add(i);
-      }
-    }
-
-    List<Integer> lfsKo = new ArrayList<>();
-
-    for (int i = 0; i < ko.size(); i++) {
-      if (ko.get(i) > 0 && lfsKo_.contains(i)) {
-        lfsKo.add(i);
-      }
-    }
-
-    if (!lfsOk.isEmpty() && lfsKo.isEmpty()) {
+    if (outputOkLabel(ok) && !outputKoLabel(ko)) {
       return LABEL_OK;
     }
-    if (lfsOk.isEmpty() && !lfsKo.isEmpty()) {
-      return LABEL_KO;
+    return LABEL_KO;
+  }
+
+  private boolean outputOkLabel(List<Double> ok) {
+
+    Preconditions.checkNotNull(ok, "ok should not be null");
+    Preconditions.checkState(ok.size() == lfSummaries_.size(),
+        "wrong vector length : %s expected vs %s found", ok.size(), lfSummaries_.size());
+
+    double sum = ok.stream().mapToDouble(v -> v).sum();
+
+    if (sum < minOk_ || sum < medianOk_) {
+      return false;
     }
 
-    Set<Integer> lfsOkMinusShared = Sets.difference(Sets.newHashSet(lfsOk), lfsShared_);
-    Set<Integer> lfsKoMinusShared = Sets.difference(Sets.newHashSet(lfsKo), lfsShared_);
-
-    double distOk = Math.abs(ok.stream().mapToDouble(d -> d).sum() - avgNbOfLfsTriggeredOk_);
-    double distKo = Math.abs(ko.stream().mapToDouble(d -> d).sum() - avgNbOfLfsTriggeredKo_);
-
-    double distLfsOk = Math.abs(lfsOk.size() - avgNbOfBestLfsTriggeredOk_);
-    double distLfsKo = Math.abs(lfsKo.size() - avgNbOfBestLfsTriggeredKo_);
-
-    if (!lfsOkMinusShared.isEmpty() && lfsKoMinusShared.isEmpty()) {
-      return distOk < distKo ? LABEL_OK : LABEL_KO;
+    for (int k = 0; k < ok.size(); k++) {
+      if (ok.get(k) < lfMinsOk_[k] || ok.get(k) < lfMediansOk_[k]) {
+        return false;
+      }
     }
-    if (lfsOkMinusShared.isEmpty() && !lfsKoMinusShared.isEmpty()) {
-      return distOk > distKo ? LABEL_KO : LABEL_OK;
+    return true;
+  }
+
+  private boolean outputKoLabel(List<Double> ko) {
+
+    Preconditions.checkNotNull(ko, "ko should not be null");
+    Preconditions.checkState(ko.size() == lfSummaries_.size(),
+        "wrong vector length : %s expected vs %s found", ko.size(), lfSummaries_.size());
+
+    double sum = ko.stream().mapToDouble(v -> v).sum();
+
+    if (sum < minKo_ || sum < medianKo_) {
+      return false;
     }
-    return lfsOkMinusShared.size() > lfsKoMinusShared.size() && distOk < distKo
-        && distLfsOk < distLfsKo ? LABEL_OK : LABEL_KO;
+
+    for (int k = 0; k < ko.size(); k++) {
+      if (ko.get(k) < lfMinsKo_[k] || ko.get(k) < lfMediansKo_[k]) {
+        return false;
+      }
+    }
+    return true;
   }
 }

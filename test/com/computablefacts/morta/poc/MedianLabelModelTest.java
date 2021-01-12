@@ -89,7 +89,7 @@ public class MedianLabelModelTest {
 
     List<Integer> list = labelModel.predict(goldLabels());
 
-    Assert.assertEquals(Lists.newArrayList(0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1), list);
+    Assert.assertEquals(Lists.newArrayList(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1), list);
   }
 
   @Test
@@ -100,10 +100,10 @@ public class MedianLabelModelTest {
 
     ConfusionMatrix matrix = labelModel.confusionMatrix(goldLabels());
 
-    Assert.assertEquals(4, matrix.nbTruePositives());
+    Assert.assertEquals(2, matrix.nbTruePositives());
     Assert.assertEquals(8, matrix.nbTrueNegatives());
     Assert.assertEquals(0, matrix.nbFalsePositives());
-    Assert.assertEquals(0, matrix.nbFalseNegatives());
+    Assert.assertEquals(2, matrix.nbFalseNegatives());
   }
 
   private MedianLabelModel<String> labelModel() {
@@ -223,9 +223,13 @@ public class MedianLabelModelTest {
   private List<Summary> summaries() {
     return Lists.newArrayList(
         new Summary("isDivisibleBy2", Sets.newHashSet("OK", "KO"), 1.0, 0.6666666666666666, 0.5, 6,
-            6),
+            6, 0, Sets.newHashSet("isDivisibleBy3", "isDivisibleBy6"),
+            Sets.newHashSet("isDivisibleBy3", "isDivisibleBy6")),
         new Summary("isDivisibleBy3", Sets.newHashSet("OK", "KO"), 1.0, 0.8333333333333334, 0.5, 12,
-            0),
-        new Summary("isDivisibleBy6", Sets.newHashSet("OK", "KO"), 1.0, 1.0, 0.5, 10, 2));
+            0, 0, Sets.newHashSet("isDivisibleBy2", "isDivisibleBy6"),
+            Sets.newHashSet("isDivisibleBy2", "isDivisibleBy6")),
+        new Summary("isDivisibleBy6", Sets.newHashSet("OK", "KO"), 1.0, 1.0, 0.5, 10, 2, 0,
+            Sets.newHashSet("isDivisibleBy2", "isDivisibleBy3"),
+            Sets.newHashSet("isDivisibleBy2", "isDivisibleBy3")));
   }
 }
