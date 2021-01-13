@@ -12,10 +12,10 @@ import com.computablefacts.morta.Pipeline;
 import com.computablefacts.nona.helpers.ConfusionMatrix;
 import com.google.common.collect.Lists;
 
-public class LogisticRegressionTest {
+public class LogisticRegressionClassifierTest {
 
   @Test
-  public void testTrainLogisticRegression() {
+  public void testTrain() {
 
     Dictionary lfNames = new Dictionary();
     lfNames.put("isDivisibleBy2", 0);
@@ -54,15 +54,14 @@ public class LogisticRegressionTest {
     List<Integer> preds = MajorityLabelModel.predictions(lfNames, lfLabels, probs,
         MajorityLabelModel.eTieBreakPolicy.RANDOM, 0.00001);
 
-    smile.classification.LogisticRegression logisticRegression =
-        LogisticRegression.train(insts, preds);
+    LogisticRegressionClassifier classifier = new LogisticRegressionClassifier();
+    classifier.train(insts, preds);
 
     // Here, instances = [1, 2, 3, 4, 5, 6] and goldLabels = ["KO", "KO", "KO", "KO", "KO", "OK"]
     List<Integer> goldLabels = Lists.newArrayList(0, 0, 0, 0, 0, 1);
 
-    List<Integer> predictions =
-        instances.stream().map(i -> logisticRegression.predict(transform.apply(i).toDoubleArray()))
-            .collect(Collectors.toList());
+    List<Integer> predictions = instances.stream().map(i -> classifier.predict(transform.apply(i)))
+        .collect(Collectors.toList());
 
     ConfusionMatrix matrix = new ConfusionMatrix();
     matrix.addAll(goldLabels, predictions, 1, 0);
@@ -74,7 +73,7 @@ public class LogisticRegressionTest {
   }
 
   @Test
-  public void testLogisticRegression() {
+  public void testPredict() {
     // TODO
   }
 }

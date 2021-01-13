@@ -121,8 +121,7 @@ final public class TrainGenerativeModel extends CommandLine {
     System.out.printf("\nAlphabet size is %d\n", alphabet.size());
     System.out.println("Reducing alphabet...");
 
-    alphabet = Helpers.alphabetReducer(Languages.eLanguage.valueOf(language), alphabet, counts,
-        gls.size());
+    alphabet = Helpers.alphabetReducer(alphabet, counts, gls.size());
 
     System.out.printf("The new alphabet size is %d\n", alphabet.size());
 
@@ -151,6 +150,17 @@ final public class TrainGenerativeModel extends CommandLine {
           outputDirectory + File.separator + "alphabet_for_" + label + "_" + language + ".xml.gz");
 
       com.computablefacts.nona.helpers.Files.create(input, xStream.toXML(alphabet));
+      com.computablefacts.nona.helpers.Files.gzip(input, output);
+      com.computablefacts.nona.helpers.Files.delete(input);
+
+      System.out.println("Saving counts...");
+
+      input = new File(
+          outputDirectory + File.separator + "counts_for_" + label + "_" + language + ".xml");
+      output = new File(
+          outputDirectory + File.separator + "counts_for_" + label + "_" + language + ".xml.gz");
+
+      com.computablefacts.nona.helpers.Files.create(input, xStream.toXML(counts));
       com.computablefacts.nona.helpers.Files.gzip(input, output);
       com.computablefacts.nona.helpers.Files.delete(input);
 

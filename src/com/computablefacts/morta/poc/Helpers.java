@@ -124,15 +124,13 @@ final public class Helpers {
     };
   }
 
-  public static Dictionary alphabetReducer(Languages.eLanguage language, Dictionary alphabet,
-      Multiset<String> counts, int nbGoldLabels) {
+  public static Dictionary alphabetReducer(Dictionary alphabet, Multiset<String> counts,
+      int nbGoldLabels) {
 
-    Preconditions.checkNotNull(language, "language should not be null");
     Preconditions.checkNotNull(alphabet, "alphabet should not be null");
     Preconditions.checkNotNull(counts, "counts should not be null");
     Preconditions.checkArgument(nbGoldLabels > 0, "nbGoldLabels must be > 0");
 
-    Set<String> stopwords = Languages.stopwords(language);
     Dictionary newAlphabet = new Dictionary();
     int minDf = (int) (0.01 * nbGoldLabels); // remove outliers
     int maxDf = (int) (0.99 * nbGoldLabels); // remove outliers
@@ -143,10 +141,6 @@ final public class Helpers {
 
       String ngram = alphabet.label(i);
 
-      if (stopwords.contains(ngram)) {
-        disp++;
-        continue;
-      }
       if (counts.count(ngram) < minDf) {
         disp++;
         continue;

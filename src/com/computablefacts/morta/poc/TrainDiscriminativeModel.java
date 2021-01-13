@@ -10,10 +10,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import com.computablefacts.morta.Pipeline;
+import com.computablefacts.morta.snorkel.AbstractClassifier;
 import com.computablefacts.morta.snorkel.Dictionary;
 import com.computablefacts.morta.snorkel.FeatureVector;
+import com.computablefacts.morta.snorkel.FisherLinearDiscriminantClassifier;
 import com.computablefacts.morta.snorkel.IGoldLabel;
-import com.computablefacts.morta.snorkel.LogisticRegression;
+import com.computablefacts.morta.snorkel.KNearestNeighborClassifier;
+import com.computablefacts.morta.snorkel.LinearDiscriminantAnalysisClassifier;
+import com.computablefacts.morta.snorkel.LogisticRegressionClassifier;
+import com.computablefacts.morta.snorkel.QuadraticDiscriminantAnalysisClassifier;
+import com.computablefacts.morta.snorkel.RegularizedDiscriminantAnalysisClassifier;
 import com.computablefacts.nona.helpers.AsciiProgressBar;
 import com.computablefacts.nona.helpers.CommandLine;
 import com.computablefacts.nona.helpers.ConfusionMatrix;
@@ -21,6 +27,7 @@ import com.computablefacts.nona.helpers.Files;
 import com.computablefacts.nona.helpers.Languages;
 import com.google.common.base.Preconditions;
 import com.google.errorprone.annotations.CheckReturnValue;
+import com.google.errorprone.annotations.Var;
 import com.thoughtworks.xstream.XStream;
 
 @CheckReturnValue
@@ -36,6 +43,7 @@ final public class TrainDiscriminativeModel extends CommandLine {
     boolean dryRun = getBooleanCommand(args, "dry_run", true);
     boolean verbose = getBooleanCommand(args, "verbose", false);
     int maxGroupSize = getIntCommand(args, "max_group_size", 4);
+    String clazzifier = getStringCommand(args, "classifier", "logit");
     String outputDirectory = getStringCommand(args, "output_directory", null);
 
     // Load gold labels
@@ -93,38 +101,65 @@ final public class TrainDiscriminativeModel extends CommandLine {
     List<Integer> preds = lm.predict(train);
 
     // Build discriminative model
-    System.out.println("Building discriminative model...");
+    System.out.printf("Building discriminative model... (%s)\n", clazzifier);
 
-    smile.classification.LogisticRegression logisticRegression =
-        LogisticRegression.train(insts, preds);
+    AbstractClassifier classifier;
+
+    if ("knn".equals(clazzifier)) {
+      classifier = new KNearestNeighborClassifier();
+    } else if ("lda".equals(clazzifier)) {
+      classifier = new LinearDiscriminantAnalysisClassifier();
+    } else if ("fld".equals(clazzifier)) {
+      classifier = new FisherLinearDiscriminantClassifier();
+    } else if ("qda".equals(clazzifier)) {
+      classifier = new QuadraticDiscriminantAnalysisClassifier();
+    } else if ("rda".equals(clazzifier)) {
+      classifier = new RegularizedDiscriminantAnalysisClassifier();
+    } else {
+      classifier = new LogisticRegressionClassifier();
+    }
+
+    classifier.train(insts, preds);
 
     // Compute model accuracy
     if (verbose) {
 
       System.out.print("Computing confusion matrix for the TRAIN dataset...");
-      System.out.println(confusionMatrix(language, alpha, maxGroupSize, train, logisticRegression));
+      System.out.println(confusionMatrix(language, alpha, maxGroupSize, train, classifier));
 
       System.out.print("Computing confusion matrix for the TEST dataset...");
-      System.out.println(confusionMatrix(language, alpha, maxGroupSize, test, logisticRegression));
+      System.out.println(confusionMatrix(language, alpha, maxGroupSize, test, classifier));
 
       System.out.print("Computing confusion matrix for the WHOLE dataset...");
-      System.out.println(confusionMatrix(language, alpha, maxGroupSize, gls, logisticRegression));
+      System.out.println(confusionMatrix(language, alpha, maxGroupSize, gls, classifier));
     }
 
     if (!dryRun) {
-      // TODO
+
+      System.out.println("Saving classifier...");
+
+      @Var
+      File input = new File(
+          outputDirectory + File.separator + "classifier_for_" + label + "_" + language + ".xml");
+      @Var
+      File output = new File(outputDirectory + File.separator + "classifier_for_" + label + "_"
+          + language + ".xml.gz");
+
+      com.computablefacts.nona.helpers.Files.create(input, xStream.toXML(alphabet));
+      com.computablefacts.nona.helpers.Files.gzip(input, output);
+      com.computablefacts.nona.helpers.Files.delete(input);
     }
   }
 
   private static ConfusionMatrix confusionMatrix(String language, Dictionary alphabet,
       int maxGroupSize, List<? extends IGoldLabel<String>> goldLabels,
-      smile.classification.LogisticRegression logisticRegression) {
+      AbstractClassifier classifier) {
 
     Preconditions.checkNotNull(language, "language should not be null");
     Preconditions.checkNotNull(alphabet, "alphabet should not be null");
     Preconditions.checkArgument(maxGroupSize > 0, "maxGroupSize must be > 0");
     Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
-    Preconditions.checkNotNull(logisticRegression, "logisticRegression should not be null");
+    Preconditions.checkNotNull(classifier, "classifier should not be null");
 
     List<FeatureVector<Double>> testInsts = Pipeline.on(goldLabels).transform(IGoldLabel::data)
         .transform(
@@ -134,8 +169,7 @@ final public class TrainDiscriminativeModel extends CommandLine {
     ConfusionMatrix matrix = new ConfusionMatrix();
 
     matrix.addAll(Pipeline.on(goldLabels).transform(MedianLabelModel::label).collect(),
-        LogisticRegression.predict(logisticRegression, testInsts), MedianLabelModel.LABEL_OK,
-        MedianLabelModel.LABEL_KO);
+        classifier.predict(testInsts), MedianLabelModel.LABEL_OK, MedianLabelModel.LABEL_KO);
 
     return matrix;
   }
