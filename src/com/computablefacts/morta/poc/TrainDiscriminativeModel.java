@@ -145,7 +145,7 @@ final public class TrainDiscriminativeModel extends CommandLine {
       File output = new File(outputDirectory + File.separator + "classifier_for_" + label + "_"
           + language + ".xml.gz");
 
-      com.computablefacts.nona.helpers.Files.create(input, xStream.toXML(alphabet));
+      com.computablefacts.nona.helpers.Files.create(input, xStream.toXML(classifier));
       com.computablefacts.nona.helpers.Files.gzip(input, output);
       com.computablefacts.nona.helpers.Files.delete(input);
     }
