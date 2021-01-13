@@ -12,9 +12,7 @@ import com.computablefacts.morta.Pipeline;
 import com.computablefacts.nona.helpers.ConfusionMatrix;
 import com.google.common.collect.Lists;
 
-import smile.classification.LogisticRegression;
-
-public class DiscriminativeModelTest {
+public class LogisticRegressionTest {
 
   @Test
   public void testTrainLogisticRegression() {
@@ -56,8 +54,8 @@ public class DiscriminativeModelTest {
     List<Integer> preds = MajorityLabelModel.predictions(lfNames, lfLabels, probs,
         MajorityLabelModel.eTieBreakPolicy.RANDOM, 0.00001);
 
-    LogisticRegression logisticRegression =
-        DiscriminativeModel.trainLogisticRegression(insts, preds);
+    smile.classification.LogisticRegression logisticRegression =
+        LogisticRegression.train(insts, preds);
 
     // Here, instances = [1, 2, 3, 4, 5, 6] and goldLabels = ["KO", "KO", "KO", "KO", "KO", "OK"]
     List<Integer> goldLabels = Lists.newArrayList(0, 0, 0, 0, 0, 1);

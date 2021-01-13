@@ -18,6 +18,8 @@ import com.computablefacts.nona.helpers.CommandLine;
 import com.computablefacts.nona.helpers.Files;
 import com.computablefacts.nona.helpers.Languages;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.HashMultiset;
+import com.google.common.collect.Multiset;
 import com.google.common.collect.Table;
 import com.google.common.primitives.Ints;
 import com.google.errorprone.annotations.CheckReturnValue;
@@ -37,6 +39,7 @@ final public class TrainGenerativeModel extends CommandLine {
     File labelingFunctions = getFileCommand(args, "labeling_functions", null);
     boolean dryRun = getBooleanCommand(args, "dry_run", true);
     boolean verbose = getBooleanCommand(args, "verbose", false);
+    int maxGroupSize = getIntCommand(args, "max_group_size", 4);
     String outputDirectory = getStringCommand(args, "output_directory", null);
 
     // Load gold labels
@@ -107,12 +110,21 @@ final public class TrainGenerativeModel extends CommandLine {
 
     AtomicInteger count = new AtomicInteger(0);
     AsciiProgressBar.ProgressBar bar = AsciiProgressBar.create();
+    @Var
     Dictionary alphabet = new Dictionary();
+    Multiset<String> counts = HashMultiset.create();
 
     gls.stream().peek(gl -> bar.update(count.incrementAndGet(), gls.size())).map(IGoldLabel::data)
-        .forEach(Helpers.alphabetBuilder(Languages.eLanguage.valueOf(language), alphabet));
+        .forEach(Helpers.alphabetBuilder(Languages.eLanguage.valueOf(language), alphabet, counts,
+            maxGroupSize));
 
     System.out.printf("\nAlphabet size is %d\n", alphabet.size());
+    System.out.println("Reducing alphabet...");
+
+    alphabet = Helpers.alphabetReducer(Languages.eLanguage.valueOf(language), alphabet, counts,
+        gls.size());
+
+    System.out.printf("The new alphabet size is %d\n", alphabet.size());
 
     // Compute model accuracy
     if (verbose) {

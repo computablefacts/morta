@@ -3,25 +3,27 @@ package com.computablefacts.morta.snorkel;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+import com.computablefacts.morta.Pipeline;
+import com.computablefacts.morta.poc.MedianLabelModel;
+import com.computablefacts.nona.helpers.ConfusionMatrix;
 import com.google.common.base.Preconditions;
 import com.google.errorprone.annotations.CheckReturnValue;
 
-import smile.classification.LogisticRegression;
-
 @CheckReturnValue
-final public class DiscriminativeModel {
+final public class LogisticRegression {
 
-  private DiscriminativeModel() {}
+  private LogisticRegression() {}
 
   /**
    * Train a logistic regression model.
    *
    * @param instances a list of feature vectors. There is one feature vector for each data point.
    * @param labels a list of output labels. There is one label associated to each feature vector.
-   * @return a {@link LogisticRegression} model.
+   * @return a {@link smile.classification.LogisticRegression} model.
    */
-  public static LogisticRegression trainLogisticRegression(List<FeatureVector<Double>> instances,
+  public static smile.classification.LogisticRegression train(List<FeatureVector<Double>> instances,
       List<Integer> labels) {
 
     Preconditions.checkNotNull(instances, "instances should not be null");
@@ -46,7 +48,17 @@ final public class DiscriminativeModel {
         insts[i][j] = instances.get(i).get(j);
       }
     }
-    return classes.size() == 2 ? LogisticRegression.binomial(insts, lbls)
-        : LogisticRegression.multinomial(insts, lbls);
+    return classes.size() == 2 ? smile.classification.LogisticRegression.binomial(insts, lbls)
+        : smile.classification.LogisticRegression.multinomial(insts, lbls);
+  }
+
+  public static List<Integer> predict(smile.classification.LogisticRegression logisticRegression,
+      List<FeatureVector<Double>> instances) {
+
+    Preconditions.checkNotNull(logisticRegression, "logisticRegression should not be null");
+    Preconditions.checkNotNull(instances, "instances should not be null");
+
+    return Pipeline.on(instances)
+        .transform(vector -> logisticRegression.predict(vector.toDoubleArray())).collect();
   }
 }

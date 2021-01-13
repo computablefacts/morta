@@ -24,6 +24,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Multiset;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
 import com.google.errorprone.annotations.CheckReturnValue;
@@ -88,10 +89,13 @@ final public class Helpers {
         }).collect(Collectors.toList());
   }
 
-  public static Consumer<String> alphabetBuilder(Languages.eLanguage language,
-      Dictionary alphabet) {
+  public static Consumer<String> alphabetBuilder(Languages.eLanguage language, Dictionary alphabet,
+      Multiset<String> counts, int maxGroupSize) {
 
     Preconditions.checkNotNull(language, "language should not be null");
+    Preconditions.checkNotNull(alphabet, "alphabet should not be null");
+    Preconditions.checkNotNull(counts, "counts should not be null");
+    Preconditions.checkArgument(maxGroupSize > 0, "maxGroupSize must be > 0");
 
     Function<String, List<String>> sentenceSplitter = Helpers.sentenceSplitter();
     Function<String, List<String>> wordSplitter = Helpers.wordSplitter(language);
@@ -106,24 +110,62 @@ final public class Helpers {
         List<String> sentence = sentences.get(i);
 
         for (int j = 0; j < sentence.size(); j++) {
-          for (int l = j + 1; l < sentence.size() && l < j + 6; l++) {
+          for (int l = j + 1; l < sentence.size() && l < j + maxGroupSize; l++) {
 
             String ngram = Joiner.on(' ').join(sentence.subList(j, l));
 
             if (!alphabet.containsKey(ngram)) {
               alphabet.put(ngram, alphabet.size());
             }
+            counts.add(ngram);
           }
         }
       }
     };
   }
 
-  public static ITransformationFunction<String, FeatureVector<Double>> countVectorizer(
-      Languages.eLanguage language, Dictionary alphabet) {
+  public static Dictionary alphabetReducer(Languages.eLanguage language, Dictionary alphabet,
+      Multiset<String> counts, int nbGoldLabels) {
 
     Preconditions.checkNotNull(language, "language should not be null");
     Preconditions.checkNotNull(alphabet, "alphabet should not be null");
+    Preconditions.checkNotNull(counts, "counts should not be null");
+    Preconditions.checkArgument(nbGoldLabels > 0, "nbGoldLabels must be > 0");
+
+    Set<String> stopwords = Languages.stopwords(language);
+    Dictionary newAlphabet = new Dictionary();
+    int minDf = (int) (0.01 * nbGoldLabels); // remove outliers
+    int maxDf = (int) (0.99 * nbGoldLabels); // remove outliers
+    @Var
+    int disp = 0;
+
+    for (int i = 0; i < alphabet.size(); i++) {
+
+      String ngram = alphabet.label(i);
+
+      if (stopwords.contains(ngram)) {
+        disp++;
+        continue;
+      }
+      if (counts.count(ngram) < minDf) {
+        disp++;
+        continue;
+      }
+      if (counts.count(ngram) > maxDf) {
+        disp++;
+        continue;
+      }
+      newAlphabet.put(ngram, i - disp);
+    }
+    return newAlphabet;
+  }
+
+  public static ITransformationFunction<String, FeatureVector<Double>> countVectorizer(
+      Languages.eLanguage language, Dictionary alphabet, int maxGroupSize) {
+
+    Preconditions.checkNotNull(language, "language should not be null");
+    Preconditions.checkNotNull(alphabet, "alphabet should not be null");
+    Preconditions.checkArgument(maxGroupSize > 0, "maxGroupSize must be > 0");
 
     Function<String, List<String>> sentenceSplitter = Helpers.sentenceSplitter();
     Function<String, List<String>> wordSplitter = Helpers.wordSplitter(language);
@@ -140,7 +182,7 @@ final public class Helpers {
         List<String> sentence = sentences.get(i);
 
         for (int j = 0; j < sentence.size(); j++) {
-          for (int l = j + 1; l < sentence.size() && l < j + 6; l++) {
+          for (int l = j + 1; l < sentence.size() && l < j + maxGroupSize; l++) {
 
             String ngram = Joiner.on(' ').join(sentence.subList(j, l));
 
