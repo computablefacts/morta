@@ -48,8 +48,9 @@ final public class Helpers {
     xStream.addPermission(NullPermission.NULL);
     xStream.addPermission(PrimitiveTypePermission.PRIMITIVES);
     xStream.allowTypeHierarchy(Collection.class);
-    xStream.allowTypesByWildcard(new String[] {"com.computablefacts.**",
-        "com.google.common.collect.**", "java.lang.**", "java.util.**", "smile.classification.**"});
+    xStream.allowTypesByWildcard(
+        new String[] {"com.computablefacts.**", "com.google.common.collect.**", "java.lang.**",
+            "java.util.**", "java.io.File", "smile.classification.**"});
 
     return xStream;
   }
