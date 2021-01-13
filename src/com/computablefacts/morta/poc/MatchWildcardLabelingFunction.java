@@ -1,5 +1,8 @@
 package com.computablefacts.morta.poc;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import com.computablefacts.morta.snorkel.AbstractLabelingFunction;
 import com.computablefacts.nona.helpers.WildcardMatcher;
 import com.google.errorprone.annotations.CheckReturnValue;
@@ -24,5 +27,10 @@ final public class MatchWildcardLabelingFunction extends AbstractLabelingFunctio
       pattern_ = WildcardMatcher.compact(name());
     }
     return pattern_;
+  }
+
+  public List<String> literals() {
+    return WildcardMatcher.split(pattern()).stream().filter(p -> !"*".equals(p) && !"?".equals(p))
+        .collect(Collectors.toList());
   }
 }
