@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import com.computablefacts.morta.Pipeline;
+import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunction;
 import com.computablefacts.nona.helpers.Files;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Table;

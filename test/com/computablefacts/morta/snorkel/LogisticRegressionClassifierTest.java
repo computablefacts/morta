@@ -5,10 +5,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.computablefacts.morta.snorkel.classifiers.LogisticRegressionClassifier;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.computablefacts.morta.Pipeline;
 import com.computablefacts.nona.helpers.ConfusionMatrix;
 import com.google.common.collect.Lists;
 

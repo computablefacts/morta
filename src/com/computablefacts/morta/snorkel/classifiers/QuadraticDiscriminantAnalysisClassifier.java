@@ -1,7 +1,8 @@
-package com.computablefacts.morta.snorkel;
+package com.computablefacts.morta.snorkel.classifiers;
 
 import java.util.Set;
 
+import com.computablefacts.morta.snorkel.classifiers.AbstractClassifier;
 import com.google.errorprone.annotations.CheckReturnValue;
 
 import smile.classification.Classifier;

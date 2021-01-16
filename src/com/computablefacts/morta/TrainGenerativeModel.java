@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import com.computablefacts.morta.snorkel.Helpers;
-import com.computablefacts.morta.snorkel.MatchWildcardLabelingFunction;
+import com.computablefacts.morta.snorkel.labelingfunctions.MatchWildcardLabelingFunction;
 import com.computablefacts.morta.snorkel.MedianLabelModel;
 import com.computablefacts.morta.snorkel.Dictionary;
 import com.computablefacts.morta.snorkel.IGoldLabel;

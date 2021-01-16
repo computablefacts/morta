@@ -1,10 +1,11 @@
-package com.computablefacts.morta.snorkel;
+package com.computablefacts.morta.snorkel.classifiers;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.computablefacts.morta.Pipeline;
+import com.computablefacts.morta.snorkel.Pipeline;
+import com.computablefacts.morta.snorkel.FeatureVector;
 import com.google.common.base.Preconditions;
 import com.google.errorprone.annotations.CheckReturnValue;
 

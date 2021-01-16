@@ -1,5 +1,6 @@
-package com.computablefacts.morta.snorkel;
+package com.computablefacts.morta.snorkel.labelingfunctions;
 
+import com.computablefacts.morta.snorkel.ILabelingFunction;
 import com.google.errorprone.annotations.CheckReturnValue;
 import com.google.re2j.Matcher;
 import com.google.re2j.Pattern;
@@ -16,7 +17,7 @@ final public class MatchRegexLabelingFunction extends AbstractLabelingFunction<S
   @Override
   public Integer apply(String text) {
     Matcher matcher = pattern().matcher(text);
-    return matcher.find() ? OK : ABSTAIN;
+    return matcher.find() ? ILabelingFunction.OK : ILabelingFunction.ABSTAIN;
   }
 
   public Pattern pattern() {

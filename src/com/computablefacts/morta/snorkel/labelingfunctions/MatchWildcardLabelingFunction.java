@@ -1,8 +1,9 @@
-package com.computablefacts.morta.snorkel;
+package com.computablefacts.morta.snorkel.labelingfunctions;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.computablefacts.morta.snorkel.Helpers;
 import com.computablefacts.nona.helpers.WildcardMatcher;
 import com.google.errorprone.annotations.CheckReturnValue;
 

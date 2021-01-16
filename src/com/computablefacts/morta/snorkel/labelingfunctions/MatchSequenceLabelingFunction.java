@@ -1,9 +1,10 @@
-package com.computablefacts.morta.snorkel;
+package com.computablefacts.morta.snorkel.labelingfunctions;
 
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.computablefacts.morta.snorkel.Helpers;
 import com.computablefacts.nona.helpers.Languages;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;

@@ -1,4 +1,4 @@
-package com.computablefacts.morta.snorkel;
+package com.computablefacts.morta.snorkel.classifiers;
 
 import java.util.Set;
 

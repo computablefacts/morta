@@ -1,10 +1,11 @@
-package com.computablefacts.morta;
+package com.computablefacts.morta.snorkel;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.computablefacts.morta.snorkel.Pipeline;
 import org.junit.Assert;
 import org.junit.Test;
 

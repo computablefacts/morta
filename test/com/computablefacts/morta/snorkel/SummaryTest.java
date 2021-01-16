@@ -7,7 +7,6 @@ import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.computablefacts.morta.Pipeline;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Table;

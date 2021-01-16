@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunction;
 import org.junit.Assert;
 import org.junit.Test;
 

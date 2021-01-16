@@ -5,15 +5,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import com.computablefacts.morta.snorkel.MedianLabelModel;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.computablefacts.morta.snorkel.AbstractLabelingFunction;
-import com.computablefacts.morta.snorkel.FeatureVector;
-import com.computablefacts.morta.snorkel.GoldLabel;
-import com.computablefacts.morta.snorkel.IGoldLabel;
-import com.computablefacts.morta.snorkel.Summary;
+import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunction;
 import com.computablefacts.nona.helpers.ConfusionMatrix;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -118,24 +113,21 @@ public class MedianLabelModelTest {
 
       @Override
       public Integer apply(String s) {
-        return Integer.parseInt(s, 10) % 2 == 0 ? MedianLabelModel.LABEL_OK
-            : MedianLabelModel.LABEL_KO;
+        return Integer.parseInt(s, 10) % 2 == 0 ? OK : KO;
       }
     });
     lfs.add(new AbstractLabelingFunction<String>("isDivisibleBy3") {
 
       @Override
       public Integer apply(String s) {
-        return Integer.parseInt(s, 10) % 3 == 0 ? MedianLabelModel.LABEL_OK
-            : MedianLabelModel.LABEL_KO;
+        return Integer.parseInt(s, 10) % 3 == 0 ? OK : KO;
       }
     });
     lfs.add(new AbstractLabelingFunction<String>("isDivisibleBy6") {
 
       @Override
       public Integer apply(String s) {
-        return Integer.parseInt(s, 10) % 6 == 0 ? MedianLabelModel.LABEL_OK
-            : MedianLabelModel.LABEL_KO;
+        return Integer.parseInt(s, 10) % 6 == 0 ? OK : KO;
       }
     });
 

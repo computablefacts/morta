@@ -1,4 +1,4 @@
-package com.computablefacts.morta;
+package com.computablefacts.morta.snorkel;
 
 import static com.computablefacts.morta.snorkel.ILabelingFunction.ABSTAIN;
 

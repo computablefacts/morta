@@ -7,10 +7,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunction;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.computablefacts.morta.Pipeline;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Table;

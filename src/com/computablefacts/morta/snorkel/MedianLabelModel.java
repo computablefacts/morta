@@ -12,8 +12,8 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import com.computablefacts.morta.Pipeline;
 import com.computablefacts.morta.snorkel.AbstractLabelModel;
+import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunction;
 import com.computablefacts.nona.Generated;
 import com.computablefacts.nona.helpers.AsciiProgressBar;
 import com.computablefacts.nona.helpers.ConfusionMatrix;
@@ -27,7 +27,7 @@ import smile.stat.hypothesis.CorTest;
 /**
  * This model is especially good when all gold labels share the same label. Each labeling function
  * is weighted according to the label class : true positive, false positive, true negative or false
- * negative. Each labeling function MUST output a value in {ABSTAIN, LABEL_OK, LABEL_KO}.
+ * negative. Each labeling function MUST output a value in {ABSTAIN, OK, KO}.
  * 
  * @param <T> data type.
  */
@@ -63,7 +63,7 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
   }
 
   /**
-   * Returns the binary class i.e. LABEL_OK or LABEL_KO, associated with a gold label.
+   * Returns the binary class i.e. OK or KO, associated with a gold label.
    *
    * @param goldLabel gold label.
    * @return a binary class.
@@ -191,7 +191,7 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
   }
 
   /**
-   * Make predictions. All predictions MUST BE in {LABEL_OK, LABEL_KO}.
+   * Make predictions. All predictions MUST BE in {OK, KO}.
    *
    * @param goldLabels gold labels.
    * @return output a prediction for each gold label.

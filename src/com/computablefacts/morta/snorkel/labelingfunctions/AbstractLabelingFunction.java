@@ -1,5 +1,6 @@
-package com.computablefacts.morta.snorkel;
+package com.computablefacts.morta.snorkel.labelingfunctions;
 
+import com.computablefacts.morta.snorkel.ILabelingFunction;
 import com.google.common.base.Preconditions;
 import com.google.errorprone.annotations.CheckReturnValue;
 
