@@ -1,9 +1,15 @@
 package com.computablefacts.morta.snorkel.labelmodels;
 
+import static com.computablefacts.morta.snorkel.ILabelingFunction.KO;
+import static com.computablefacts.morta.snorkel.ILabelingFunction.OK;
+
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import org.junit.Assert;
+import org.junit.Test;
 
 import com.computablefacts.morta.snorkel.Dictionary;
 import com.computablefacts.morta.snorkel.FeatureVector;
@@ -11,9 +17,6 @@ import com.computablefacts.morta.snorkel.GoldLabel;
 import com.computablefacts.morta.snorkel.IGoldLabel;
 import com.computablefacts.morta.snorkel.Summary;
 import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunction;
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
@@ -110,8 +113,8 @@ public class AbstractLabelModelTest {
   private Dictionary lfLabels() {
 
     Dictionary lfLabels = new Dictionary();
-    lfLabels.put("OK", 1);
-    lfLabels.put("KO", 0);
+    lfLabels.put("OK", OK);
+    lfLabels.put("KO", KO);
 
     return lfLabels;
   }
@@ -124,21 +127,21 @@ public class AbstractLabelModelTest {
 
       @Override
       public Integer apply(String x) {
-        return Integer.parseInt(x, 10) % 2 == 0 ? 1 : 0;
+        return Integer.parseInt(x, 10) % 2 == 0 ? OK : KO;
       }
     });
     lfs.add(new AbstractLabelingFunction<String>("isDivisibleBy3") {
 
       @Override
       public Integer apply(String x) {
-        return Integer.parseInt(x, 10) % 3 == 0 ? 1 : 0;
+        return Integer.parseInt(x, 10) % 3 == 0 ? OK : KO;
       }
     });
     lfs.add(new AbstractLabelingFunction<String>("isDivisibleBy6") {
 
       @Override
       public Integer apply(String x) {
-        return Integer.parseInt(x, 10) % 6 == 0 ? 1 : 0;
+        return Integer.parseInt(x, 10) % 6 == 0 ? OK : KO;
       }
     });
     return lfs;
@@ -165,62 +168,62 @@ public class AbstractLabelModelTest {
 
   private List<Map.Entry<String, FeatureVector<Integer>>> isDivisibleBy2Correct() {
     return Lists.newArrayList(
-        new AbstractMap.SimpleEntry<>("1", FeatureVector.from(new int[] {0, 0, 0})),
-        new AbstractMap.SimpleEntry<>("2", FeatureVector.from(new int[] {1, 0, 0})),
-        new AbstractMap.SimpleEntry<>("5", FeatureVector.from(new int[] {0, 0, 0})),
-        new AbstractMap.SimpleEntry<>("6", FeatureVector.from(new int[] {1, 1, 1})),
-        new AbstractMap.SimpleEntry<>("7", FeatureVector.from(new int[] {0, 0, 0})),
-        new AbstractMap.SimpleEntry<>("9", FeatureVector.from(new int[] {0, 1, 0})),
-        new AbstractMap.SimpleEntry<>("11", FeatureVector.from(new int[] {0, 0, 0})));
+        new AbstractMap.SimpleEntry<>("1", FeatureVector.from(new int[] {KO, KO, KO})),
+        new AbstractMap.SimpleEntry<>("2", FeatureVector.from(new int[] {OK, KO, KO})),
+        new AbstractMap.SimpleEntry<>("5", FeatureVector.from(new int[] {KO, KO, KO})),
+        new AbstractMap.SimpleEntry<>("6", FeatureVector.from(new int[] {OK, OK, OK})),
+        new AbstractMap.SimpleEntry<>("7", FeatureVector.from(new int[] {KO, KO, KO})),
+        new AbstractMap.SimpleEntry<>("9", FeatureVector.from(new int[] {KO, OK, KO})),
+        new AbstractMap.SimpleEntry<>("11", FeatureVector.from(new int[] {KO, KO, KO})));
   }
 
   private List<Map.Entry<String, FeatureVector<Integer>>> isDivisibleBy2Incorrect() {
     return Lists.newArrayList(
-        new AbstractMap.SimpleEntry<>("3", FeatureVector.from(new int[] {0, 1, 0})),
-        new AbstractMap.SimpleEntry<>("4", FeatureVector.from(new int[] {1, 0, 0})),
-        new AbstractMap.SimpleEntry<>("8", FeatureVector.from(new int[] {1, 0, 0})),
-        new AbstractMap.SimpleEntry<>("10", FeatureVector.from(new int[] {1, 0, 0})),
-        new AbstractMap.SimpleEntry<>("12", FeatureVector.from(new int[] {1, 1, 1})));
+        new AbstractMap.SimpleEntry<>("3", FeatureVector.from(new int[] {KO, OK, KO})),
+        new AbstractMap.SimpleEntry<>("4", FeatureVector.from(new int[] {OK, KO, KO})),
+        new AbstractMap.SimpleEntry<>("8", FeatureVector.from(new int[] {OK, KO, KO})),
+        new AbstractMap.SimpleEntry<>("10", FeatureVector.from(new int[] {OK, KO, KO})),
+        new AbstractMap.SimpleEntry<>("12", FeatureVector.from(new int[] {OK, OK, OK})));
   }
 
   private List<Map.Entry<String, FeatureVector<Integer>>> isDivisibleBy3Correct() {
     return Lists.newArrayList(
-        new AbstractMap.SimpleEntry<>("1", FeatureVector.from(new int[] {0, 0, 0})),
-        new AbstractMap.SimpleEntry<>("3", FeatureVector.from(new int[] {0, 1, 0})),
-        new AbstractMap.SimpleEntry<>("4", FeatureVector.from(new int[] {1, 0, 0})),
-        new AbstractMap.SimpleEntry<>("5", FeatureVector.from(new int[] {0, 0, 0})),
-        new AbstractMap.SimpleEntry<>("6", FeatureVector.from(new int[] {1, 1, 1})),
-        new AbstractMap.SimpleEntry<>("7", FeatureVector.from(new int[] {0, 0, 0})),
-        new AbstractMap.SimpleEntry<>("8", FeatureVector.from(new int[] {1, 0, 0})),
-        new AbstractMap.SimpleEntry<>("10", FeatureVector.from(new int[] {1, 0, 0})),
-        new AbstractMap.SimpleEntry<>("11", FeatureVector.from(new int[] {0, 0, 0})));
+        new AbstractMap.SimpleEntry<>("1", FeatureVector.from(new int[] {KO, KO, KO})),
+        new AbstractMap.SimpleEntry<>("3", FeatureVector.from(new int[] {KO, OK, KO})),
+        new AbstractMap.SimpleEntry<>("4", FeatureVector.from(new int[] {OK, KO, KO})),
+        new AbstractMap.SimpleEntry<>("5", FeatureVector.from(new int[] {KO, KO, KO})),
+        new AbstractMap.SimpleEntry<>("6", FeatureVector.from(new int[] {OK, OK, OK})),
+        new AbstractMap.SimpleEntry<>("7", FeatureVector.from(new int[] {KO, KO, KO})),
+        new AbstractMap.SimpleEntry<>("8", FeatureVector.from(new int[] {OK, KO, KO})),
+        new AbstractMap.SimpleEntry<>("10", FeatureVector.from(new int[] {OK, KO, KO})),
+        new AbstractMap.SimpleEntry<>("11", FeatureVector.from(new int[] {KO, KO, KO})));
   }
 
   private List<Map.Entry<String, FeatureVector<Integer>>> isDivisibleBy3Incorrect() {
     return Lists.newArrayList(
-        new AbstractMap.SimpleEntry<>("2", FeatureVector.from(new int[] {1, 0, 0})),
-        new AbstractMap.SimpleEntry<>("9", FeatureVector.from(new int[] {0, 1, 0})),
-        new AbstractMap.SimpleEntry<>("12", FeatureVector.from(new int[] {1, 1, 1})));
+        new AbstractMap.SimpleEntry<>("2", FeatureVector.from(new int[] {OK, KO, KO})),
+        new AbstractMap.SimpleEntry<>("9", FeatureVector.from(new int[] {KO, OK, KO})),
+        new AbstractMap.SimpleEntry<>("12", FeatureVector.from(new int[] {OK, OK, OK})));
   }
 
   private List<Map.Entry<String, FeatureVector<Integer>>> isDivisibleBy6Correct() {
     return Lists.newArrayList(
-        new AbstractMap.SimpleEntry<>("1", FeatureVector.from(new int[] {0, 0, 0})),
-        new AbstractMap.SimpleEntry<>("4", FeatureVector.from(new int[] {1, 0, 0})),
-        new AbstractMap.SimpleEntry<>("5", FeatureVector.from(new int[] {0, 0, 0})),
-        new AbstractMap.SimpleEntry<>("6", FeatureVector.from(new int[] {1, 1, 1})),
-        new AbstractMap.SimpleEntry<>("7", FeatureVector.from(new int[] {0, 0, 0})),
-        new AbstractMap.SimpleEntry<>("8", FeatureVector.from(new int[] {1, 0, 0})),
-        new AbstractMap.SimpleEntry<>("9", FeatureVector.from(new int[] {0, 1, 0})),
-        new AbstractMap.SimpleEntry<>("10", FeatureVector.from(new int[] {1, 0, 0})),
-        new AbstractMap.SimpleEntry<>("11", FeatureVector.from(new int[] {0, 0, 0})));
+        new AbstractMap.SimpleEntry<>("1", FeatureVector.from(new int[] {KO, KO, KO})),
+        new AbstractMap.SimpleEntry<>("4", FeatureVector.from(new int[] {OK, KO, KO})),
+        new AbstractMap.SimpleEntry<>("5", FeatureVector.from(new int[] {KO, KO, KO})),
+        new AbstractMap.SimpleEntry<>("6", FeatureVector.from(new int[] {OK, OK, OK})),
+        new AbstractMap.SimpleEntry<>("7", FeatureVector.from(new int[] {KO, KO, KO})),
+        new AbstractMap.SimpleEntry<>("8", FeatureVector.from(new int[] {OK, KO, KO})),
+        new AbstractMap.SimpleEntry<>("9", FeatureVector.from(new int[] {KO, OK, KO})),
+        new AbstractMap.SimpleEntry<>("10", FeatureVector.from(new int[] {OK, KO, KO})),
+        new AbstractMap.SimpleEntry<>("11", FeatureVector.from(new int[] {KO, KO, KO})));
   }
 
   private List<Map.Entry<String, FeatureVector<Integer>>> isDivisibleBy6Incorrect() {
     return Lists.newArrayList(
-        new AbstractMap.SimpleEntry<>("2", FeatureVector.from(new int[] {1, 0, 0})),
-        new AbstractMap.SimpleEntry<>("3", FeatureVector.from(new int[] {0, 1, 0})),
-        new AbstractMap.SimpleEntry<>("12", FeatureVector.from(new int[] {1, 1, 1})));
+        new AbstractMap.SimpleEntry<>("2", FeatureVector.from(new int[] {OK, KO, KO})),
+        new AbstractMap.SimpleEntry<>("3", FeatureVector.from(new int[] {KO, OK, KO})),
+        new AbstractMap.SimpleEntry<>("12", FeatureVector.from(new int[] {OK, OK, OK})));
   }
 
   private List<Summary> summaries() {

@@ -1,20 +1,22 @@
 package com.computablefacts.morta.snorkel.classifiers;
 
+import static com.computablefacts.morta.snorkel.ILabelingFunction.KO;
+import static com.computablefacts.morta.snorkel.ILabelingFunction.OK;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import org.junit.Assert;
+import org.junit.Test;
 
 import com.computablefacts.morta.snorkel.Dictionary;
 import com.computablefacts.morta.snorkel.FeatureVector;
 import com.computablefacts.morta.snorkel.ILabelingFunction;
 import com.computablefacts.morta.snorkel.ITransformationFunction;
 import com.computablefacts.morta.snorkel.Pipeline;
-import com.computablefacts.morta.snorkel.classifiers.LogisticRegressionClassifier;
 import com.computablefacts.morta.snorkel.labelmodels.MajorityLabelModel;
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.computablefacts.nona.helpers.ConfusionMatrix;
 import com.google.common.collect.Lists;
 
@@ -31,13 +33,13 @@ public class LogisticRegressionClassifierTest {
     // OK = isDivisibleBy2 AND isDivisibleBy3
     // KO = !isDivisibleBy2 OR !isDivisibleBy3
     Dictionary lfLabels = new Dictionary();
-    lfLabels.put("OK", 1);
-    lfLabels.put("KO", 0);
+    lfLabels.put("OK", OK);
+    lfLabels.put("KO", KO);
 
     List<ILabelingFunction<Integer>> lfs = new ArrayList<>();
-    lfs.add(x -> x % 2 == 0 ? 1 : 0);
-    lfs.add(x -> x % 3 == 0 ? 1 : 0);
-    lfs.add(x -> x % 6 == 0 ? 1 : 0);
+    lfs.add(x -> x % 2 == 0 ? OK : KO);
+    lfs.add(x -> x % 3 == 0 ? OK : KO);
+    lfs.add(x -> x % 6 == 0 ? OK : KO);
 
     List<Integer> instances = Lists.newArrayList(1, 2, 3, 4, 5, 6);
 
@@ -64,7 +66,7 @@ public class LogisticRegressionClassifierTest {
     classifier.train(insts, preds);
 
     // Here, instances = [1, 2, 3, 4, 5, 6] and goldLabels = ["KO", "KO", "KO", "KO", "KO", "OK"]
-    List<Integer> goldLabels = Lists.newArrayList(0, 0, 0, 0, 0, 1);
+    List<Integer> goldLabels = Lists.newArrayList(KO, KO, KO, KO, KO, OK);
 
     List<Integer> predictions = instances.stream().map(i -> classifier.predict(transform.apply(i)))
         .collect(Collectors.toList());
