@@ -1,10 +1,11 @@
-package com.computablefacts.morta.poc;
+package com.computablefacts.morta.snorkel;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.computablefacts.morta.snorkel.MedianLabelModel;
 import org.junit.Assert;
 import org.junit.Test;
 

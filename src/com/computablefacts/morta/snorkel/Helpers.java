@@ -1,4 +1,4 @@
-package com.computablefacts.morta.poc;
+package com.computablefacts.morta.snorkel;
 
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
@@ -14,9 +14,6 @@ import java.util.stream.Collectors;
 
 import org.tartarus.snowball.SnowballStemmer;
 
-import com.computablefacts.morta.snorkel.Dictionary;
-import com.computablefacts.morta.snorkel.FeatureVector;
-import com.computablefacts.morta.snorkel.ITransformationFunction;
 import com.computablefacts.nona.helpers.Languages;
 import com.computablefacts.nona.helpers.StringIterator;
 import com.google.common.base.CharMatcher;

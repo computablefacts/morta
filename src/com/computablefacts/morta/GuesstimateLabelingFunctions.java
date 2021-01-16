@@ -1,10 +1,14 @@
-package com.computablefacts.morta.poc;
+package com.computablefacts.morta;
 
 import java.io.File;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.computablefacts.morta.docsetlabeler.DocSetLabelerImpl;
+import com.computablefacts.morta.snorkel.Helpers;
+import com.computablefacts.morta.snorkel.MatchWildcardLabelingFunction;
+import com.computablefacts.morta.snorkel.MedianLabelModel;
 import com.computablefacts.morta.snorkel.IGoldLabel;
 import com.computablefacts.nona.helpers.CommandLine;
 import com.computablefacts.nona.helpers.Languages;

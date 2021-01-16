@@ -1,4 +1,4 @@
-package com.computablefacts.morta.poc;
+package com.computablefacts.morta.docsetlabeler;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;

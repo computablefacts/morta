@@ -1,10 +1,9 @@
-package com.computablefacts.morta.poc;
+package com.computablefacts.morta.snorkel;
 
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import com.computablefacts.morta.snorkel.AbstractLabelingFunction;
 import com.computablefacts.nona.helpers.Languages;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;

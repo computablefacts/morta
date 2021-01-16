@@ -1,4 +1,4 @@
-package com.computablefacts.morta.poc;
+package com.computablefacts.morta;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
@@ -14,6 +14,9 @@ import java.util.stream.Collectors;
 import com.computablefacts.junon.Fact;
 import com.computablefacts.junon.Metadata;
 import com.computablefacts.junon.Provenance;
+import com.computablefacts.morta.snorkel.Helpers;
+import com.computablefacts.morta.snorkel.MatchWildcardLabelingFunction;
+import com.computablefacts.morta.snorkel.MedianLabelModel;
 import com.computablefacts.morta.snorkel.AbstractClassifier;
 import com.computablefacts.morta.snorkel.Dictionary;
 import com.computablefacts.morta.snorkel.FeatureVector;

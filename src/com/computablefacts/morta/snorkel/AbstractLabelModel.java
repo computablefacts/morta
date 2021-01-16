@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.computablefacts.morta.Pipeline;
-import com.computablefacts.morta.poc.Helpers;
 import com.computablefacts.nona.helpers.Files;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Table;

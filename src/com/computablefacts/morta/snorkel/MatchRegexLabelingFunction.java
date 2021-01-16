@@ -1,6 +1,5 @@
-package com.computablefacts.morta.poc;
+package com.computablefacts.morta.snorkel;
 
-import com.computablefacts.morta.snorkel.AbstractLabelingFunction;
 import com.google.errorprone.annotations.CheckReturnValue;
 import com.google.re2j.Matcher;
 import com.google.re2j.Pattern;

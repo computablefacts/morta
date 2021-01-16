@@ -1,4 +1,4 @@
-package com.computablefacts.morta.poc;
+package com.computablefacts.morta.docsetlabeler;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
+import com.computablefacts.morta.snorkel.Helpers;
 import org.tartarus.snowball.SnowballStemmer;
 
 import com.computablefacts.nona.helpers.AsciiProgressBar;
@@ -68,7 +69,7 @@ final public class DocSetLabelerImpl extends DocSetLabeler {
           t -> bar.update(count.incrementAndGet(), corpus.size(), "Loading the whole corpus..."))
           .forEach(bag::add);
 
-      bagCorpus_ = new com.computablefacts.morta.poc.BagOfTexts(bag.freezeBagOfTexts());
+      bagCorpus_ = new com.computablefacts.morta.docsetlabeler.BagOfTexts(bag.freezeBagOfTexts());
 
       System.out.println(); // Cosmetic
     }
@@ -83,7 +84,7 @@ final public class DocSetLabelerImpl extends DocSetLabeler {
               t -> bar.update(count.incrementAndGet(), subsetOk.size(), "Loading \"OK\" corpus..."))
           .forEach(bag::add);
 
-      bagSubsetOk_ = new com.computablefacts.morta.poc.BagOfTexts(bag.freezeBagOfTexts());
+      bagSubsetOk_ = new com.computablefacts.morta.docsetlabeler.BagOfTexts(bag.freezeBagOfTexts());
 
       System.out.println(); // Cosmetic
     }
@@ -98,7 +99,7 @@ final public class DocSetLabelerImpl extends DocSetLabeler {
               t -> bar.update(count.incrementAndGet(), subsetKo.size(), "Loading \"KO\" corpus..."))
           .forEach(bag::add);
 
-      bagSubsetKo_ = new com.computablefacts.morta.poc.BagOfTexts(bag.freezeBagOfTexts());
+      bagSubsetKo_ = new com.computablefacts.morta.docsetlabeler.BagOfTexts(bag.freezeBagOfTexts());
 
       System.out.println(); // Cosmetic
     }

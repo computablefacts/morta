@@ -1,4 +1,4 @@
-package com.computablefacts.morta.poc;
+package com.computablefacts.morta.docsetlabeler;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;

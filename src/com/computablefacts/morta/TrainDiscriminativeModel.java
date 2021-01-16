@@ -1,4 +1,4 @@
-package com.computablefacts.morta.poc;
+package com.computablefacts.morta;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
@@ -9,7 +9,8 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import com.computablefacts.morta.Pipeline;
+import com.computablefacts.morta.snorkel.Helpers;
+import com.computablefacts.morta.snorkel.MedianLabelModel;
 import com.computablefacts.morta.snorkel.AbstractClassifier;
 import com.computablefacts.morta.snorkel.Dictionary;
 import com.computablefacts.morta.snorkel.FeatureVector;

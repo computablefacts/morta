@@ -1,4 +1,4 @@
-package com.computablefacts.morta.poc;
+package com.computablefacts.morta.snorkel;
 
 import static com.computablefacts.morta.snorkel.ILabelingFunction.ABSTAIN;
 
@@ -12,12 +12,6 @@ import java.util.stream.Collectors;
 
 import com.computablefacts.morta.Pipeline;
 import com.computablefacts.morta.snorkel.AbstractLabelModel;
-import com.computablefacts.morta.snorkel.AbstractLabelingFunction;
-import com.computablefacts.morta.snorkel.Dictionary;
-import com.computablefacts.morta.snorkel.FeatureVector;
-import com.computablefacts.morta.snorkel.IGoldLabel;
-import com.computablefacts.morta.snorkel.ILabelingFunction;
-import com.computablefacts.morta.snorkel.Summary;
 import com.computablefacts.nona.Generated;
 import com.computablefacts.nona.helpers.AsciiProgressBar;
 import com.computablefacts.nona.helpers.ConfusionMatrix;
@@ -75,7 +69,7 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
    * @param goldLabel gold label.
    * @return a binary class.
    */
-  static <T> int label(IGoldLabel<T> goldLabel) {
+  public static <T> int label(IGoldLabel<T> goldLabel) {
 
     Preconditions.checkNotNull(goldLabel, "goldLabel should not be null");
 
