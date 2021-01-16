@@ -36,7 +36,7 @@ final public class MatchSequenceLabelingFunction extends AbstractLabelingFunctio
     // Find matching patterns
     for (String sentence : sentences) {
       if (sentence.contains(name())) {
-        return MedianLabelModel.LABEL_OK;
+        return OK;
       }
     }
     return ABSTAIN;

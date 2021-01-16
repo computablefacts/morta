@@ -1,5 +1,7 @@
 package com.computablefacts.morta;
 
+import static com.computablefacts.morta.snorkel.ILabelingFunction.OK;
+
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -14,12 +16,11 @@ import java.util.stream.Collectors;
 import com.computablefacts.junon.Fact;
 import com.computablefacts.junon.Metadata;
 import com.computablefacts.junon.Provenance;
-import com.computablefacts.morta.snorkel.Helpers;
-import com.computablefacts.morta.snorkel.MatchWildcardLabelingFunction;
-import com.computablefacts.morta.snorkel.MedianLabelModel;
 import com.computablefacts.morta.snorkel.AbstractClassifier;
 import com.computablefacts.morta.snorkel.Dictionary;
 import com.computablefacts.morta.snorkel.FeatureVector;
+import com.computablefacts.morta.snorkel.Helpers;
+import com.computablefacts.morta.snorkel.MatchWildcardLabelingFunction;
 import com.computablefacts.nona.helpers.Codecs;
 import com.computablefacts.nona.helpers.CommandLine;
 import com.computablefacts.nona.helpers.Document;
@@ -154,7 +155,7 @@ final public class ExecuteModel extends CommandLine {
                     .apply(page);
             int prediction = classifier.predict(vector);
 
-            if (prediction == MedianLabelModel.LABEL_OK) {
+            if (prediction == OK) {
 
               String snippet = SnippetExtractor.extract(keywords, page, 300, 50, "");
 

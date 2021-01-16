@@ -1,5 +1,8 @@
 package com.computablefacts.morta;
 
+import static com.computablefacts.morta.snorkel.ILabelingFunction.KO;
+import static com.computablefacts.morta.snorkel.ILabelingFunction.OK;
+
 import java.io.File;
 import java.util.List;
 import java.util.Map;
@@ -7,9 +10,9 @@ import java.util.stream.Collectors;
 
 import com.computablefacts.morta.docsetlabeler.DocSetLabelerImpl;
 import com.computablefacts.morta.snorkel.Helpers;
+import com.computablefacts.morta.snorkel.IGoldLabel;
 import com.computablefacts.morta.snorkel.MatchWildcardLabelingFunction;
 import com.computablefacts.morta.snorkel.MedianLabelModel;
-import com.computablefacts.morta.snorkel.IGoldLabel;
 import com.computablefacts.nona.helpers.CommandLine;
 import com.computablefacts.nona.helpers.Languages;
 import com.computablefacts.nona.helpers.WildcardMatcher;
@@ -46,9 +49,8 @@ final public class GuesstimateLabelingFunctions extends CommandLine {
     // Pages for which LF must return LABEL_OK
     System.out.println("Building dataset for LABEL_OK...");
 
-    List<String> pagesOk =
-        gls.stream().filter(gl -> MedianLabelModel.label(gl) == MedianLabelModel.LABEL_OK)
-            .map(IGoldLabel::data).collect(Collectors.toList());
+    List<String> pagesOk = gls.stream().filter(gl -> MedianLabelModel.label(gl) == OK)
+        .map(IGoldLabel::data).collect(Collectors.toList());
 
     System.out.printf("%d pages found (%d duplicates)\n", pagesOk.size(),
         pagesOk.size() - Sets.newHashSet(pagesOk).size());
@@ -56,9 +58,8 @@ final public class GuesstimateLabelingFunctions extends CommandLine {
     // Pages for which LF must return LABEL_KO
     System.out.println("Building dataset for LABEL_KO...");
 
-    List<String> pagesKo =
-        gls.stream().filter(gl -> MedianLabelModel.label(gl) == MedianLabelModel.LABEL_KO)
-            .map(IGoldLabel::data).collect(Collectors.toList());
+    List<String> pagesKo = gls.stream().filter(gl -> MedianLabelModel.label(gl) == KO)
+        .map(IGoldLabel::data).collect(Collectors.toList());
 
     System.out.printf("%d pages found (%d duplicates)\n", pagesKo.size(),
         pagesKo.size() - Sets.newHashSet(pagesKo).size());

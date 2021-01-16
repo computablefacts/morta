@@ -16,7 +16,7 @@ final public class MatchRegexLabelingFunction extends AbstractLabelingFunction<S
   @Override
   public Integer apply(String text) {
     Matcher matcher = pattern().matcher(text);
-    return matcher.find() ? MedianLabelModel.LABEL_OK : ABSTAIN;
+    return matcher.find() ? OK : ABSTAIN;
   }
 
   public Pattern pattern() {

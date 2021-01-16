@@ -1,5 +1,8 @@
 package com.computablefacts.morta;
 
+import static com.computablefacts.morta.snorkel.ILabelingFunction.KO;
+import static com.computablefacts.morta.snorkel.ILabelingFunction.OK;
+
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -9,16 +12,16 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import com.computablefacts.morta.snorkel.Helpers;
-import com.computablefacts.morta.snorkel.MedianLabelModel;
 import com.computablefacts.morta.snorkel.AbstractClassifier;
 import com.computablefacts.morta.snorkel.Dictionary;
 import com.computablefacts.morta.snorkel.FeatureVector;
 import com.computablefacts.morta.snorkel.FisherLinearDiscriminantClassifier;
+import com.computablefacts.morta.snorkel.Helpers;
 import com.computablefacts.morta.snorkel.IGoldLabel;
 import com.computablefacts.morta.snorkel.KNearestNeighborClassifier;
 import com.computablefacts.morta.snorkel.LinearDiscriminantAnalysisClassifier;
 import com.computablefacts.morta.snorkel.LogisticRegressionClassifier;
+import com.computablefacts.morta.snorkel.MedianLabelModel;
 import com.computablefacts.morta.snorkel.QuadraticDiscriminantAnalysisClassifier;
 import com.computablefacts.morta.snorkel.RegularizedDiscriminantAnalysisClassifier;
 import com.computablefacts.nona.helpers.AsciiProgressBar;
@@ -170,7 +173,7 @@ final public class TrainDiscriminativeModel extends CommandLine {
     ConfusionMatrix matrix = new ConfusionMatrix();
 
     matrix.addAll(Pipeline.on(goldLabels).transform(MedianLabelModel::label).collect(),
-        classifier.predict(testInsts), MedianLabelModel.LABEL_OK, MedianLabelModel.LABEL_KO);
+        classifier.predict(testInsts), OK, KO);
 
     return matrix;
   }

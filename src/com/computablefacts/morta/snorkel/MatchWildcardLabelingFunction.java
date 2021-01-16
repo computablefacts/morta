@@ -17,8 +17,7 @@ final public class MatchWildcardLabelingFunction extends AbstractLabelingFunctio
 
   @Override
   public Integer apply(String text) {
-    return WildcardMatcher.match(Helpers.normalize(text), pattern()) ? MedianLabelModel.LABEL_OK
-        : ABSTAIN;
+    return WildcardMatcher.match(Helpers.normalize(text), pattern()) ? OK : ABSTAIN;
   }
 
   public String pattern() {

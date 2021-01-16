@@ -1,6 +1,8 @@
 package com.computablefacts.morta.snorkel;
 
 import static com.computablefacts.morta.snorkel.ILabelingFunction.ABSTAIN;
+import static com.computablefacts.morta.snorkel.ILabelingFunction.KO;
+import static com.computablefacts.morta.snorkel.ILabelingFunction.OK;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -31,9 +33,6 @@ import smile.stat.hypothesis.CorTest;
  */
 @CheckReturnValue
 final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
-
-  public static final int LABEL_KO = 0;
-  public static final int LABEL_OK = 1;
 
   private List<Map.Entry<? extends AbstractLabelingFunction<T>, Summary>> lfSummaries_;
   private double[] lfMediansOk_;
@@ -73,7 +72,7 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
 
     Preconditions.checkNotNull(goldLabel, "goldLabel should not be null");
 
-    return goldLabel.isTruePositive() || goldLabel.isFalseNegative() ? LABEL_OK : LABEL_KO;
+    return goldLabel.isTruePositive() || goldLabel.isFalseNegative() ? OK : KO;
   }
 
   private static <T> Dictionary lfsNames(List<? extends AbstractLabelingFunction<T>> lfs) {
@@ -91,8 +90,8 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
   private static Dictionary lfsLabels() {
 
     Dictionary lfOutputs = new Dictionary();
-    lfOutputs.put("KO", LABEL_KO);
-    lfOutputs.put("OK", LABEL_OK);
+    lfOutputs.put("KO", KO);
+    lfOutputs.put("OK", OK);
 
     return lfOutputs;
   }
@@ -180,9 +179,9 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
       T data = goldLabel.data();
       int label = label(goldLabel);
 
-      if (label == LABEL_OK) {
+      if (label == OK) {
         ok.add(score(lfSummaries_, label, data));
-      } else if (label == LABEL_KO) {
+      } else if (label == KO) {
         ko.add(score(lfSummaries_, label, data));
       } // discard ABSTAIN
     }
@@ -248,7 +247,7 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
     List<Integer> predicted = predict(goldLabels);
 
     ConfusionMatrix matrix = new ConfusionMatrix();
-    matrix.addAll(actual, predicted, LABEL_OK, LABEL_KO);
+    matrix.addAll(actual, predicted, OK, KO);
 
     return matrix;
   }
@@ -268,7 +267,7 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
       T data) {
 
     Preconditions.checkNotNull(lfSummaries, "lfSummaries should not be null");
-    Preconditions.checkArgument(label == ABSTAIN || label == LABEL_OK || label == LABEL_KO,
+    Preconditions.checkArgument(label == ABSTAIN || label == OK || label == KO,
         "unknown label class");
     Preconditions.checkNotNull(data, "data should not be null");
 
@@ -361,13 +360,13 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
 
     Preconditions.checkNotNull(data, "data should not be null");
 
-    List<Double> ok = score(lfSummaries_, LABEL_OK, data);
-    List<Double> ko = score(lfSummaries_, LABEL_KO, data);
+    List<Double> ok = score(lfSummaries_, OK, data);
+    List<Double> ko = score(lfSummaries_, KO, data);
 
     if (outputOkLabel(ok) && !outputKoLabel(ko)) {
-      return LABEL_OK;
+      return OK;
     }
-    return LABEL_KO;
+    return KO;
   }
 
   private boolean outputOkLabel(List<Double> ok) {
