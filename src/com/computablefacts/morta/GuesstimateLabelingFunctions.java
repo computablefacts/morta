@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 import com.computablefacts.morta.docsetlabeler.DocSetLabelerImpl;
 import com.computablefacts.morta.snorkel.Helpers;
 import com.computablefacts.morta.snorkel.IGoldLabel;
-import com.computablefacts.morta.snorkel.MedianLabelModel;
+import com.computablefacts.morta.snorkel.labelmodels.MedianLabelModel;
 import com.computablefacts.morta.snorkel.labelingfunctions.MatchWildcardLabelingFunction;
 import com.computablefacts.nona.helpers.CommandLine;
 import com.computablefacts.nona.helpers.Languages;

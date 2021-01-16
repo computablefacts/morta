@@ -1,11 +1,21 @@
-package com.computablefacts.morta.snorkel;
+package com.computablefacts.morta.snorkel.labelmodels;
+
+import static com.computablefacts.morta.snorkel.ILabelingFunction.ABSTAIN;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.computablefacts.morta.snorkel.Dictionary;
+import com.computablefacts.morta.snorkel.FeatureVector;
+import com.computablefacts.morta.snorkel.GoldLabel;
+import com.computablefacts.morta.snorkel.IGoldLabel;
+import com.computablefacts.morta.snorkel.ILabelingFunction;
+import com.computablefacts.morta.snorkel.Pipeline;
+import com.computablefacts.morta.snorkel.Summary;
 import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunction;
+import com.computablefacts.morta.snorkel.labelmodels.MajorityLabelModel;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -15,14 +25,128 @@ import com.google.common.collect.Table;
 
 import smile.stat.hypothesis.CorTest;
 
-public class AbstractLabelModelTest {
+public class MajorityLabelModelTest {
+
+  @Test
+  public void testProbabilities1() {
+
+    List<FeatureVector<Double>> goldProbs = Lists.newArrayList(
+        FeatureVector.from(new double[] {1.0, 0.0}), FeatureVector.from(new double[] {0.5, 0.5}),
+        FeatureVector.from(new double[] {0.5, 0.5}));
+
+    Dictionary lfNames = new Dictionary();
+    lfNames.put("lf1", 0);
+    lfNames.put("lf2", 1);
+    lfNames.put("lf3", 2);
+
+    Dictionary lfLabels = new Dictionary();
+    lfLabels.put("KO", 0);
+    lfLabels.put("OK", 1);
+
+    List<FeatureVector<Integer>> instances =
+        Lists.newArrayList(FeatureVector.from(new int[] {0, 0, ABSTAIN}),
+            FeatureVector.from(new int[] {ABSTAIN, 0, 1}),
+            FeatureVector.from(new int[] {1, ABSTAIN, 0}));
+
+    List<FeatureVector<Double>> probabilities =
+        MajorityLabelModel.probabilities(lfNames, lfLabels, instances);
+
+    Assert.assertEquals(instances.size(), probabilities.size());
+    Assert.assertEquals(goldProbs, probabilities);
+  }
+
+  @Test
+  public void testProbabilities2() {
+
+    List<FeatureVector<Double>> goldProbs = Lists.newArrayList(
+        FeatureVector.from(new double[] {0.0, 1.0}), FeatureVector.from(new double[] {1.0, 0.0}),
+        FeatureVector.from(new double[] {0.0, 1.0}), FeatureVector.from(new double[] {1.0, 0.0}),
+        FeatureVector.from(new double[] {1.0, 0.0}), FeatureVector.from(new double[] {1.0, 0.0}),
+        FeatureVector.from(new double[] {0.5, 0.5}), FeatureVector.from(new double[] {1.0, 0.0}),
+        FeatureVector.from(new double[] {0.0, 1.0}), FeatureVector.from(new double[] {0.0, 1.0}),
+        FeatureVector.from(new double[] {0.0, 1.0}), FeatureVector.from(new double[] {1.0, 0.0}),
+        FeatureVector.from(new double[] {0.0, 1.0}), FeatureVector.from(new double[] {1.0, 0.0}),
+        FeatureVector.from(new double[] {0.5, 0.5}));
+
+    Dictionary lfNames = new Dictionary();
+    lfNames.put("lf1", 0);
+    lfNames.put("lf2", 1);
+    lfNames.put("lf3", 2);
+    lfNames.put("lf4", 3);
+    lfNames.put("lf5", 4);
+    lfNames.put("lf6", 5);
+    lfNames.put("lf7", 6);
+    lfNames.put("lf8", 7);
+    lfNames.put("lf9", 8);
+    lfNames.put("lf10", 9);
+
+    Dictionary lfLabels = new Dictionary();
+    lfLabels.put("KO", 0);
+    lfLabels.put("OK", 1);
+
+    List<FeatureVector<Integer>> instances =
+        Lists.newArrayList(FeatureVector.from(new int[] {-1, -1, -1, -1, -1, -1, 1, -1, -1, -1}),
+            FeatureVector.from(new int[] {0, -1, -1, -1, -1, -1, -1, -1, -1, 0}),
+            FeatureVector.from(new int[] {-1, 1, 1, -1, -1, -1, -1, -1, -1, -1}),
+            FeatureVector.from(new int[] {-1, -1, -1, -1, -1, 0, -1, -1, -1, -1}),
+            FeatureVector.from(new int[] {-1, -1, -1, -1, -1, 0, -1, -1, -1, 0}),
+            FeatureVector.from(new int[] {0, -1, -1, -1, -1, -1, -1, -1, -1, -1}),
+            FeatureVector.from(new int[] {-1, -1, -1, -1, -1, 0, 1, -1, -1, -1}),
+            FeatureVector.from(new int[] {-1, -1, -1, -1, -1, 0, -1, -1, -1, -1}),
+            FeatureVector.from(new int[] {-1, 1, -1, -1, 1, 0, 1, -1, -1, 0}),
+            FeatureVector.from(new int[] {-1, 1, 1, -1, -1, -1, -1, -1, -1, 0}),
+            FeatureVector.from(new int[] {0, 1, 1, -1, -1, -1, -1, -1, -1, -1}),
+            FeatureVector.from(new int[] {0, -1, -1, -1, -1, -1, -1, -1, 0, 0}),
+            FeatureVector.from(new int[] {-1, 1, 1, -1, 1, -1, -1, -1, -1, 0}),
+            FeatureVector.from(new int[] {0, -1, -1, -1, -1, -1, -1, -1, -1, 0}),
+            FeatureVector.from(new int[] {-1, -1, 1, -1, -1, -1, -1, -1, -1, 0}));
+
+    List<FeatureVector<Double>> probabilities =
+        MajorityLabelModel.probabilities(lfNames, lfLabels, instances);
+
+    Assert.assertEquals(instances.size(), probabilities.size());
+    Assert.assertEquals(goldProbs, probabilities);
+  }
+
+  @Test
+  public void testProbabilities3() {
+
+    Dictionary lfNames = new Dictionary();
+    lfNames.put("isDivisibleBy2", 0);
+    lfNames.put("isDivisibleBy3", 1);
+    lfNames.put("isDivisibleBy6", 2);
+
+    // OK = isDivisibleBy2 AND isDivisibleBy3
+    // KO = !isDivisibleBy2 OR !isDivisibleBy3
+    Dictionary lfLabels = new Dictionary();
+    lfLabels.put("OK", 1);
+    lfLabels.put("KO", 0);
+
+    // goldProbs = [[1.0, 0.0], [1.0, 0.0], [1.0, 0.0], [1.0, 0.0], [1.0, 0.0], [0.0, 1.0]]
+    List<FeatureVector<Double>> goldProbs = Lists.newArrayList(
+        FeatureVector.from(new double[] {1.0, 0.0}), FeatureVector.from(new double[] {1.0, 0.0}),
+        FeatureVector.from(new double[] {1.0, 0.0}), FeatureVector.from(new double[] {1.0, 0.0}),
+        FeatureVector.from(new double[] {1.0, 0.0}), FeatureVector.from(new double[] {0.0, 1.0}));
+
+    List<ILabelingFunction<Integer>> lfs = new ArrayList<>();
+    lfs.add(x -> x % 2 == 0 ? 1 : 0);
+    lfs.add(x -> x % 3 == 0 ? 1 : 0);
+    lfs.add(x -> x % 6 == 0 ? 1 : 0);
+
+    List<Integer> instances = Lists.newArrayList(1, 2, 3, 4, 5, 6);
+
+    List<FeatureVector<Double>> probabilities = MajorityLabelModel.probabilities(lfNames, lfLabels,
+        Pipeline.on(instances).label(lfs).transform(Map.Entry::getValue).collect());
+
+    Assert.assertEquals(instances.size(), probabilities.size());
+    Assert.assertEquals(goldProbs, probabilities);
+  }
 
   @Test
   public void testLabelingFunctionsCorrelations() {
 
-    AbstractLabelModel<String> labelModel = labelModel();
     Table<String, String, CorTest> matrix =
-        labelModel.labelingFunctionsCorrelations(goldLabels(), Summary.eCorrelation.PEARSON);
+        labelModel().labelingFunctionsCorrelations(goldLabels(), Summary.eCorrelation.PEARSON);
 
     Assert.assertEquals(Sets.newHashSet("isDivisibleBy2", "isDivisibleBy3", "isDivisibleBy6"),
         matrix.rowKeySet());
@@ -45,9 +169,8 @@ public class AbstractLabelModelTest {
   @Test
   public void testExplore() {
 
-    AbstractLabelModel<String> labelModel = labelModel();
     Table<String, Summary.eStatus, List<Map.Entry<String, FeatureVector<Integer>>>> table =
-        labelModel.explore(goldLabels());
+        labelModel().explore(goldLabels());
 
     Assert.assertEquals(Sets.newHashSet("isDivisibleBy2", "isDivisibleBy3", "isDivisibleBy6"),
         table.rowKeySet());
@@ -73,23 +196,24 @@ public class AbstractLabelModelTest {
   @Test
   public void testSummarize() {
 
-    AbstractLabelModel<String> labelModel = labelModel();
-    List<Summary> list = labelModel.summarize(goldLabels());
+    List<Summary> list = labelModel().summarize(goldLabels());
 
     Assert.assertEquals(summaries(), list);
   }
 
-  private AbstractLabelModel<String> labelModel() {
-    return new AbstractLabelModel<String>(lfNames(), lfLabels(), lfs()) {
+  @Test
+  public void testPredict() {
 
-      @Override
-      public void fit(List<? extends IGoldLabel<String>> goldLabels) {}
+    MajorityLabelModel<String> labelModel = labelModel();
+    labelModel.fit(goldLabels());
 
-      @Override
-      public List<Integer> predict(List<? extends IGoldLabel<String>> goldLabels) {
-        return new ArrayList<>();
-      }
-    };
+    List<Integer> list = labelModel.predict(goldLabels());
+
+    Assert.assertEquals(Lists.newArrayList(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1), list);
+  }
+
+  private MajorityLabelModel<String> labelModel() {
+    return new MajorityLabelModel<>(lfNames(), lfLabels(), lfs());
   }
 
   private Dictionary lfNames() {
@@ -115,21 +239,21 @@ public class AbstractLabelModelTest {
 
     List<AbstractLabelingFunction<String>> lfs = new ArrayList<>();
 
-    lfs.add(new AbstractLabelingFunction<String>("isDivisibleBy2") {
+    lfs.add(new AbstractLabelingFunction<String>("lf_mod_2") {
 
       @Override
       public Integer apply(String x) {
         return Integer.parseInt(x, 10) % 2 == 0 ? 1 : 0;
       }
     });
-    lfs.add(new AbstractLabelingFunction<String>("isDivisibleBy3") {
+    lfs.add(new AbstractLabelingFunction<String>("lf_mod_3") {
 
       @Override
       public Integer apply(String x) {
         return Integer.parseInt(x, 10) % 3 == 0 ? 1 : 0;
       }
     });
-    lfs.add(new AbstractLabelingFunction<String>("isDivisibleBy6") {
+    lfs.add(new AbstractLabelingFunction<String>("lf_mod_6") {
 
       @Override
       public Integer apply(String x) {
@@ -227,7 +351,7 @@ public class AbstractLabelModelTest {
             3, 0, Sets.newHashSet("isDivisibleBy6", "isDivisibleBy2"),
             Sets.newHashSet("isDivisibleBy6", "isDivisibleBy2")),
         new Summary("isDivisibleBy6", Sets.newHashSet("OK", "KO"), 1.0, 1.0, 0.5, 9, 3, 0,
-            Sets.newHashSet("isDivisibleBy2", "isDivisibleBy3"),
-            Sets.newHashSet("isDivisibleBy2", "isDivisibleBy3")));
+            Sets.newHashSet("isDivisibleBy3", "isDivisibleBy2"),
+            Sets.newHashSet("isDivisibleBy3", "isDivisibleBy2")));
   }
 }

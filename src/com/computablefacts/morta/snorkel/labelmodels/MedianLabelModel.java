@@ -1,4 +1,4 @@
-package com.computablefacts.morta.snorkel;
+package com.computablefacts.morta.snorkel.labelmodels;
 
 import static com.computablefacts.morta.snorkel.ILabelingFunction.ABSTAIN;
 import static com.computablefacts.morta.snorkel.ILabelingFunction.KO;
@@ -12,7 +12,12 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import com.computablefacts.morta.snorkel.AbstractLabelModel;
+import com.computablefacts.morta.snorkel.Dictionary;
+import com.computablefacts.morta.snorkel.FeatureVector;
+import com.computablefacts.morta.snorkel.IGoldLabel;
+import com.computablefacts.morta.snorkel.ILabelingFunction;
+import com.computablefacts.morta.snorkel.Pipeline;
+import com.computablefacts.morta.snorkel.Summary;
 import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunction;
 import com.computablefacts.nona.Generated;
 import com.computablefacts.nona.helpers.AsciiProgressBar;

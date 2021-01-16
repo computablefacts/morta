@@ -1,4 +1,4 @@
-package com.computablefacts.morta.snorkel;
+package com.computablefacts.morta.snorkel.labelmodels;
 
 import static com.computablefacts.morta.snorkel.ILabelingFunction.ABSTAIN;
 
@@ -7,6 +7,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import com.computablefacts.morta.snorkel.Dictionary;
+import com.computablefacts.morta.snorkel.FeatureVector;
+import com.computablefacts.morta.snorkel.IGoldLabel;
+import com.computablefacts.morta.snorkel.ILabelingFunction;
+import com.computablefacts.morta.snorkel.Pipeline;
 import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunction;
 import com.google.common.base.Preconditions;
 import com.google.errorprone.annotations.CheckReturnValue;
@@ -50,7 +55,7 @@ final public class MajorityLabelModel<T> extends AbstractLabelModel<T> {
    *         represents a distinct label. Thus, the {@link FeatureVector} length is equal to the
    *         number of labels.
    */
-  static List<FeatureVector<Double>> probabilities(Dictionary lfNames, Dictionary lfLabels,
+  public static List<FeatureVector<Double>> probabilities(Dictionary lfNames, Dictionary lfLabels,
       List<FeatureVector<Integer>> instances) {
 
     Preconditions.checkNotNull(lfNames, "lfNames should not be null");
@@ -137,7 +142,7 @@ final public class MajorityLabelModel<T> extends AbstractLabelModel<T> {
    * @param tieBreakPolicy tie-break policy.
    * @return a single label for each data point.
    */
-  static List<Integer> predictions(Dictionary lfNames, Dictionary lfLabels,
+  public static List<Integer> predictions(Dictionary lfNames, Dictionary lfLabels,
       List<FeatureVector<Double>> probabilities, eTieBreakPolicy tieBreakPolicy, double tolerance) {
 
     Preconditions.checkNotNull(lfNames, "lfNames should not be null");

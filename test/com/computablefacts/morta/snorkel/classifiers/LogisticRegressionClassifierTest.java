@@ -1,11 +1,17 @@
-package com.computablefacts.morta.snorkel;
+package com.computablefacts.morta.snorkel.classifiers;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.computablefacts.morta.snorkel.Dictionary;
+import com.computablefacts.morta.snorkel.FeatureVector;
+import com.computablefacts.morta.snorkel.ILabelingFunction;
+import com.computablefacts.morta.snorkel.ITransformationFunction;
+import com.computablefacts.morta.snorkel.Pipeline;
 import com.computablefacts.morta.snorkel.classifiers.LogisticRegressionClassifier;
+import com.computablefacts.morta.snorkel.labelmodels.MajorityLabelModel;
 import org.junit.Assert;
 import org.junit.Test;
 

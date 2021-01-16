@@ -22,7 +22,7 @@ import com.computablefacts.morta.snorkel.IGoldLabel;
 import com.computablefacts.morta.snorkel.classifiers.KNearestNeighborClassifier;
 import com.computablefacts.morta.snorkel.classifiers.LinearDiscriminantAnalysisClassifier;
 import com.computablefacts.morta.snorkel.classifiers.LogisticRegressionClassifier;
-import com.computablefacts.morta.snorkel.MedianLabelModel;
+import com.computablefacts.morta.snorkel.labelmodels.MedianLabelModel;
 import com.computablefacts.morta.snorkel.classifiers.QuadraticDiscriminantAnalysisClassifier;
 import com.computablefacts.morta.snorkel.classifiers.RegularizedDiscriminantAnalysisClassifier;
 import com.computablefacts.nona.helpers.AsciiProgressBar;

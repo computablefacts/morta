@@ -1,4 +1,4 @@
-package com.computablefacts.morta.snorkel;
+package com.computablefacts.morta.snorkel.labelmodels;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
@@ -7,6 +7,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.computablefacts.morta.snorkel.Dictionary;
+import com.computablefacts.morta.snorkel.FeatureVector;
+import com.computablefacts.morta.snorkel.Helpers;
+import com.computablefacts.morta.snorkel.IGoldLabel;
+import com.computablefacts.morta.snorkel.Pipeline;
+import com.computablefacts.morta.snorkel.Summary;
 import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunction;
 import com.computablefacts.nona.helpers.Files;
 import com.google.common.base.Preconditions;
@@ -85,7 +91,7 @@ public abstract class AbstractLabelModel<T> {
    * @return a correlation matrix.
    */
   public Table<String, String, CorTest> labelingFunctionsCorrelations(
-      List<? extends IGoldLabel<T>> goldLabels, Summary.eCorrelation correlation) {
+          List<? extends IGoldLabel<T>> goldLabels, Summary.eCorrelation correlation) {
 
     Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
     Preconditions.checkNotNull(correlation, "correlation should not be null");
