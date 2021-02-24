@@ -29,6 +29,7 @@ public abstract class AbstractLabelModel<T> {
   private final Dictionary lfNames_;
   private final Dictionary lfLabels_;
   private final List<? extends AbstractLabelingFunction<T>> lfs_;
+  private double mcc_;
 
   /**
    * Constructor.
@@ -84,6 +85,22 @@ public abstract class AbstractLabelModel<T> {
   }
 
   /**
+   * Set the Matthews correlation coefficient associated with this label model.
+   *
+   * @param mcc Matthews correlation coefficient.
+   */
+  public void mcc(double mcc) {
+    mcc_ = mcc;
+  }
+
+  /**
+   * Get the Matthews correlation coefficient associated with this label model.
+   */
+  public double mcc() {
+    return mcc_;
+  }
+
+  /**
    * Compute correlation between each pair of labeling functions.
    *
    * @param goldLabels gold labels.
@@ -91,7 +108,7 @@ public abstract class AbstractLabelModel<T> {
    * @return a correlation matrix.
    */
   public Table<String, String, CorTest> labelingFunctionsCorrelations(
-          List<? extends IGoldLabel<T>> goldLabels, Summary.eCorrelation correlation) {
+      List<? extends IGoldLabel<T>> goldLabels, Summary.eCorrelation correlation) {
 
     Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
     Preconditions.checkNotNull(correlation, "correlation should not be null");

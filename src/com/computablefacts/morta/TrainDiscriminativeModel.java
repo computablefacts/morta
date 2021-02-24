@@ -12,19 +12,19 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import com.computablefacts.morta.snorkel.Pipeline;
-import com.computablefacts.morta.snorkel.classifiers.AbstractClassifier;
 import com.computablefacts.morta.snorkel.Dictionary;
 import com.computablefacts.morta.snorkel.FeatureVector;
-import com.computablefacts.morta.snorkel.classifiers.FisherLinearDiscriminantClassifier;
 import com.computablefacts.morta.snorkel.Helpers;
 import com.computablefacts.morta.snorkel.IGoldLabel;
+import com.computablefacts.morta.snorkel.Pipeline;
+import com.computablefacts.morta.snorkel.classifiers.AbstractClassifier;
+import com.computablefacts.morta.snorkel.classifiers.FisherLinearDiscriminantClassifier;
 import com.computablefacts.morta.snorkel.classifiers.KNearestNeighborClassifier;
 import com.computablefacts.morta.snorkel.classifiers.LinearDiscriminantAnalysisClassifier;
 import com.computablefacts.morta.snorkel.classifiers.LogisticRegressionClassifier;
-import com.computablefacts.morta.snorkel.labelmodels.MedianLabelModel;
 import com.computablefacts.morta.snorkel.classifiers.QuadraticDiscriminantAnalysisClassifier;
 import com.computablefacts.morta.snorkel.classifiers.RegularizedDiscriminantAnalysisClassifier;
+import com.computablefacts.morta.snorkel.labelmodels.MedianLabelModel;
 import com.computablefacts.nona.helpers.AsciiProgressBar;
 import com.computablefacts.nona.helpers.CommandLine;
 import com.computablefacts.nona.helpers.ConfusionMatrix;
@@ -134,9 +134,14 @@ final public class TrainDiscriminativeModel extends CommandLine {
 
       System.out.print("Computing confusion matrix for the TEST dataset...");
       System.out.println(confusionMatrix(language, alpha, maxGroupSize, test, classifier));
+    }
 
+    ConfusionMatrix matrix = confusionMatrix(language, alpha, maxGroupSize, gls, classifier);
+    classifier.mcc(matrix.matthewsCorrelationCoefficient());
+
+    if (verbose) {
       System.out.print("Computing confusion matrix for the WHOLE dataset...");
-      System.out.println(confusionMatrix(language, alpha, maxGroupSize, gls, classifier));
+      System.out.println(matrix);
     }
 
     if (!dryRun) {

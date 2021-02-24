@@ -9,15 +9,16 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import com.computablefacts.morta.snorkel.Helpers;
-import com.computablefacts.morta.snorkel.labelingfunctions.MatchWildcardLabelingFunction;
-import com.computablefacts.morta.snorkel.labelmodels.MedianLabelModel;
 import com.computablefacts.morta.snorkel.Dictionary;
+import com.computablefacts.morta.snorkel.Helpers;
 import com.computablefacts.morta.snorkel.IGoldLabel;
 import com.computablefacts.morta.snorkel.Summary;
+import com.computablefacts.morta.snorkel.labelingfunctions.MatchWildcardLabelingFunction;
+import com.computablefacts.morta.snorkel.labelmodels.MedianLabelModel;
 import com.computablefacts.nona.helpers.AsciiProgressBar;
 import com.computablefacts.nona.helpers.AsciiTable;
 import com.computablefacts.nona.helpers.CommandLine;
+import com.computablefacts.nona.helpers.ConfusionMatrix;
 import com.computablefacts.nona.helpers.Files;
 import com.computablefacts.nona.helpers.Languages;
 import com.google.common.base.Preconditions;
@@ -136,9 +137,14 @@ final public class TrainGenerativeModel extends CommandLine {
 
       System.out.print("Computing confusion matrix for the TEST dataset...");
       System.out.println(labelModel.confusionMatrix(test));
+    }
 
+    ConfusionMatrix matrix = labelModel.confusionMatrix(gls);
+    labelModel.mcc(matrix.matthewsCorrelationCoefficient());
+
+    if (verbose) {
       System.out.print("Computing confusion matrix for the WHOLE dataset...");
-      System.out.println(labelModel.confusionMatrix(gls));
+      System.out.println(matrix);
     }
 
     if (!dryRun) {

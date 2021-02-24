@@ -4,8 +4,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.computablefacts.morta.snorkel.Pipeline;
 import com.computablefacts.morta.snorkel.FeatureVector;
+import com.computablefacts.morta.snorkel.Pipeline;
 import com.google.common.base.Preconditions;
 import com.google.errorprone.annotations.CheckReturnValue;
 
@@ -15,6 +15,23 @@ import smile.classification.Classifier;
 public abstract class AbstractClassifier {
 
   private Classifier<double[]> classifier_;
+  private double mcc_;
+
+  /**
+   * Set the Matthews correlation coefficient associated with this label model.
+   *
+   * @param mcc Matthews correlation coefficient.
+   */
+  public void mcc(double mcc) {
+    mcc_ = mcc;
+  }
+
+  /**
+   * Get the Matthews correlation coefficient associated with this label model.
+   */
+  public double mcc() {
+    return mcc_;
+  }
 
   /**
    * Predict output using a previously trained classifier.
