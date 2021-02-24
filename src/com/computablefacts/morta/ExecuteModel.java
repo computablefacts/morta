@@ -16,10 +16,10 @@ import java.util.stream.Collectors;
 import com.computablefacts.junon.Fact;
 import com.computablefacts.junon.Metadata;
 import com.computablefacts.junon.Provenance;
-import com.computablefacts.morta.snorkel.classifiers.AbstractClassifier;
 import com.computablefacts.morta.snorkel.Dictionary;
 import com.computablefacts.morta.snorkel.FeatureVector;
 import com.computablefacts.morta.snorkel.Helpers;
+import com.computablefacts.morta.snorkel.classifiers.AbstractClassifier;
 import com.computablefacts.morta.snorkel.labelingfunctions.MatchWildcardLabelingFunction;
 import com.computablefacts.nona.helpers.Codecs;
 import com.computablefacts.nona.helpers.CommandLine;
@@ -55,7 +55,6 @@ final public class ExecuteModel extends CommandLine {
     String extractedBy = getStringCommand(args, "extracted_by", "morta");
     String root = getStringCommand(args, "root", null);
     String dataset = getStringCommand(args, "dataset", null);
-    double confidenceScore = getDoubleCommand(args, "confidence_score", 0.5d);
     String output = getStringCommand(args, "output", null);
 
     Stopwatch stopwatch = Stopwatch.createStarted();
@@ -83,6 +82,7 @@ final public class ExecuteModel extends CommandLine {
     AbstractClassifier classifier = (AbstractClassifier) xStream
         .fromXML(Files.compressedLineStream(clazzifier, StandardCharsets.UTF_8)
             .map(Map.Entry::getValue).collect(Collectors.joining("\n")));
+    double confidenceScore = (classifier.mcc() + 1.0) / 2.0; // rescale MCC between 0 and 1
 
     // Load labeling functions
     if (showLogs) {
