@@ -317,39 +317,4 @@ final public class DocSetLabelerImpl extends DocSetLabeler {
         .map(trigram -> Splitter.on('¤').trimResults().omitEmptyStrings().splitToList(trigram))
         .collect(Collectors.toSet());
   }
-
-  /**
-   * Compute TF-IDF for ngrams.
-   *
-   * @param bag bag of texts.
-   * @param text text.
-   * @param word1 first word.
-   * @param word2 second word.
-   * @param word3 third word.
-   * @return TF-IDF.
-   */
-  @Deprecated
-  private double tfIdf(IBagOfTexts bag, String text, String word1, String word2, String word3) {
-
-    Preconditions.checkNotNull(bag, "bag should not be null");
-    Preconditions.checkNotNull(text, "text should not be null");
-    Preconditions.checkNotNull(word1, "word1 should not be null");
-
-    Text txt = bag.text(text);
-
-    if (txt == null) {
-      return 0.0;
-    }
-
-    if (word2 == null && word3 == null) {
-      return bag.tfIdf(txt, word1);
-    }
-    if (word2 != null && word3 == null) {
-      return bag.tfIdf(txt, word1, word2);
-    }
-    if (word2 != null && word3 != null) {
-      return bag.tfIdf(txt, word1, word2, word3);
-    }
-    return 0.0;
-  }
 }
