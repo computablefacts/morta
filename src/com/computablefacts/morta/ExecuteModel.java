@@ -56,6 +56,7 @@ final public class ExecuteModel extends CommandLine {
     String root = getStringCommand(args, "root", null);
     String dataset = getStringCommand(args, "dataset", null);
     String output = getStringCommand(args, "output", null);
+    double threshold = getDoubleCommand(args, "threshold", 0.7);
 
     Stopwatch stopwatch = Stopwatch.createStarted();
 
@@ -82,125 +83,152 @@ final public class ExecuteModel extends CommandLine {
     AbstractClassifier classifier = (AbstractClassifier) xStream
         .fromXML(Files.compressedLineStream(clazzifier, StandardCharsets.UTF_8)
             .map(Map.Entry::getValue).collect(Collectors.joining("\n")));
-    double confidenceScore = (classifier.mcc() + 1.0) / 2.0; // rescale MCC between 0 and 1
 
-    // Load labeling functions
-    if (showLogs) {
-      System.out.println("Loading labeling functions...");
-    }
+    if (Double.isNaN(classifier.mcc()) || Double.isInfinite(classifier.mcc())) {
 
-    List<MatchWildcardLabelingFunction> lfs = (List<MatchWildcardLabelingFunction>) xStream
-        .fromXML(Files.compressedLineStream(labelingFunctions, StandardCharsets.UTF_8)
-            .map(Map.Entry::getValue).collect(Collectors.joining("\n")));
+      stopwatch.stop();
 
-    List<String> keywords =
-        lfs.stream().flatMap(lf -> lf.literals().stream()).distinct().collect(Collectors.toList());
+      if (showLogs) {
+        System.out.println("extraction failed : MCC is either NaN or Infinite");
+        System.out.println("elapsed time : " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
+      }
+    } else {
 
-    if (showLogs) {
-      System.out.println("Keywords found : [\n  " + Joiner.on("\n  ").join(keywords) + "\n]");
-    }
+      double confidenceScore = (classifier.mcc() + 1.0) / 2.0; // rescale MCC between 0 and 1
 
-    // Load documents
-    if (showLogs) {
-      System.out.println("Processing documents...");
-    }
+      if (confidenceScore < threshold) {
 
-    AtomicInteger nbExtractedFacts = new AtomicInteger(0);
-    List<Fact> queue = new ArrayList<>(1000);
-    Files.compressedLineStream(archive, StandardCharsets.UTF_8)
-        .filter(e -> !Strings.isNullOrEmpty(e.getValue()) /* skip empty rows */).map(e -> {
-          try {
-            return new Document(Codecs.asObject(e.getValue()));
-          } catch (Exception ex) {
-            // TODO : logger_.error(Throwables.getStackTraceAsString(Throwables.getRootCause(ex)));
-            // TODO : logger_.error("An error occurred on line : \"" + e.getKey() + "\"");
-          }
-          return null;
-        }).filter(doc -> {
+        stopwatch.stop();
 
-          if (doc == null || doc.isEmpty()) {
-            return false;
-          }
+        if (showLogs) {
+          System.out.println("extraction failed : confidence score is less than threshold ("
+              + confidenceScore + " < " + threshold + ")");
+          System.out.println("elapsed time : " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
+        }
+      } else {
 
-          // Ignore non-pdf files
-          if (!"application/pdf".equals(doc.contentType())) {
-            return false;
-          }
-          if (!(doc.text() instanceof String)) {
-            return false;
-          }
-          return true;
-        }).forEach(doc -> {
+        // Load labeling functions
+        if (showLogs) {
+          System.out.println("Model confidence score is " + confidenceScore);
+          System.out.println("Loading labeling functions...");
+        }
 
-          if (queue.size() >= 1000) {
-            if (output == null) {
-              queue.stream().map(Codecs::asString).forEach(System.out::println);
-            } else if (nbExtractedFacts.get() == queue.size()) {
-              Files.create(new File(output),
-                  queue.stream().map(Codecs::asString).collect(Collectors.toList()));
-            } else {
-              Files.append(new File(output),
-                  queue.stream().map(Codecs::asString).collect(Collectors.toList()));
-            }
-            queue.clear();
-          }
+        List<MatchWildcardLabelingFunction> lfs = (List<MatchWildcardLabelingFunction>) xStream
+            .fromXML(Files.compressedLineStream(labelingFunctions, StandardCharsets.UTF_8)
+                .map(Map.Entry::getValue).collect(Collectors.joining("\n")));
 
-          List<String> pages = Splitter.on(FORM_FEED).splitToList((String) doc.text());
+        List<String> keywords = lfs.stream().flatMap(lf -> lf.literals().stream()).distinct()
+            .collect(Collectors.toList());
 
-          for (int i = 0; i < pages.size(); i++) {
+        if (showLogs) {
+          System.out.println("Keywords found : [\n  " + Joiner.on("\n  ").join(keywords) + "\n]");
+        }
 
-            String page = pages.get(i);
-            FeatureVector<Double> vector =
-                Helpers.countVectorizer(Languages.eLanguage.valueOf(language), alpha, maxGroupSize)
+        // Load documents
+        if (showLogs) {
+          System.out.println("Processing documents...");
+        }
+
+        AtomicInteger nbExtractedFacts = new AtomicInteger(0);
+        List<Fact> queue = new ArrayList<>(1000);
+        Files.compressedLineStream(archive, StandardCharsets.UTF_8)
+            .filter(e -> !Strings.isNullOrEmpty(e.getValue()) /* skip empty rows */).map(e -> {
+              try {
+                return new Document(Codecs.asObject(e.getValue()));
+              } catch (Exception ex) {
+                // TODO :
+                // logger_.error(Throwables.getStackTraceAsString(Throwables.getRootCause(ex)));
+                // TODO : logger_.error("An error occurred on line : \"" + e.getKey() + "\"");
+              }
+              return null;
+            }).filter(doc -> {
+
+              if (doc == null || doc.isEmpty()) {
+                return false;
+              }
+
+              // Ignore non-pdf files
+              if (!"application/pdf".equals(doc.contentType())) {
+                return false;
+              }
+              if (!(doc.text() instanceof String)) {
+                return false;
+              }
+              return true;
+            }).forEach(doc -> {
+
+              if (queue.size() >= 1000) {
+                if (output == null) {
+                  queue.stream().map(Codecs::asString).forEach(System.out::println);
+                } else if (nbExtractedFacts.get() == queue.size()) {
+                  Files.create(new File(output),
+                      queue.stream().map(Codecs::asString).collect(Collectors.toList()));
+                } else {
+                  Files.append(new File(output),
+                      queue.stream().map(Codecs::asString).collect(Collectors.toList()));
+                }
+                queue.clear();
+              }
+
+              List<String> pages = Splitter.on(FORM_FEED).splitToList((String) doc.text());
+
+              for (int i = 0; i < pages.size(); i++) {
+
+                String page = pages.get(i);
+                FeatureVector<Double> vector = Helpers
+                    .countVectorizer(Languages.eLanguage.valueOf(language), alpha, maxGroupSize)
                     .apply(page);
-            int prediction = classifier.predict(vector);
+                int prediction = classifier.predict(vector);
 
-            if (prediction == OK) {
+                if (prediction == OK) {
 
-              String snippet = SnippetExtractor.extract(keywords, page, 300, 50, "");
+                  String snippet = SnippetExtractor.extract(keywords, page, 300, 50, "");
 
-              if (!Strings.isNullOrEmpty(snippet)) {
+                  if (!Strings.isNullOrEmpty(snippet)) {
 
-                // TODO : cleanup ASAP
-                int begin = snippet.indexOf("...") == 0 ? 3 : 0;
-                int end = snippet.lastIndexOf("...") == snippet.length() - 3 ? snippet.length() - 3
-                    : snippet.length();
+                    // TODO : cleanup ASAP
+                    int begin = snippet.indexOf("...") == 0 ? 3 : 0;
+                    int end =
+                        snippet.lastIndexOf("...") == snippet.length() - 3 ? snippet.length() - 3
+                            : snippet.length();
 
-                if (0 <= begin && begin <= end) {
+                    if (0 <= begin && begin <= end) {
 
-                  Fact fact = newFact(extractedWith, extractedBy, root, dataset, doc, label,
-                      confidenceScore, i + 1, page, snippet, begin, end);
+                      Fact fact = newFact(extractedWith, extractedBy, root, dataset, doc, label,
+                          confidenceScore, i + 1, page, snippet, begin, end);
 
-                  queue.add(fact);
-                  nbExtractedFacts.incrementAndGet();
+                      queue.add(fact);
+                      nbExtractedFacts.incrementAndGet();
 
-                  if (showLogs) {
-                    System.out.printf("\n%s -> p.%d : %s \n---\n%s\n---", doc.docId(), i + 1, label,
-                        snippet.replaceAll("(\r\n|\n)+", "\n"));
+                      if (showLogs) {
+                        System.out.printf("\n%s -> p.%d : %s \n---\n%s\n---", doc.docId(), i + 1,
+                            label, snippet.replaceAll("(\r\n|\n)+", "\n"));
+                      }
+                    }
                   }
                 }
               }
-            }
+            });
+
+        if (queue.size() > 0) {
+          if (output == null) {
+            queue.stream().map(Codecs::asString).forEach(System.out::println);
+          } else if (nbExtractedFacts.get() == queue.size()) {
+            Files.create(new File(output),
+                queue.stream().map(Codecs::asString).collect(Collectors.toList()));
+          } else {
+            Files.append(new File(output),
+                queue.stream().map(Codecs::asString).collect(Collectors.toList()));
           }
-        });
+        }
 
-    if (queue.size() > 0) {
-      if (output == null) {
-        queue.stream().map(Codecs::asString).forEach(System.out::println);
-      } else if (nbExtractedFacts.get() == queue.size()) {
-        Files.create(new File(output),
-            queue.stream().map(Codecs::asString).collect(Collectors.toList()));
-      } else {
-        Files.append(new File(output),
-            queue.stream().map(Codecs::asString).collect(Collectors.toList()));
+        stopwatch.stop();
+
+        if (showLogs) {
+          System.out.println("number of extracted facts : " + nbExtractedFacts.get());
+          System.out.println("elapsed time : " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
+        }
       }
-    }
-
-    stopwatch.stop();
-
-    if (showLogs) {
-      System.out.println("number of extracted facts : " + nbExtractedFacts.get());
-      System.out.println("elapsed time : " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
     }
   }
 
