@@ -19,6 +19,7 @@ import com.computablefacts.junon.Provenance;
 import com.computablefacts.morta.snorkel.Dictionary;
 import com.computablefacts.morta.snorkel.FeatureVector;
 import com.computablefacts.morta.snorkel.Helpers;
+import com.computablefacts.morta.snorkel.ITransformationFunction;
 import com.computablefacts.morta.snorkel.classifiers.AbstractClassifier;
 import com.computablefacts.morta.snorkel.labelingfunctions.MatchWildcardLabelingFunction;
 import com.computablefacts.nona.helpers.Codecs;
@@ -141,20 +142,6 @@ final public class ExecuteModel extends CommandLine {
                 // TODO : logger_.error("An error occurred on line : \"" + e.getKey() + "\"");
               }
               return null;
-            }).filter(doc -> {
-
-              if (doc == null || doc.isEmpty()) {
-                return false;
-              }
-
-              // Ignore non-pdf files
-              if (!"application/pdf".equals(doc.contentType())) {
-                return false;
-              }
-              if (!(doc.text() instanceof String)) {
-                return false;
-              }
-              return true;
             }).forEach(doc -> {
 
               if (queue.size() >= 1000) {
@@ -170,43 +157,12 @@ final public class ExecuteModel extends CommandLine {
                 queue.clear();
               }
 
-              List<String> pages = Splitter.on(FORM_FEED).splitToList((String) doc.text());
+              List<Fact> facts = apply(extractedWith, extractedBy, root, dataset, threshold,
+                  maxGroupSize, language, label, alpha, classifier, lfs, keywords, doc, showLogs);
 
-              for (int i = 0; i < pages.size(); i++) {
-
-                String page = pages.get(i);
-                FeatureVector<Double> vector = Helpers
-                    .countVectorizer(Languages.eLanguage.valueOf(language), alpha, maxGroupSize)
-                    .apply(page);
-                int prediction = classifier.predict(vector);
-
-                if (prediction == OK) {
-
-                  String snippet = SnippetExtractor.extract(keywords, page, 300, 50, "");
-
-                  if (!Strings.isNullOrEmpty(snippet)) {
-
-                    // TODO : cleanup ASAP
-                    int begin = snippet.indexOf("...") == 0 ? 3 : 0;
-                    int end =
-                        snippet.lastIndexOf("...") == snippet.length() - 3 ? snippet.length() - 3
-                            : snippet.length();
-
-                    if (0 <= begin && begin <= end) {
-
-                      Fact fact = newFact(extractedWith, extractedBy, root, dataset, doc, label,
-                          confidenceScore, i + 1, page, snippet, begin, end);
-
-                      queue.add(fact);
-                      nbExtractedFacts.incrementAndGet();
-
-                      if (showLogs) {
-                        System.out.printf("\n%s -> p.%d : %s \n---\n%s\n---", doc.docId(), i + 1,
-                            label, snippet.replaceAll("(\r\n|\n)+", "\n"));
-                      }
-                    }
-                  }
-                }
+              if (!facts.isEmpty()) {
+                queue.addAll(facts);
+                nbExtractedFacts.addAndGet(facts.size());
               }
             });
 
@@ -230,6 +186,76 @@ final public class ExecuteModel extends CommandLine {
         }
       }
     }
+  }
+
+  public static List<Fact> apply(String extractedWith, String extractedBy, String root,
+      String dataset, double threshold, int maxGroupSize, String language, String label,
+      Dictionary alpha, AbstractClassifier classifier, List<MatchWildcardLabelingFunction> lfs,
+      List<String> keywords, Document doc, boolean showLogs) {
+
+    Preconditions.checkNotNull(extractedWith, "extractedWith should not be null");
+    Preconditions.checkNotNull(extractedBy, "extractedBy should not be null");
+    Preconditions.checkNotNull(root, "root should not be null");
+    Preconditions.checkNotNull(dataset, "dataset should not be null");
+    Preconditions.checkArgument(0.0 <= threshold && threshold <= 1.0,
+        "threshold must be such as 0.0 <= threshold <= 1.0");
+    Preconditions.checkArgument(0 <= maxGroupSize, "maxGroupSize must be such as 0 < maxGroupSize");
+    Preconditions.checkNotNull(language, "language should not be null");
+    Preconditions.checkNotNull(label, "label should not be null");
+    Preconditions.checkNotNull(alpha, "alpha should not be null");
+    Preconditions.checkNotNull(classifier, "classifier should not be null");
+    Preconditions.checkNotNull(lfs, "lfs should not be null");
+    Preconditions.checkNotNull(keywords, "keywords should not be null");
+    Preconditions.checkNotNull(doc, "doc should not be null");
+
+    if (Double.isNaN(classifier.mcc()) || Double.isInfinite(classifier.mcc())) {
+      return Lists.newArrayList();
+    }
+
+    double confidenceScore = (classifier.mcc() + 1.0) / 2.0; // Rescale MCC between 0 and 1
+
+    if (confidenceScore < threshold) {
+      return Lists.newArrayList();
+    }
+    if (doc.isEmpty()) {
+      return Lists.newArrayList();
+    }
+    if (!"application/pdf".equals(doc.contentType())) { // Ignore non-pdf files
+      return Lists.newArrayList();
+    }
+    if (!(doc.text() instanceof String)) {
+      return Lists.newArrayList();
+    }
+
+    ITransformationFunction<String, FeatureVector<Double>> countVectorizer =
+        Helpers.countVectorizer(Languages.eLanguage.valueOf(language), alpha, maxGroupSize);
+    List<Fact> facts = new ArrayList<>();
+    List<String> pages = Splitter.on(FORM_FEED).splitToList((String) doc.text());
+
+    for (int i = 0; i < pages.size(); i++) {
+
+      String page = pages.get(i);
+      int prediction = classifier.predict(countVectorizer.apply(page));
+
+      if (prediction == OK) {
+
+        String snippet = SnippetExtractor.extract(keywords, page, 300, 50, "");
+
+        if (!Strings.isNullOrEmpty(snippet)) {
+
+          Fact fact = newFact(extractedWith, extractedBy, root, dataset, doc, label,
+              confidenceScore, i + 1, page, snippet, 0, snippet.length());
+
+          facts.add(fact);
+
+          if (showLogs) {
+            System.out.printf("\n%s -> p.%d : %s \n---\n%s\n---", doc.docId(), i + 1, label,
+                snippet.replaceAll("(\r\n|\n)+", "\n"));
+          }
+        }
+      }
+    }
+    return facts;
   }
 
   private static Fact newFact(String extractedWith, String extractedBy, String root, String dataset,
