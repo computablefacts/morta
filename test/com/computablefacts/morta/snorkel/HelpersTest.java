@@ -16,7 +16,7 @@ public class HelpersTest {
 
     Function<String, List<String>> sentenceSplitter = Helpers.sentenceSplitter();
 
-    sentenceSplitter.apply(null);
+    List<String> sentences = sentenceSplitter.apply(null);
   }
 
   @Test
@@ -40,7 +40,7 @@ public class HelpersTest {
 
     Function<String, List<String>> wordSplitter = Helpers.wordSplitter(Languages.eLanguage.FRENCH);
 
-    wordSplitter.apply(null);
+    List<String> words = wordSplitter.apply(null);
   }
 
   @Test
