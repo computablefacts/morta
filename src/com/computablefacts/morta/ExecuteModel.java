@@ -46,214 +46,162 @@ final public class ExecuteModel extends CommandLine {
 
     String language = getStringCommand(args, "language", null);
     String label = getStringCommand(args, "label", null);
-    File alphabet = getFileCommand(args, "alphabet", null);
     File archive = getFileCommand(args, "archive", null);
-    File clazzifier = getFileCommand(args, "classifier", null);
-    File labelingFunctions = getFileCommand(args, "labeling_functions", null);
     boolean showLogs = getBooleanCommand(args, "show_logs", false);
     int maxGroupSize = getIntCommand(args, "max_group_size", 4);
     String extractedWith = getStringCommand(args, "extracted_with", "morta");
     String extractedBy = getStringCommand(args, "extracted_by", "morta");
     String root = getStringCommand(args, "root", null);
     String dataset = getStringCommand(args, "dataset", null);
+    String input = getStringCommand(args, "input", null);
     String output = getStringCommand(args, "output", null);
     double threshold = getDoubleCommand(args, "threshold", 0.7);
 
     Stopwatch stopwatch = Stopwatch.createStarted();
 
-    // Load alphabet
+    // Loading model
     if (showLogs) {
-      System.out.println("Loading alphabet...");
+      System.out.println("Loading model...");
     }
 
-    XStream xStream = Helpers.xStream();
+    Model model = new Model(language, label, maxGroupSize);
 
-    Dictionary alpha =
-        (Dictionary) xStream.fromXML(Files.compressedLineStream(alphabet, StandardCharsets.UTF_8)
-            .map(Map.Entry::getValue).collect(Collectors.joining("\n")));
-
-    if (showLogs) {
-      System.out.printf("Alphabet size is %d\n", alpha.size());
-    }
-
-    // Load classifier
-    if (showLogs) {
-      System.out.println("Loading classifier...");
-    }
-
-    AbstractClassifier classifier = (AbstractClassifier) xStream
-        .fromXML(Files.compressedLineStream(clazzifier, StandardCharsets.UTF_8)
-            .map(Map.Entry::getValue).collect(Collectors.joining("\n")));
-
-    if (Double.isNaN(classifier.mcc()) || Double.isInfinite(classifier.mcc())) {
+    if (!model.init(input)) {
 
       stopwatch.stop();
 
       if (showLogs) {
-        System.out.println("extraction failed : MCC is either NaN or Infinite");
-        System.out.println("elapsed time : " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
+        System.out.println("Extraction failed : invalid model");
+        System.out.println("Elapsed time : " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
+      }
+    } else if (model.confidenceScore() < threshold) {
+
+      stopwatch.stop();
+
+      if (showLogs) {
+        System.out.println("Extraction failed : confidence score is less than threshold ("
+            + model.confidenceScore() + " < " + threshold + ")");
+        System.out.println("Elapsed time : " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
       }
     } else {
 
-      double confidenceScore = (classifier.mcc() + 1.0) / 2.0; // rescale MCC between 0 and 1
+      if (showLogs) {
+        System.out.printf("Alphabet size is %d\n", model.alphabet().size());
+        System.out.printf("Model confidence score is %f\n", model.confidenceScore());
+        System.out
+            .println("Keywords found : [\n  " + Joiner.on("\n  ").join(model.keywords()) + "\n]");
+        System.out.println("Processing documents...");
+      }
 
-      if (confidenceScore < threshold) {
+      AtomicInteger nbExtractedFacts = new AtomicInteger(0);
+      List<Fact> queue = new ArrayList<>(1000);
+      List<Model> models = Lists.newArrayList(model);
 
-        stopwatch.stop();
+      Files.compressedLineStream(archive, StandardCharsets.UTF_8)
+          .filter(e -> !Strings.isNullOrEmpty(e.getValue()) /* skip empty rows */).map(e -> {
+            try {
+              return new Document(Codecs.asObject(e.getValue()));
+            } catch (Exception ex) {
+              // TODO :
+              // logger_.error(Throwables.getStackTraceAsString(Throwables.getRootCause(ex)));
+              // TODO : logger_.error("An error occurred on line : \"" + e.getKey() + "\"");
+            }
+            return null;
+          }).forEach(doc -> {
 
-        if (showLogs) {
-          System.out.println("extraction failed : confidence score is less than threshold ("
-              + confidenceScore + " < " + threshold + ")");
-          System.out.println("elapsed time : " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
-        }
-      } else {
-
-        // Load labeling functions
-        if (showLogs) {
-          System.out.println("Model confidence score is " + confidenceScore);
-          System.out.println("Loading labeling functions...");
-        }
-
-        List<MatchWildcardLabelingFunction> lfs = (List<MatchWildcardLabelingFunction>) xStream
-            .fromXML(Files.compressedLineStream(labelingFunctions, StandardCharsets.UTF_8)
-                .map(Map.Entry::getValue).collect(Collectors.joining("\n")));
-
-        List<String> keywords = lfs.stream().flatMap(lf -> lf.literals().stream()).distinct()
-            .collect(Collectors.toList());
-
-        if (showLogs) {
-          System.out.println("Keywords found : [\n  " + Joiner.on("\n  ").join(keywords) + "\n]");
-        }
-
-        // Load documents
-        if (showLogs) {
-          System.out.println("Processing documents...");
-        }
-
-        AtomicInteger nbExtractedFacts = new AtomicInteger(0);
-        List<Fact> queue = new ArrayList<>(1000);
-        Files.compressedLineStream(archive, StandardCharsets.UTF_8)
-            .filter(e -> !Strings.isNullOrEmpty(e.getValue()) /* skip empty rows */).map(e -> {
-              try {
-                return new Document(Codecs.asObject(e.getValue()));
-              } catch (Exception ex) {
-                // TODO :
-                // logger_.error(Throwables.getStackTraceAsString(Throwables.getRootCause(ex)));
-                // TODO : logger_.error("An error occurred on line : \"" + e.getKey() + "\"");
+            if (queue.size() >= 1000) {
+              if (output == null) {
+                queue.stream().map(Codecs::asString).forEach(System.out::println);
+              } else if (nbExtractedFacts.get() == queue.size()) {
+                Files.create(new File(output),
+                    queue.stream().map(Codecs::asString).collect(Collectors.toList()));
+              } else {
+                Files.append(new File(output),
+                    queue.stream().map(Codecs::asString).collect(Collectors.toList()));
               }
-              return null;
-            }).forEach(doc -> {
+              queue.clear();
+            }
 
-              if (queue.size() >= 1000) {
-                if (output == null) {
-                  queue.stream().map(Codecs::asString).forEach(System.out::println);
-                } else if (nbExtractedFacts.get() == queue.size()) {
-                  Files.create(new File(output),
-                      queue.stream().map(Codecs::asString).collect(Collectors.toList()));
-                } else {
-                  Files.append(new File(output),
-                      queue.stream().map(Codecs::asString).collect(Collectors.toList()));
-                }
-                queue.clear();
-              }
+            List<Fact> facts =
+                apply(extractedWith, extractedBy, root, dataset, models, doc, showLogs);
 
-              List<Fact> facts = apply(extractedWith, extractedBy, root, dataset, threshold,
-                  maxGroupSize, language, label, alpha, classifier, lfs, keywords, doc, showLogs);
+            if (!facts.isEmpty()) {
+              queue.addAll(facts);
+              nbExtractedFacts.addAndGet(facts.size());
+            }
+          });
 
-              if (!facts.isEmpty()) {
-                queue.addAll(facts);
-                nbExtractedFacts.addAndGet(facts.size());
-              }
-            });
-
-        if (queue.size() > 0) {
-          if (output == null) {
-            queue.stream().map(Codecs::asString).forEach(System.out::println);
-          } else if (nbExtractedFacts.get() == queue.size()) {
-            Files.create(new File(output),
-                queue.stream().map(Codecs::asString).collect(Collectors.toList()));
-          } else {
-            Files.append(new File(output),
-                queue.stream().map(Codecs::asString).collect(Collectors.toList()));
-          }
+      if (queue.size() > 0) {
+        if (output == null) {
+          queue.stream().map(Codecs::asString).forEach(System.out::println);
+        } else if (nbExtractedFacts.get() == queue.size()) {
+          Files.create(new File(output),
+              queue.stream().map(Codecs::asString).collect(Collectors.toList()));
+        } else {
+          Files.append(new File(output),
+              queue.stream().map(Codecs::asString).collect(Collectors.toList()));
         }
+      }
 
-        stopwatch.stop();
+      stopwatch.stop();
 
-        if (showLogs) {
-          System.out.println("number of extracted facts : " + nbExtractedFacts.get());
-          System.out.println("elapsed time : " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
-        }
+      if (showLogs) {
+        System.out.println("Number of extracted facts : " + nbExtractedFacts.get());
+        System.out.println("Elapsed time : " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
       }
     }
   }
 
   public static List<Fact> apply(String extractedWith, String extractedBy, String root,
-      String dataset, double threshold, int maxGroupSize, String language, String label,
-      Dictionary alpha, AbstractClassifier classifier, List<MatchWildcardLabelingFunction> lfs,
-      List<String> keywords, Document doc, boolean showLogs) {
+      String dataset, List<Model> models, Document doc, boolean showLogs) {
 
     Preconditions.checkNotNull(extractedWith, "extractedWith should not be null");
     Preconditions.checkNotNull(extractedBy, "extractedBy should not be null");
     Preconditions.checkNotNull(root, "root should not be null");
     Preconditions.checkNotNull(dataset, "dataset should not be null");
-    Preconditions.checkArgument(0.0 <= threshold && threshold <= 1.0,
-        "threshold must be such as 0.0 <= threshold <= 1.0");
-    Preconditions.checkArgument(0 <= maxGroupSize, "maxGroupSize must be such as 0 < maxGroupSize");
-    Preconditions.checkNotNull(language, "language should not be null");
-    Preconditions.checkNotNull(label, "label should not be null");
-    Preconditions.checkNotNull(alpha, "alpha should not be null");
-    Preconditions.checkNotNull(classifier, "classifier should not be null");
-    Preconditions.checkNotNull(lfs, "lfs should not be null");
-    Preconditions.checkNotNull(keywords, "keywords should not be null");
     Preconditions.checkNotNull(doc, "doc should not be null");
 
-    if (Double.isNaN(classifier.mcc()) || Double.isInfinite(classifier.mcc())) {
-      return Lists.newArrayList();
-    }
+    List<Fact> facts = new ArrayList<>();
 
-    double confidenceScore = (classifier.mcc() + 1.0) / 2.0; // Rescale MCC between 0 and 1
-
-    if (confidenceScore < threshold) {
-      return Lists.newArrayList();
-    }
     if (doc.isEmpty()) {
-      return Lists.newArrayList();
+      return facts;
     }
     if (!"application/pdf".equals(doc.contentType())) { // Ignore non-pdf files
-      return Lists.newArrayList();
+      return facts;
     }
     if (!(doc.text() instanceof String)) {
-      return Lists.newArrayList();
+      return facts;
     }
 
-    ITransformationFunction<String, FeatureVector<Double>> countVectorizer =
-        Helpers.countVectorizer(Languages.eLanguage.valueOf(language), alpha, maxGroupSize);
-    List<Fact> facts = new ArrayList<>();
     List<String> pages = Splitter.on(FORM_FEED).splitToList((String) doc.text());
 
     for (int i = 0; i < pages.size(); i++) {
 
-      String page = pages.get(i);
-      int prediction = classifier.predict(countVectorizer.apply(page));
+      int pageIndex = i;
+      String page = pages.get(pageIndex);
 
-      if (prediction == OK) {
+      models.stream().filter(Model::isValid).forEach(model -> {
 
-        String snippet = SnippetExtractor.extract(keywords, page, 300, 50, "");
+        int prediction = model.classifier().predict(model.countVectorizer().apply(page));
 
-        if (!Strings.isNullOrEmpty(snippet)) {
+        if (prediction == OK) {
 
-          Fact fact = newFact(extractedWith, extractedBy, root, dataset, doc, label,
-              confidenceScore, i + 1, page, snippet, 0, snippet.length());
+          String snippet = SnippetExtractor.extract(model.keywords(), page, 300, 50, "");
 
-          facts.add(fact);
+          if (!Strings.isNullOrEmpty(snippet)) {
 
-          if (showLogs) {
-            System.out.printf("\n%s -> p.%d : %s \n---\n%s\n---", doc.docId(), i + 1, label,
-                snippet.replaceAll("(\r\n|\n)+", "\n"));
+            Fact fact = newFact(extractedWith, extractedBy, root, dataset, doc, model.name(),
+                model.confidenceScore(), pageIndex + 1, page, snippet, 0, snippet.length());
+
+            facts.add(fact);
+
+            if (showLogs) {
+              System.out.printf("\n%s -> p.%d : %s \n---\n%s\n---", doc.docId(), pageIndex + 1,
+                  model.name(), snippet.replaceAll("(\r\n|\n)+", "\n"));
+            }
           }
         }
-      }
+      });
     }
     return facts;
   }
@@ -311,5 +259,125 @@ final public class ExecuteModel extends CommandLine {
         startIndex, endIndex));
 
     return fact;
+  }
+
+  final public static class Model {
+
+    private final XStream xStream_ = Helpers.xStream();
+    private final String language_;
+    private final String model_;
+    private final int maxGroupSize_;
+    private Dictionary alphabet_;
+    private AbstractClassifier classifier_;
+    private List<MatchWildcardLabelingFunction> labelingFunctions_;
+    private List<String> keywords_;
+    private double confidenceScore_;
+    private ITransformationFunction<String, FeatureVector<Double>> countVectorizer_;
+
+    public Model() {
+      language_ = "";
+      model_ = "";
+      maxGroupSize_ = 0;
+    }
+
+    public Model(String language, String model, int maxGroupSize) {
+
+      Preconditions.checkArgument(!Strings.isNullOrEmpty(language),
+          "language is either null or empty");
+      Preconditions.checkArgument(!Strings.isNullOrEmpty(model), "model is either null or empty");
+      Preconditions.checkArgument(maxGroupSize > 0, "maxGroupSize must be > 0");
+
+      language_ = language;
+      model_ = model;
+      maxGroupSize_ = maxGroupSize;
+    }
+
+    public String name() {
+      return model_;
+    }
+
+    public String language() {
+      return language_;
+    }
+
+    public Dictionary alphabet() {
+      return alphabet_;
+    }
+
+    public AbstractClassifier classifier() {
+      return classifier_;
+    }
+
+    public List<MatchWildcardLabelingFunction> labelingFunctions() {
+      return labelingFunctions_;
+    }
+
+    public List<String> keywords() {
+      return keywords_;
+    }
+
+    public double confidenceScore() {
+      return confidenceScore_;
+    }
+
+    public ITransformationFunction<String, FeatureVector<Double>> countVectorizer() {
+      return countVectorizer_;
+    }
+
+    public boolean isValid() {
+      return !Strings.isNullOrEmpty(model_) && !Strings.isNullOrEmpty(language_)
+          && maxGroupSize_ > 0 && alphabet_ != null && classifier_ != null
+          && labelingFunctions_ != null && keywords_ != null && 0.0 <= confidenceScore_
+          && confidenceScore_ <= 1.0 && countVectorizer_ != null;
+    }
+
+    public boolean init(String dir) {
+
+      Preconditions.checkArgument(!Strings.isNullOrEmpty(dir),
+          "dir should neither be null nor empty");
+
+      alphabet_ = alphabet(dir);
+      classifier_ = classifier(dir);
+      labelingFunctions_ = labelingFunctions(dir);
+      countVectorizer_ =
+          Helpers.countVectorizer(Languages.eLanguage.valueOf(language_), alphabet_, maxGroupSize_);
+
+      if (classifier_ != null) {
+        if (Double.isNaN(classifier_.mcc()) || Double.isInfinite(classifier_.mcc())) {
+          confidenceScore_ = -1.0;
+        } else {
+          confidenceScore_ = (classifier_.mcc() + 1.0) / 2.0; // Rescale MCC between 0 and 1
+        }
+      }
+      if (labelingFunctions_ != null) {
+        keywords_ = labelingFunctions_.stream().flatMap((lf) -> lf.literals().stream()).distinct()
+            .collect(Collectors.toList());
+      }
+      return isValid();
+    }
+
+    private Dictionary alphabet(String dir) {
+      return (Dictionary) xStream_
+          .fromXML(Files
+              .compressedLineStream(new File(Constants.alphabetGz(dir, language_, model_)),
+                  StandardCharsets.UTF_8)
+              .map(Map.Entry::getValue).collect(Collectors.joining("\n")));
+    }
+
+    private AbstractClassifier classifier(String dir) {
+      return (AbstractClassifier) xStream_
+          .fromXML(Files
+              .compressedLineStream(new File(Constants.classifierGz(dir, language_, model_)),
+                  StandardCharsets.UTF_8)
+              .map(Map.Entry::getValue).collect(Collectors.joining("\n")));
+    }
+
+    private List<MatchWildcardLabelingFunction> labelingFunctions(String dir) {
+      return (List<MatchWildcardLabelingFunction>) xStream_
+          .fromXML(Files
+              .compressedLineStream(new File(Constants.labelingFunctionsGz(dir, language_, model_)),
+                  StandardCharsets.UTF_8)
+              .map(Map.Entry::getValue).collect(Collectors.joining("\n")));
+    }
   }
 }

@@ -152,11 +152,9 @@ final public class TrainGenerativeModel extends CommandLine {
       System.out.println("Saving alphabet...");
 
       @Var
-      File input = new File(
-          outputDirectory + File.separator + "alphabet_for_" + label + "_" + language + ".xml");
+      File input = new File(Constants.alphabetXml(outputDirectory, language, label));
       @Var
-      File output = new File(
-          outputDirectory + File.separator + "alphabet_for_" + label + "_" + language + ".xml.gz");
+      File output = new File(Constants.alphabetGz(outputDirectory, language, label));
 
       com.computablefacts.nona.helpers.Files.create(input, xStream.toXML(alphabet));
       com.computablefacts.nona.helpers.Files.gzip(input, output);
@@ -164,10 +162,8 @@ final public class TrainGenerativeModel extends CommandLine {
 
       System.out.println("Saving counts...");
 
-      input = new File(
-          outputDirectory + File.separator + "counts_for_" + label + "_" + language + ".xml");
-      output = new File(
-          outputDirectory + File.separator + "counts_for_" + label + "_" + language + ".xml.gz");
+      input = new File(Constants.countsXml(outputDirectory, language, label));
+      output = new File(Constants.countsGz(outputDirectory, language, label));
 
       com.computablefacts.nona.helpers.Files.create(input, xStream.toXML(counts));
       com.computablefacts.nona.helpers.Files.gzip(input, output);
@@ -175,10 +171,8 @@ final public class TrainGenerativeModel extends CommandLine {
 
       System.out.println("Saving label model...");
 
-      input = new File(
-          outputDirectory + File.separator + "label_model_for_" + label + "_" + language + ".xml");
-      output = new File(outputDirectory + File.separator + "label_model_for_" + label + "_"
-          + language + ".xml.gz");
+      input = new File(Constants.labelModelXml(outputDirectory, language, label));
+      output = new File(Constants.labelModelGz(outputDirectory, language, label));
 
       com.computablefacts.nona.helpers.Files.create(input, xStream.toXML(labelModel));
       com.computablefacts.nona.helpers.Files.gzip(input, output);

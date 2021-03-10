@@ -32,7 +32,6 @@ import com.computablefacts.nona.helpers.Files;
 import com.computablefacts.nona.helpers.Languages;
 import com.google.common.base.Preconditions;
 import com.google.errorprone.annotations.CheckReturnValue;
-import com.google.errorprone.annotations.Var;
 import com.thoughtworks.xstream.XStream;
 
 @CheckReturnValue
@@ -148,12 +147,8 @@ final public class TrainDiscriminativeModel extends CommandLine {
 
       System.out.println("Saving classifier...");
 
-      @Var
-      File input = new File(
-          outputDirectory + File.separator + "classifier_for_" + label + "_" + language + ".xml");
-      @Var
-      File output = new File(outputDirectory + File.separator + "classifier_for_" + label + "_"
-          + language + ".xml.gz");
+      File input = new File(Constants.classifierXml(outputDirectory, language, label));
+      File output = new File(Constants.classifierGz(outputDirectory, language, label));
 
       com.computablefacts.nona.helpers.Files.create(input, xStream.toXML(classifier));
       com.computablefacts.nona.helpers.Files.gzip(input, output);

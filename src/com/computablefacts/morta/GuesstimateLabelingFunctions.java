@@ -11,8 +11,8 @@ import java.util.stream.Collectors;
 import com.computablefacts.morta.docsetlabeler.DocSetLabelerImpl;
 import com.computablefacts.morta.snorkel.Helpers;
 import com.computablefacts.morta.snorkel.IGoldLabel;
-import com.computablefacts.morta.snorkel.labelmodels.MedianLabelModel;
 import com.computablefacts.morta.snorkel.labelingfunctions.MatchWildcardLabelingFunction;
+import com.computablefacts.morta.snorkel.labelmodels.MedianLabelModel;
 import com.computablefacts.nona.helpers.CommandLine;
 import com.computablefacts.nona.helpers.Languages;
 import com.computablefacts.nona.helpers.WildcardMatcher;
@@ -93,10 +93,8 @@ final public class GuesstimateLabelingFunctions extends CommandLine {
 
       XStream xStream = Helpers.xStream();
 
-      File input = new File(outputDirectory + File.separator + "labeling_functions_for_" + label
-          + "_" + language + ".xml");
-      File output = new File(outputDirectory + File.separator + "labeling_functions_for_" + label
-          + "_" + language + ".xml.gz");
+      File input = new File(Constants.labelingFunctionsXml(outputDirectory, language, label));
+      File output = new File(Constants.labelingFunctionsGz(outputDirectory, language, label));
 
       com.computablefacts.nona.helpers.Files.create(input, xStream.toXML(lfs));
       com.computablefacts.nona.helpers.Files.gzip(input, output);
