@@ -13,6 +13,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+import javax.annotation.concurrent.NotThreadSafe;
+
 import com.computablefacts.junon.Fact;
 import com.computablefacts.junon.Metadata;
 import com.computablefacts.junon.Provenance;
@@ -261,6 +263,7 @@ final public class ExecuteModel extends CommandLine {
     return fact;
   }
 
+  @NotThreadSafe
   final public static class Model {
 
     private final XStream xStream_ = Helpers.xStream();
@@ -272,7 +275,6 @@ final public class ExecuteModel extends CommandLine {
     private List<MatchWildcardLabelingFunction> labelingFunctions_;
     private List<String> keywords_;
     private double confidenceScore_;
-    private ITransformationFunction<String, FeatureVector<Double>> countVectorizer_;
 
     public Model() {
       language_ = "";
@@ -321,14 +323,15 @@ final public class ExecuteModel extends CommandLine {
     }
 
     public ITransformationFunction<String, FeatureVector<Double>> countVectorizer() {
-      return countVectorizer_;
+      return Helpers.countVectorizer(Languages.eLanguage.valueOf(language_), alphabet_,
+          maxGroupSize_);
     }
 
     public boolean isValid() {
       return !Strings.isNullOrEmpty(model_) && !Strings.isNullOrEmpty(language_)
           && maxGroupSize_ > 0 && alphabet_ != null && classifier_ != null
           && labelingFunctions_ != null && keywords_ != null && 0.0 <= confidenceScore_
-          && confidenceScore_ <= 1.0 && countVectorizer_ != null;
+          && confidenceScore_ <= 1.0;
     }
 
     public boolean init(String dir) {
@@ -339,8 +342,6 @@ final public class ExecuteModel extends CommandLine {
       alphabet_ = alphabet(dir);
       classifier_ = classifier(dir);
       labelingFunctions_ = labelingFunctions(dir);
-      countVectorizer_ =
-          Helpers.countVectorizer(Languages.eLanguage.valueOf(language_), alphabet_, maxGroupSize_);
 
       if (classifier_ != null) {
         if (Double.isNaN(classifier_.mcc()) || Double.isInfinite(classifier_.mcc())) {
