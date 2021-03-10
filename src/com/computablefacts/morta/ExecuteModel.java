@@ -230,7 +230,7 @@ final public class ExecuteModel extends CommandLine {
     String sourceType = "STORAGE/ROOT/DATASET/DOC_ID";
     String sourceStore = "ACCUMULO/" + root + "/" + dataset + "/" + doc.docId();
 
-    Fact fact = new Fact(factType, confidenceScore, null, new Date(), null, true);
+    Fact fact = new Fact(factType, confidenceScore, null, new Date(), null, null);
 
     if (dataset.equals("vam")) {
       fact.value(doc.docId());
