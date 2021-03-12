@@ -39,7 +39,7 @@
     </developers>
 
     <properties>
-        <junon.version>0.5</junon.version>
+        <junon.version>0.6</junon.version>
         <error-prone.version>2.3.1</error-prone.version>
         <junit.version>4.13.1</junit.version>
         <equalsverifier.version>3.4.2</equalsverifier.version>
