@@ -3,6 +3,7 @@ package com.computablefacts.morta;
 import static com.computablefacts.morta.snorkel.ILabelingFunction.OK;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -275,6 +276,7 @@ final public class ExecuteModel extends CommandLine {
     private List<MatchWildcardLabelingFunction> labelingFunctions_;
     private List<String> keywords_;
     private double confidenceScore_;
+    private String observations_;
 
     public Model() {
       language_ = "";
@@ -322,6 +324,10 @@ final public class ExecuteModel extends CommandLine {
       return confidenceScore_;
     }
 
+    public String observations() {
+      return observations_;
+    }
+
     public ITransformationFunction<String, FeatureVector<Double>> countVectorizer() {
       return Helpers.countVectorizer(Languages.eLanguage.valueOf(language_), alphabet_,
           maxGroupSize_);
@@ -342,6 +348,7 @@ final public class ExecuteModel extends CommandLine {
       alphabet_ = alphabet(dir);
       classifier_ = classifier(dir);
       labelingFunctions_ = labelingFunctions(dir);
+      observations_ = observations(dir);
 
       if (classifier_ != null) {
         if (Double.isNaN(classifier_.mcc()) || Double.isInfinite(classifier_.mcc())) {
@@ -379,6 +386,18 @@ final public class ExecuteModel extends CommandLine {
               .compressedLineStream(new File(Constants.labelingFunctionsGz(dir, language_, model_)),
                   StandardCharsets.UTF_8)
               .map(Map.Entry::getValue).collect(Collectors.joining("\n")));
+    }
+
+    private String observations(String dir) {
+      try {
+        File file = new File(Constants.observations(dir));
+        if (file.exists()) {
+          return com.google.common.io.Files.asCharSource(file, StandardCharsets.UTF_8).read();
+        }
+      } catch (IOException e) {
+        // TODO
+      }
+      return "";
     }
   }
 }

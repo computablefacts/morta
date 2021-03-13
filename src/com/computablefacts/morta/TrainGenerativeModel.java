@@ -21,6 +21,7 @@ import com.computablefacts.nona.helpers.CommandLine;
 import com.computablefacts.nona.helpers.ConfusionMatrix;
 import com.computablefacts.nona.helpers.Files;
 import com.computablefacts.nona.helpers.Languages;
+import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multiset;
@@ -46,11 +47,17 @@ final public class TrainGenerativeModel extends CommandLine {
     int maxGroupSize = getIntCommand(args, "max_group_size", 4);
     String outputDirectory = getStringCommand(args, "output_directory", null);
 
+    Observations observations = new Observations(new File(Constants.observations(outputDirectory)));
+    observations.add(
+        "================================================================================\n= Train Generative Model\n================================================================================");
+    observations.add(String.format("The label is %s", label));
+    observations.add(String.format("Max. group size for the count vectorizer is %d", maxGroupSize));
+
     // Load gold labels
-    List<IGoldLabel<String>> gls = IGoldLabel.load(goldLabels, label);
+    List<IGoldLabel<String>> gls = IGoldLabel.load(observations, goldLabels, label);
 
     // Split gold labels into train and test
-    System.out.println("Splitting gold labels into train/test...");
+    observations.add("Splitting gold labels into train/test...");
 
     List<Set<IGoldLabel<String>>> trainTest = IGoldLabel.split(gls, true, 0.0, 0.75);
     List<IGoldLabel<String>> train = new ArrayList<>(trainTest.get(1));
@@ -60,11 +67,11 @@ final public class TrainGenerativeModel extends CommandLine {
         "Inconsistency found in the number of gold labels : %s expected vs %s found", gls.size(),
         train.size() + test.size());
 
-    System.out.printf("Dataset size for training is %d\n", train.size());
-    System.out.printf("Dataset size for testing is %d\n", test.size());
+    observations.add(String.format("Dataset size for training is %d", train.size()));
+    observations.add(String.format("Dataset size for testing is %d", test.size()));
 
     // Load labeling functions
-    System.out.println("Loading labeling functions...");
+    observations.add("Loading labeling functions...");
 
     XStream xStream = Helpers.xStream();
 
@@ -74,10 +81,12 @@ final public class TrainGenerativeModel extends CommandLine {
 
     // TODO : backport load LF from YAML pattern files
 
-    System.out.printf("%d labeling functions loaded\n", lfs.size());
+    observations.add(String.format("%d labeling functions loaded", lfs.size()));
+    observations.add(String.format("Patterns found : [\n  %s\n]", Joiner.on("\n  ").join(
+        lfs.stream().map(MatchWildcardLabelingFunction::pattern).collect(Collectors.toList()))));
 
     // Build label model
-    System.out.println("Building label model...");
+    observations.add("Building label model...");
 
     MedianLabelModel<String> labelModel = new MedianLabelModel<>(lfs);
     labelModel.fit(train);
@@ -87,30 +96,28 @@ final public class TrainGenerativeModel extends CommandLine {
     if (verbose) {
 
       labelModel.lfSummaries().stream().map(Map.Entry::getValue)
-          .sorted((o1, o2) -> Ints.compare(o2.correct(), o1.correct())) // Sort summaries by
-          // decreasing number of
-          // correct labels
-          .forEach(summary -> System.out.println("  " + summary.toString()));
+          // Sort summaries by decreasing number of correct labels
+          .sorted((o1, o2) -> Ints.compare(o2.correct(), o1.correct()))
+          .forEach(summary -> observations.add(String.format("  %s", summary.toString())));
 
-      System.out.println("Building correlation matrix for labeling functions...");
+      observations.add("Building correlation matrix for labeling functions...");
 
       Table<String, String, CorTest> lfCorrelations =
           labelModel.labelingFunctionsCorrelations(train, Summary.eCorrelation.PEARSON);
 
       System.out.println(); // Cosmetic
-      System.out.print(AsciiTable.format(Helpers.correlations(lfCorrelations), true));
+      observations.add(AsciiTable.format(Helpers.correlations(lfCorrelations), true));
 
-      System.out.println("Exploring vectors...");
+      observations.add("Exploring vectors...");
 
-      System.out
-          .print(AsciiTable.format(
+      observations.add(AsciiTable.format(
               Helpers.vectors(labelModel.lfNames(), labelModel.lfLabels(),
                   labelModel.vectors(train), labelModel.actual(train), labelModel.predicted(train)),
               true));
     }
 
     // Build alphabet (ngrams from 1 included to 6 excluded)
-    System.out.println("Building alphabet...");
+    observations.add("Building alphabet...");
 
     AtomicInteger count = new AtomicInteger(0);
     AsciiProgressBar.ProgressBar bar = AsciiProgressBar.create();
@@ -122,34 +129,35 @@ final public class TrainGenerativeModel extends CommandLine {
         .forEach(Helpers.alphabetBuilder(Languages.eLanguage.valueOf(language), alphabet, counts,
             maxGroupSize));
 
-    System.out.printf("\nAlphabet size is %d\n", alphabet.size());
-    System.out.println("Reducing alphabet...");
+    System.out.println(); // Cosmetic
+    observations.add(String.format("Alphabet size is %d", alphabet.size()));
+    observations.add("Reducing alphabet...");
 
     alphabet = Helpers.alphabetReducer(alphabet, counts, gls.size());
 
-    System.out.printf("The new alphabet size is %d\n", alphabet.size());
+    observations.add(String.format("The new alphabet size is %d", alphabet.size()));
 
     // Compute model accuracy
     if (verbose) {
 
-      System.out.print("Computing confusion matrix for the TRAIN dataset...");
-      System.out.println(labelModel.confusionMatrix(train));
+      observations.add("\nComputing confusion matrix for the TRAIN dataset...");
+      observations.add(labelModel.confusionMatrix(train).toString());
 
-      System.out.print("Computing confusion matrix for the TEST dataset...");
-      System.out.println(labelModel.confusionMatrix(test));
+      observations.add("\nComputing confusion matrix for the TEST dataset...");
+      observations.add(labelModel.confusionMatrix(test).toString());
     }
 
     ConfusionMatrix matrix = labelModel.confusionMatrix(gls);
     labelModel.mcc(matrix.matthewsCorrelationCoefficient());
 
     if (verbose) {
-      System.out.print("Computing confusion matrix for the WHOLE dataset...");
-      System.out.println(matrix);
+      observations.add("\nComputing confusion matrix for the WHOLE dataset...");
+      observations.add(matrix.toString());
     }
 
     if (!dryRun) {
 
-      System.out.println("Saving alphabet...");
+      observations.add("Saving alphabet...");
 
       @Var
       File input = new File(Constants.alphabetXml(outputDirectory, language, label));
@@ -160,7 +168,7 @@ final public class TrainGenerativeModel extends CommandLine {
       com.computablefacts.nona.helpers.Files.gzip(input, output);
       com.computablefacts.nona.helpers.Files.delete(input);
 
-      System.out.println("Saving counts...");
+      observations.add("Saving counts...");
 
       input = new File(Constants.countsXml(outputDirectory, language, label));
       output = new File(Constants.countsGz(outputDirectory, language, label));
@@ -169,7 +177,7 @@ final public class TrainGenerativeModel extends CommandLine {
       com.computablefacts.nona.helpers.Files.gzip(input, output);
       com.computablefacts.nona.helpers.Files.delete(input);
 
-      System.out.println("Saving label model...");
+      observations.add("Saving label model...");
 
       input = new File(Constants.labelModelXml(outputDirectory, language, label));
       output = new File(Constants.labelModelGz(outputDirectory, language, label));
@@ -178,5 +186,7 @@ final public class TrainGenerativeModel extends CommandLine {
       com.computablefacts.nona.helpers.Files.gzip(input, output);
       com.computablefacts.nona.helpers.Files.delete(input);
     }
+
+    observations.flush();
   }
 }

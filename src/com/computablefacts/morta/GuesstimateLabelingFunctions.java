@@ -38,53 +38,57 @@ final public class GuesstimateLabelingFunctions extends CommandLine {
     Preconditions.checkArgument(nbCandidatesToConsider > 0, "nbCandidatesToConsider must be > 0");
     Preconditions.checkArgument(nbLabelsToReturn > 0, "nbLabelsToReturn must be > 0");
 
-    System.out.printf("The label is %s\n", label);
-    System.out.printf("The number of candidates to consider (DocSetLabeler) is %d\n",
-        nbCandidatesToConsider);
-    System.out.printf("The number of labels to return (DocSetLabeler) is %d\n", nbLabelsToReturn);
+    Observations observations = new Observations(new File(Constants.observations(outputDirectory)));
+    observations.add(
+        "================================================================================\n= Guesstimate Labeling Functions\n================================================================================");
+    observations.add(String.format("The label is %s", label));
+    observations.add(String.format("The number of candidates to consider (DocSetLabeler) is %d",
+        nbCandidatesToConsider));
+    observations.add(
+        String.format("The number of labels to return (DocSetLabeler) is %d", nbLabelsToReturn));
 
     // Load gold labels for a given label
-    List<IGoldLabel<String>> gls = IGoldLabel.load(goldLabels, label);
+    List<IGoldLabel<String>> gls = IGoldLabel.load(observations, goldLabels, label);
 
     // Pages for which LF must return OK
-    System.out.println("Building dataset for label OK...");
+    observations.add("Building dataset for label OK...");
 
     List<String> pagesOk = gls.stream().filter(gl -> MedianLabelModel.label(gl) == OK)
         .map(IGoldLabel::data).collect(Collectors.toList());
 
-    System.out.printf("%d pages found (%d duplicates)\n", pagesOk.size(),
-        pagesOk.size() - Sets.newHashSet(pagesOk).size());
+    observations.add(String.format("%d pages found (%d duplicates)", pagesOk.size(),
+        pagesOk.size() - Sets.newHashSet(pagesOk).size()));
 
     // Pages for which LF must return KO
-    System.out.println("Building dataset for label KO...");
+    observations.add("Building dataset for label KO...");
 
     List<String> pagesKo = gls.stream().filter(gl -> MedianLabelModel.label(gl) == KO)
         .map(IGoldLabel::data).collect(Collectors.toList());
 
-    System.out.printf("%d pages found (%d duplicates)\n", pagesKo.size(),
-        pagesKo.size() - Sets.newHashSet(pagesKo).size());
+    observations.add(String.format("%d pages found (%d duplicates)", pagesKo.size(),
+        pagesKo.size() - Sets.newHashSet(pagesKo).size()));
 
     // All pages
-    System.out.println("Building the whole dataset...");
+    observations.add("Building the whole dataset...");
 
     List<String> pages = gls.stream().map(IGoldLabel::data).collect(Collectors.toList());
 
-    System.out.printf("%d pages found (%d duplicates)\n", pages.size(),
-        pages.size() - Sets.newHashSet(pages).size());
+    observations.add(String.format("%d pages found (%d duplicates)", pages.size(),
+        pages.size() - Sets.newHashSet(pages).size()));
 
     // Guesstimate LF
     DocSetLabelerImpl docSetLabeler = new DocSetLabelerImpl(Languages.eLanguage.valueOf(language));
 
-    System.out.println("Starting DocSetLabeler...");
+    observations.add("Starting DocSetLabeler...");
 
     List<Map.Entry<String, Double>> labels = docSetLabeler.label(pages, pagesOk, pagesKo,
         nbCandidatesToConsider, nbLabelsToReturn, true);
 
-    System.out.println("\nPatterns found : [\n  " + Joiner.on("\n  ").join(labels) + "\n]");
+    observations.add(String.format("Patterns found : [\n  %s\n]", Joiner.on("\n  ").join(labels)));
 
     if (!dryRun) {
 
-      System.out.println("Saving patterns...");
+      observations.add("Saving patterns...");
 
       List<MatchWildcardLabelingFunction> lfs = labels.stream()
           .map(lbl -> new MatchWildcardLabelingFunction(
@@ -100,5 +104,7 @@ final public class GuesstimateLabelingFunctions extends CommandLine {
       com.computablefacts.nona.helpers.Files.gzip(input, output);
       com.computablefacts.nona.helpers.Files.delete(input);
     }
+
+    observations.flush();
   }
 }

@@ -6,6 +6,10 @@ import smile.util.Strings;
 
 final public class Constants {
 
+  public static String observations(String dir) {
+    return (Strings.isNullOrEmpty(dir) ? "" : dir + File.separator) + "observations.txt";
+  }
+
   public static String countsXml(String dir, String language, String model) {
     return (Strings.isNullOrEmpty(dir) ? "" : dir + File.separator) + "counts_for_" + model + "_"
         + language + ".xml";

@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.computablefacts.morta.Observations;
 import com.computablefacts.nona.helpers.AsciiProgressBar;
 import com.computablefacts.nona.helpers.Codecs;
 import com.computablefacts.nona.helpers.ConfusionMatrix;
@@ -24,12 +25,13 @@ public interface IGoldLabel<D> {
    * @param file gold labels as JSON objects stored inside a gzip file.
    * @return a list of {@link IGoldLabel}.
    */
-  static List<IGoldLabel<String>> load(File file, String label) {
+  static List<IGoldLabel<String>> load(Observations observations, File file, String label) {
 
+    Preconditions.checkNotNull(observations, "observations should not be null");
     Preconditions.checkNotNull(file, "file should not be null");
     Preconditions.checkArgument(file.exists(), "file should exist : %s", file);
 
-    System.out.println("Loading gold labels...");
+    observations.add("Loading gold labels...");
 
     AsciiProgressBar.IndeterminateProgressBar bar = AsciiProgressBar.createIndeterminate();
 
@@ -42,6 +44,7 @@ public interface IGoldLabel<D> {
     bar.complete();
 
     System.out.println(); // Cosmetic
+    observations.add(String.format("%d gold labels loaded.", gls.size()));
 
     return gls;
   }

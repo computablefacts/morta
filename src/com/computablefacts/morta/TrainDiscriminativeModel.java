@@ -50,11 +50,17 @@ final public class TrainDiscriminativeModel extends CommandLine {
     String clazzifier = getStringCommand(args, "classifier", "logit");
     String outputDirectory = getStringCommand(args, "output_directory", null);
 
+    Observations observations = new Observations(new File(Constants.observations(outputDirectory)));
+    observations.add(
+        "================================================================================\n= Train Discriminative Model\n================================================================================");
+    observations.add(String.format("The label is %s", label));
+    observations.add(String.format("Max. group size for the count vectorizer is %d", maxGroupSize));
+
     // Load gold labels
-    List<IGoldLabel<String>> gls = IGoldLabel.load(goldLabels, label);
+    List<IGoldLabel<String>> gls = IGoldLabel.load(observations, goldLabels, label);
 
     // Split gold labels into train and test
-    System.out.println("Splitting gold labels into train/test...");
+    observations.add("Splitting gold labels into train/test...");
 
     List<Set<IGoldLabel<String>>> trainTest = IGoldLabel.split(gls, true, 0.0, 0.75);
     List<IGoldLabel<String>> train = new ArrayList<>(trainTest.get(1));
@@ -64,11 +70,11 @@ final public class TrainDiscriminativeModel extends CommandLine {
         "Inconsistency found in the number of gold labels : %s expected vs %s found", gls.size(),
         train.size() + test.size());
 
-    System.out.printf("Dataset size for training is %d\n", train.size());
-    System.out.printf("Dataset size for testing is %d\n", test.size());
+    observations.add(String.format("Dataset size for training is %d", train.size()));
+    observations.add(String.format("Dataset size for testing is %d", test.size()));
 
     // Load alphabet
-    System.out.println("Loading alphabet...");
+    observations.add("Loading alphabet...");
 
     XStream xStream = Helpers.xStream();
 
@@ -76,17 +82,17 @@ final public class TrainDiscriminativeModel extends CommandLine {
         (Dictionary) xStream.fromXML(Files.compressedLineStream(alphabet, StandardCharsets.UTF_8)
             .map(Map.Entry::getValue).collect(Collectors.joining("\n")));
 
-    System.out.printf("Alphabet size is %d\n", alpha.size());
+    observations.add(String.format("Alphabet size is %d", alpha.size()));
 
     // Load label model
-    System.out.println("Loading label model...");
+    observations.add("Loading label model...");
 
     MedianLabelModel<String> lm = (MedianLabelModel<String>) xStream
         .fromXML(Files.compressedLineStream(labelModel, StandardCharsets.UTF_8)
             .map(Map.Entry::getValue).collect(Collectors.joining("\n")));
 
     // Apply CountVectorizer on gold labels
-    System.out.println("Applying 'CountVectorizer' on gold labels...");
+    observations.add("Applying 'CountVectorizer' on gold labels...");
 
     AtomicInteger count = new AtomicInteger(0);
     AsciiProgressBar.ProgressBar bar = AsciiProgressBar.create();
@@ -100,12 +106,12 @@ final public class TrainDiscriminativeModel extends CommandLine {
     System.out.println(); // Cosmetic
 
     // Apply label model on gold labels
-    System.out.println("Applying 'LabelModel' on gold labels...");
+    observations.add("Applying 'LabelModel' on gold labels...");
 
     List<Integer> preds = lm.predict(train);
 
     // Build discriminative model
-    System.out.printf("Building discriminative model... (%s)\n", clazzifier);
+    observations.add(String.format("Building discriminative model... (%s)", clazzifier));
 
     AbstractClassifier classifier;
 
@@ -128,24 +134,25 @@ final public class TrainDiscriminativeModel extends CommandLine {
     // Compute model accuracy
     if (verbose) {
 
-      System.out.print("Computing confusion matrix for the TRAIN dataset...");
-      System.out.println(confusionMatrix(language, alpha, maxGroupSize, train, classifier));
+      observations.add("\nComputing confusion matrix for the TRAIN dataset...");
+      observations
+          .add(confusionMatrix(language, alpha, maxGroupSize, train, classifier).toString());
 
-      System.out.print("Computing confusion matrix for the TEST dataset...");
-      System.out.println(confusionMatrix(language, alpha, maxGroupSize, test, classifier));
+      observations.add("\nComputing confusion matrix for the TEST dataset...");
+      observations.add(confusionMatrix(language, alpha, maxGroupSize, test, classifier).toString());
     }
 
     ConfusionMatrix matrix = confusionMatrix(language, alpha, maxGroupSize, gls, classifier);
     classifier.mcc(matrix.matthewsCorrelationCoefficient());
 
     if (verbose) {
-      System.out.print("Computing confusion matrix for the WHOLE dataset...");
-      System.out.println(matrix);
+      observations.add("\nComputing confusion matrix for the WHOLE dataset...");
+      observations.add(matrix.toString());
     }
 
     if (!dryRun) {
 
-      System.out.println("Saving classifier...");
+      observations.add("Saving classifier...");
 
       File input = new File(Constants.classifierXml(outputDirectory, language, label));
       File output = new File(Constants.classifierGz(outputDirectory, language, label));
@@ -154,6 +161,8 @@ final public class TrainDiscriminativeModel extends CommandLine {
       com.computablefacts.nona.helpers.Files.gzip(input, output);
       com.computablefacts.nona.helpers.Files.delete(input);
     }
+
+    observations.flush();
   }
 
   private static ConfusionMatrix confusionMatrix(String language, Dictionary alphabet,
