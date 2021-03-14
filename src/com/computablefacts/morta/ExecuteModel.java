@@ -8,8 +8,12 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.computablefacts.junon.Fact;
 import com.computablefacts.junon.Metadata;
@@ -23,12 +27,14 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.errorprone.annotations.CheckReturnValue;
 
 @CheckReturnValue
 final public class ExecuteModel extends CommandLine {
 
+  private static final Logger logger_ = LoggerFactory.getLogger(ExecuteModel.class);
   private static final char FORM_FEED = '\f';
 
   public static void main(String[] args) {
@@ -85,12 +91,11 @@ final public class ExecuteModel extends CommandLine {
             try {
               return new Document(Codecs.asObject(e.getValue()));
             } catch (Exception ex) {
-              // TODO :
-              // logger_.error(Throwables.getStackTraceAsString(Throwables.getRootCause(ex)));
-              // TODO : logger_.error("An error occurred on line : \"" + e.getKey() + "\"");
+              logger_.error(Throwables.getStackTraceAsString(Throwables.getRootCause(ex)));
+              logger_.error(String.format("An error occurred on line : \"%s\"", e.getKey()));
             }
             return null;
-          }).forEach(doc -> {
+          }).filter(Objects::nonNull).forEach(doc -> {
 
             if (queue.size() >= 1000) {
               if (output == null) {
