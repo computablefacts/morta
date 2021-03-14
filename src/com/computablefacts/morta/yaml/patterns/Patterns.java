@@ -61,13 +61,13 @@ final public class Patterns {
 
   private static final Logger logger_ = LoggerFactory.getLogger(Patterns.class);
 
+  // Dependencies i.e. other YAML files this one depends on
   @JsonProperty("dependencies")
-  public String[] dependencies_; // dependencies i.e. other YAML files this one depends on
+  public String[] dependencies_;
 
+  // Map a single character to an array of characters
   @JsonProperty("fix_common_ocr_mistakes")
-  public com.computablefacts.morta.yaml.patterns.KeyValue[] fixCommonOcrMistakes_; // map a single
-  // character to an array
-  // of characters
+  public com.computablefacts.morta.yaml.patterns.KeyValue[] fixCommonOcrMistakes_;
 
   @JsonProperty("patterns")
   public Pattern[] patterns_;
