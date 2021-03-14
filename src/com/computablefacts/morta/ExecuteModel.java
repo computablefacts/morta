@@ -8,7 +8,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -23,7 +22,6 @@ import com.computablefacts.nona.helpers.SnippetExtractor;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
-import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.errorprone.annotations.CheckReturnValue;
@@ -38,7 +36,6 @@ final public class ExecuteModel extends CommandLine {
     String language = getStringCommand(args, "language", null);
     String label = getStringCommand(args, "label", null);
     File archive = getFileCommand(args, "archive", null);
-    boolean showLogs = getBooleanCommand(args, "show_logs", false);
     int maxGroupSize = getIntCommand(args, "max_group_size", 4);
     String extractedWith = getStringCommand(args, "extracted_with", "morta");
     String extractedBy = getStringCommand(args, "extracted_by", "morta");
@@ -47,42 +44,37 @@ final public class ExecuteModel extends CommandLine {
     String input = getStringCommand(args, "input", null);
     String output = getStringCommand(args, "output", null);
     double threshold = getDoubleCommand(args, "threshold", 0.7);
+    String outputDirectory = getStringCommand(args, "output_directory", null);
 
-    Stopwatch stopwatch = Stopwatch.createStarted();
+    Observations observations = new Observations(new File(Constants.observations(outputDirectory)));
+    observations.add(
+        "================================================================================\n= Execute Model\n================================================================================");
+    observations.add(String.format("The label is %s", label));
+    observations.add(String.format("The language is %s", language));
+    observations.add(String.format("The root is %s", root));
+    observations.add(String.format("The dataset is %s", dataset));
+    observations.add(String.format("The threshold is %f", threshold));
+    observations
+        .add(String.format("Max. group size for the 'CountVectorizer' is %d", maxGroupSize));
 
     // Loading model
-    if (showLogs) {
-      System.out.println("Loading model...");
-    }
+    observations.add("Loading model...");
 
     Model model = new Model(language, label, maxGroupSize);
 
     if (!model.init(input)) {
-
-      stopwatch.stop();
-
-      if (showLogs) {
-        System.out.println("Extraction failed : invalid model");
-        System.out.println("Elapsed time : " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
-      }
+      observations.add("Extraction failed : invalid model");
     } else if (model.confidenceScore() < threshold) {
-
-      stopwatch.stop();
-
-      if (showLogs) {
-        System.out.println("Extraction failed : confidence score is less than threshold ("
-            + model.confidenceScore() + " < " + threshold + ")");
-        System.out.println("Elapsed time : " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
-      }
+      observations.add(
+          String.format("Extraction failed : confidence score is less than threshold (%f < %f)",
+              model.confidenceScore(), threshold));
     } else {
 
-      if (showLogs) {
-        System.out.printf("Alphabet size is %d\n", model.alphabet().size());
-        System.out.printf("Model confidence score is %f\n", model.confidenceScore());
-        System.out
-            .println("Keywords found : [\n  " + Joiner.on("\n  ").join(model.keywords()) + "\n]");
-        System.out.println("Processing documents...");
-      }
+      observations.add(String.format("Alphabet size is %d", model.alphabet().size()));
+      observations.add(String.format("Model confidence score is %f", model.confidenceScore()));
+      observations.add(
+          String.format("Keywords found : [\n  %s\n]", Joiner.on("\n  ").join(model.keywords())));
+      observations.add("Processing documents...");
 
       AtomicInteger nbExtractedFacts = new AtomicInteger(0);
       List<Fact> queue = new ArrayList<>(1000);
@@ -114,7 +106,7 @@ final public class ExecuteModel extends CommandLine {
             }
 
             List<Fact> facts =
-                apply(extractedWith, extractedBy, root, dataset, models, doc, showLogs);
+                apply(observations, extractedWith, extractedBy, root, dataset, models, doc);
 
             if (!facts.isEmpty()) {
               queue.addAll(facts);
@@ -134,17 +126,19 @@ final public class ExecuteModel extends CommandLine {
         }
       }
 
-      stopwatch.stop();
-
-      if (showLogs) {
-        System.out.println("Number of extracted facts : " + nbExtractedFacts.get());
-        System.out.println("Elapsed time : " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
-      }
+      observations.add(String.format("Number of extracted facts : %d", nbExtractedFacts.get()));
     }
+
+    observations.flush();
   }
 
   public static List<Fact> apply(String extractedWith, String extractedBy, String root,
-      String dataset, List<Model> models, Document doc, boolean showLogs) {
+      String dataset, List<Model> models, Document doc) {
+    return apply(null, extractedWith, extractedBy, root, dataset, models, doc);
+  }
+
+  private static List<Fact> apply(Observations observations, String extractedWith,
+      String extractedBy, String root, String dataset, List<Model> models, Document doc) {
 
     Preconditions.checkNotNull(extractedWith, "extractedWith should not be null");
     Preconditions.checkNotNull(extractedBy, "extractedBy should not be null");
@@ -186,9 +180,9 @@ final public class ExecuteModel extends CommandLine {
 
             facts.add(fact);
 
-            if (showLogs) {
-              System.out.printf("\n%s -> p.%d : %s \n---\n%s\n---", doc.docId(), pageIndex + 1,
-                  model.name(), snippet.replaceAll("(\r\n|\n)+", "\n"));
+            if (observations != null) {
+              observations.add(String.format("%s -> p.%d : %s \n---\n%s\n---", doc.docId(),
+                  pageIndex + 1, model.name(), snippet.replaceAll("(\r\n|\n)+", "\n")));
             }
           }
         }

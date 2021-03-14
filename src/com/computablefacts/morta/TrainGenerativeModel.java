@@ -51,7 +51,9 @@ final public class TrainGenerativeModel extends CommandLine {
     observations.add(
         "================================================================================\n= Train Generative Model\n================================================================================");
     observations.add(String.format("The label is %s", label));
-    observations.add(String.format("Max. group size for the count vectorizer is %d", maxGroupSize));
+    observations.add(String.format("The language is %s", language));
+    observations
+        .add(String.format("Max. group size for the 'CountVectorizer' is %d", maxGroupSize));
 
     // Load gold labels
     List<IGoldLabel<String>> gls = IGoldLabel.load(observations, goldLabels, label);

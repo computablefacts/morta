@@ -42,6 +42,7 @@ final public class GuesstimateLabelingFunctions extends CommandLine {
     observations.add(
         "================================================================================\n= Guesstimate Labeling Functions\n================================================================================");
     observations.add(String.format("The label is %s", label));
+    observations.add(String.format("The language is %s", language));
     observations.add(String.format("The number of candidates to consider (DocSetLabeler) is %d",
         nbCandidatesToConsider));
     observations.add(

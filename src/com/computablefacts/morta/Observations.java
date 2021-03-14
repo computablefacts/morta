@@ -50,5 +50,19 @@ final public class Observations {
       }
       System.out.println(msg);
     }
+    autoFlush();
+  }
+
+  private void autoFlush() {
+    if (file_ != null) {
+      if (observations_.size() >= 50) {
+        if (file_.exists()) {
+          Files.append(file_, observations_);
+        } else {
+          Files.create(file_, observations_);
+        }
+        observations_.clear();
+      }
+    }
   }
 }
