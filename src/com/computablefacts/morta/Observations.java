@@ -40,10 +40,13 @@ final public class Observations {
 
   public void add(String message) {
     if (message != null) {
+
+      String msg = message.trim();
+
       if (file_ != null) {
-        observations_.add(message);
+        observations_.add(msg);
       }
-      System.out.println(message);
+      System.out.println(msg);
     }
   }
 }

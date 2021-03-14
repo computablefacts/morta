@@ -140,10 +140,10 @@ final public class TrainGenerativeModel extends CommandLine {
     // Compute model accuracy
     if (verbose) {
 
-      observations.add("\nComputing confusion matrix for the TRAIN dataset...");
+      observations.add("Computing confusion matrix for the TRAIN dataset...");
       observations.add(labelModel.confusionMatrix(train).toString());
 
-      observations.add("\nComputing confusion matrix for the TEST dataset...");
+      observations.add("Computing confusion matrix for the TEST dataset...");
       observations.add(labelModel.confusionMatrix(test).toString());
     }
 
@@ -151,7 +151,7 @@ final public class TrainGenerativeModel extends CommandLine {
     labelModel.mcc(matrix.matthewsCorrelationCoefficient());
 
     if (verbose) {
-      observations.add("\nComputing confusion matrix for the WHOLE dataset...");
+      observations.add("Computing confusion matrix for the WHOLE dataset...");
       observations.add(matrix.toString());
     }
 

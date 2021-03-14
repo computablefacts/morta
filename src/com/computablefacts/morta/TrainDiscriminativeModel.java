@@ -134,11 +134,11 @@ final public class TrainDiscriminativeModel extends CommandLine {
     // Compute model accuracy
     if (verbose) {
 
-      observations.add("\nComputing confusion matrix for the TRAIN dataset...");
+      observations.add("Computing confusion matrix for the TRAIN dataset...");
       observations
           .add(confusionMatrix(language, alpha, maxGroupSize, train, classifier).toString());
 
-      observations.add("\nComputing confusion matrix for the TEST dataset...");
+      observations.add("Computing confusion matrix for the TEST dataset...");
       observations.add(confusionMatrix(language, alpha, maxGroupSize, test, classifier).toString());
     }
 
@@ -146,7 +146,7 @@ final public class TrainDiscriminativeModel extends CommandLine {
     classifier.mcc(matrix.matthewsCorrelationCoefficient());
 
     if (verbose) {
-      observations.add("\nComputing confusion matrix for the WHOLE dataset...");
+      observations.add("Computing confusion matrix for the WHOLE dataset...");
       observations.add(matrix.toString());
     }
 
