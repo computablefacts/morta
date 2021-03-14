@@ -2,8 +2,11 @@ package com.computablefacts.morta;
 
 import java.io.File;
 
+import com.google.errorprone.annotations.CheckReturnValue;
+
 import smile.util.Strings;
 
+@CheckReturnValue
 final public class Constants {
 
   public static String observations(String dir) {

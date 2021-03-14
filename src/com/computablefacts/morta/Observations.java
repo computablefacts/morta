@@ -9,8 +9,10 @@ import javax.annotation.concurrent.NotThreadSafe;
 
 import com.computablefacts.nona.helpers.Files;
 import com.google.common.base.Stopwatch;
+import com.google.errorprone.annotations.CheckReturnValue;
 
 @NotThreadSafe
+@CheckReturnValue
 final public class Observations {
 
   private final Stopwatch stopwatch_ = Stopwatch.createStarted();
