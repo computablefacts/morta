@@ -2,18 +2,25 @@ package com.computablefacts.morta.yaml.patterns;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.computablefacts.logfmt.LogFormatter;
+import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunction;
+import com.computablefacts.morta.snorkel.labelingfunctions.MatchRegexLabelingFunction;
+import com.computablefacts.morta.snorkel.labelingfunctions.MatchWildcardLabelingFunction;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
+import com.google.common.annotations.Beta;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ObjectArrays;
 import com.google.errorprone.annotations.CheckReturnValue;
@@ -154,6 +161,20 @@ final public class Patterns {
       logger_.error(LogFormatter.create().message(e).formatError());
     }
     return false;
+  }
+
+  @Beta
+  public static List<AbstractLabelingFunction<String>> toLabelingFunctions(Pattern[] patterns) {
+
+    Preconditions.checkNotNull(patterns, "patterns should not be null");
+
+    return Arrays.stream(patterns).map(pattern -> {
+      if (pattern.isWildcard_ != null && pattern.isWildcard_) {
+        return new MatchWildcardLabelingFunction(pattern.pattern_);
+      }
+      return new MatchRegexLabelingFunction(pattern.pattern_,
+          pattern.isCaseSensitive_ != null && pattern.isCaseSensitive_);
+    }).collect(Collectors.toList());
   }
 
   private boolean isValid() {

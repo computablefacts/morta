@@ -6,10 +6,12 @@ import java.util.stream.Collectors;
 
 import com.computablefacts.morta.snorkel.Helpers;
 import com.computablefacts.nona.helpers.Languages;
+import com.google.common.annotations.Beta;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.errorprone.annotations.CheckReturnValue;
 
+@Beta
 @CheckReturnValue
 final public class MatchSequenceLabelingFunction extends AbstractLabelingFunction<String> {
 

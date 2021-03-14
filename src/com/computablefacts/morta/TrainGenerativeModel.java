@@ -13,8 +13,10 @@ import com.computablefacts.morta.snorkel.Dictionary;
 import com.computablefacts.morta.snorkel.Helpers;
 import com.computablefacts.morta.snorkel.IGoldLabel;
 import com.computablefacts.morta.snorkel.Summary;
-import com.computablefacts.morta.snorkel.labelingfunctions.MatchWildcardLabelingFunction;
+import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunction;
 import com.computablefacts.morta.snorkel.labelmodels.MedianLabelModel;
+import com.computablefacts.morta.yaml.patterns.Pattern;
+import com.computablefacts.morta.yaml.patterns.Patterns;
 import com.computablefacts.nona.helpers.AsciiProgressBar;
 import com.computablefacts.nona.helpers.AsciiTable;
 import com.computablefacts.nona.helpers.CommandLine;
@@ -23,6 +25,7 @@ import com.computablefacts.nona.helpers.Files;
 import com.computablefacts.nona.helpers.Languages;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Table;
@@ -42,6 +45,8 @@ final public class TrainGenerativeModel extends CommandLine {
     String label = getStringCommand(args, "label", null);
     File goldLabels = getFileCommand(args, "gold_labels", null);
     File labelingFunctions = getFileCommand(args, "labeling_functions", null);
+    String userDefinedLabelingFunctions =
+        getStringCommand(args, "user_defined_labeling_functions", null);
     boolean dryRun = getBooleanCommand(args, "dry_run", true);
     boolean verbose = getBooleanCommand(args, "verbose", false);
     int maxGroupSize = getIntCommand(args, "max_group_size", 4);
@@ -72,20 +77,40 @@ final public class TrainGenerativeModel extends CommandLine {
     observations.add(String.format("Dataset size for training is %d", train.size()));
     observations.add(String.format("Dataset size for testing is %d", test.size()));
 
-    // Load labeling functions
+    // Load guesstimated labeling functions
     observations.add("Loading labeling functions...");
 
     XStream xStream = Helpers.xStream();
 
-    List<MatchWildcardLabelingFunction> lfs = (List<MatchWildcardLabelingFunction>) xStream
+    List<AbstractLabelingFunction<String>> lfs = (List<AbstractLabelingFunction<String>>) xStream
         .fromXML(Files.compressedLineStream(labelingFunctions, StandardCharsets.UTF_8)
             .map(Map.Entry::getValue).collect(Collectors.joining("\n")));
 
-    // TODO : backport load LF from YAML pattern files
-
     observations.add(String.format("%d labeling functions loaded", lfs.size()));
-    observations.add(String.format("Patterns found : [\n  %s\n]", Joiner.on("\n  ").join(
-        lfs.stream().map(MatchWildcardLabelingFunction::pattern).collect(Collectors.toList()))));
+
+    // Load user-defined labeling functions
+    if (!Strings.isNullOrEmpty(userDefinedLabelingFunctions)) {
+
+      File file = new File(userDefinedLabelingFunctions);
+
+      if (file.exists()) {
+
+        Pattern[] patterns = Patterns.load(file, true);
+
+        if (patterns != null) {
+
+          observations.add("Loading user-defined labeling functions...");
+
+          List<AbstractLabelingFunction<String>> udlfs = Patterns.toLabelingFunctions(patterns);
+          lfs.addAll(udlfs);
+
+          observations.add(String.format("%d labeling functions loaded", udlfs.size()));
+        }
+      }
+    }
+
+    observations.add(String.format("Patterns found : [\n  %s\n]", Joiner.on("\n  ")
+        .join(lfs.stream().map(AbstractLabelingFunction::name).collect(Collectors.toList()))));
 
     // Build label model
     observations.add("Building label model...");
@@ -159,12 +184,21 @@ final public class TrainGenerativeModel extends CommandLine {
 
     if (!dryRun) {
 
-      observations.add("Saving alphabet...");
+      observations.add("Saving labeling functions...");
 
       @Var
-      File input = new File(Constants.alphabetXml(outputDirectory, language, label));
+      File input = new File(Constants.labelingFunctionsXml(outputDirectory, language, label));
       @Var
-      File output = new File(Constants.alphabetGz(outputDirectory, language, label));
+      File output = new File(Constants.labelingFunctionsGz(outputDirectory, language, label));
+
+      com.computablefacts.nona.helpers.Files.create(input, xStream.toXML(lfs));
+      com.computablefacts.nona.helpers.Files.gzip(input, output);
+      com.computablefacts.nona.helpers.Files.delete(input);
+
+      observations.add("Saving alphabet...");
+
+      input = new File(Constants.alphabetXml(outputDirectory, language, label));
+      output = new File(Constants.alphabetGz(outputDirectory, language, label));
 
       com.computablefacts.nona.helpers.Files.create(input, xStream.toXML(alphabet));
       com.computablefacts.nona.helpers.Files.gzip(input, output);

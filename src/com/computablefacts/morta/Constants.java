@@ -33,6 +33,11 @@ final public class Constants {
         + "_" + language + ".xml";
   }
 
+  public static String guesstimatedLabelingFunctionsXml(String dir, String language, String model) {
+    return (Strings.isNullOrEmpty(dir) ? "" : dir + File.separator)
+        + "guesstimated_labeling_functions_for_" + model + "_" + language + ".xml";
+  }
+
   public static String labelingFunctionsXml(String dir, String language, String model) {
     return (Strings.isNullOrEmpty(dir) ? "" : dir + File.separator) + "labeling_functions_for_"
         + model + "_" + language + ".xml";
@@ -52,6 +57,10 @@ final public class Constants {
 
   public static String classifierGz(String dir, String language, String model) {
     return classifierXml(dir, language, model) + ".gz";
+  }
+
+  public static String guesstimatedLabelingFunctionsGz(String dir, String language, String model) {
+    return guesstimatedLabelingFunctionsXml(dir, language, model) + ".gz";
   }
 
   public static String labelingFunctionsGz(String dir, String language, String model) {

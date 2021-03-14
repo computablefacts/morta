@@ -1,5 +1,8 @@
 package com.computablefacts.morta.snorkel.labelingfunctions;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import com.computablefacts.morta.snorkel.ILabelingFunction;
 import com.google.common.base.Preconditions;
 import com.google.errorprone.annotations.CheckReturnValue;
@@ -15,5 +18,9 @@ public abstract class AbstractLabelingFunction<T> implements ILabelingFunction<T
 
   public String name() {
     return name_;
+  }
+
+  public Set<String> matches(String text) {
+    return new HashSet<>();
   }
 }

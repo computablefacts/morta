@@ -89,7 +89,7 @@ final public class GuesstimateLabelingFunctions extends CommandLine {
 
     if (!dryRun) {
 
-      observations.add("Saving patterns...");
+      observations.add("Saving guesstimated labeling functions...");
 
       List<MatchWildcardLabelingFunction> lfs = labels.stream()
           .map(lbl -> new MatchWildcardLabelingFunction(
@@ -98,8 +98,10 @@ final public class GuesstimateLabelingFunctions extends CommandLine {
 
       XStream xStream = Helpers.xStream();
 
-      File input = new File(Constants.labelingFunctionsXml(outputDirectory, language, label));
-      File output = new File(Constants.labelingFunctionsGz(outputDirectory, language, label));
+      File input =
+          new File(Constants.guesstimatedLabelingFunctionsXml(outputDirectory, language, label));
+      File output =
+          new File(Constants.guesstimatedLabelingFunctionsGz(outputDirectory, language, label));
 
       com.computablefacts.nona.helpers.Files.create(input, xStream.toXML(lfs));
       com.computablefacts.nona.helpers.Files.gzip(input, output);

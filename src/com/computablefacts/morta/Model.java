@@ -14,10 +14,11 @@ import com.computablefacts.morta.snorkel.FeatureVector;
 import com.computablefacts.morta.snorkel.Helpers;
 import com.computablefacts.morta.snorkel.ITransformationFunction;
 import com.computablefacts.morta.snorkel.classifiers.AbstractClassifier;
-import com.computablefacts.morta.snorkel.labelingfunctions.MatchWildcardLabelingFunction;
+import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunction;
 import com.computablefacts.nona.helpers.Files;
 import com.computablefacts.nona.helpers.Languages;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.errorprone.annotations.CheckReturnValue;
 import com.thoughtworks.xstream.XStream;
@@ -32,8 +33,7 @@ final public class Model {
   private final int maxGroupSize_;
   private Dictionary alphabet_;
   private AbstractClassifier classifier_;
-  private List<MatchWildcardLabelingFunction> labelingFunctions_;
-  private List<String> keywords_;
+  private List<AbstractLabelingFunction<String>> labelingFunctions_;
   private double confidenceScore_;
   private String observations_;
 
@@ -71,12 +71,14 @@ final public class Model {
     return classifier_;
   }
 
-  public List<MatchWildcardLabelingFunction> labelingFunctions() {
+  public List<AbstractLabelingFunction<String>> labelingFunctions() {
     return labelingFunctions_;
   }
 
-  public List<String> keywords() {
-    return keywords_;
+  public List<String> keywords(String text) {
+    return labelingFunctions_.stream().flatMap((lf) -> lf.matches(text).stream()).flatMap(
+        keyword -> Splitter.on(' ').omitEmptyStrings().trimResults().splitToList(keyword).stream())
+        .distinct().collect(Collectors.toList());
   }
 
   public double confidenceScore() {
@@ -95,7 +97,7 @@ final public class Model {
   public boolean isValid() {
     return !Strings.isNullOrEmpty(model_) && !Strings.isNullOrEmpty(language_) && maxGroupSize_ > 0
         && alphabet_ != null && classifier_ != null && labelingFunctions_ != null
-        && keywords_ != null && 0.0 <= confidenceScore_ && confidenceScore_ <= 1.0;
+        && 0.0 <= confidenceScore_ && confidenceScore_ <= 1.0;
   }
 
   public boolean init(String dir) {
@@ -114,10 +116,6 @@ final public class Model {
       } else {
         confidenceScore_ = (classifier_.mcc() + 1.0) / 2.0; // Rescale MCC between 0 and 1
       }
-    }
-    if (labelingFunctions_ != null) {
-      keywords_ = labelingFunctions_.stream().flatMap((lf) -> lf.literals().stream()).distinct()
-          .collect(Collectors.toList());
     }
     return isValid();
   }
@@ -140,8 +138,8 @@ final public class Model {
                 .map(Map.Entry::getValue).collect(Collectors.joining("\n")));
   }
 
-  private List<MatchWildcardLabelingFunction> labelingFunctions(String dir) {
-    return (List<MatchWildcardLabelingFunction>) xStream_.fromXML(
+  private List<AbstractLabelingFunction<String>> labelingFunctions(String dir) {
+    return (List<AbstractLabelingFunction<String>>) xStream_.fromXML(
         Files.compressedLineStream(new File(Constants.labelingFunctionsGz(dir, language_, model_)),
             StandardCharsets.UTF_8).map(Map.Entry::getValue).collect(Collectors.joining("\n")));
   }

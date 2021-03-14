@@ -23,7 +23,6 @@ import com.computablefacts.nona.helpers.CommandLine;
 import com.computablefacts.nona.helpers.Document;
 import com.computablefacts.nona.helpers.Files;
 import com.computablefacts.nona.helpers.SnippetExtractor;
-import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
@@ -78,8 +77,6 @@ final public class ExecuteModel extends CommandLine {
 
       observations.add(String.format("Alphabet size is %d", model.alphabet().size()));
       observations.add(String.format("Model confidence score is %f", model.confidenceScore()));
-      observations.add(
-          String.format("Keywords found : [\n  %s\n]", Joiner.on("\n  ").join(model.keywords())));
       observations.add("Processing documents...");
 
       AtomicInteger nbExtractedFacts = new AtomicInteger(0);
@@ -176,18 +173,23 @@ final public class ExecuteModel extends CommandLine {
 
         if (prediction == OK) {
 
-          String snippet = SnippetExtractor.extract(model.keywords(), page, 300, 50, "");
+          List<String> keywords = model.keywords(page);
 
-          if (!Strings.isNullOrEmpty(snippet)) {
+          if (!keywords.isEmpty()) {
 
-            Fact fact = newFact(extractedWith, extractedBy, root, dataset, doc, model.name(),
-                model.confidenceScore(), pageIndex + 1, page, snippet, 0, snippet.length());
+            String snippet = SnippetExtractor.extract(keywords, page, 300, 50, "");
 
-            facts.add(fact);
+            if (!Strings.isNullOrEmpty(snippet)) {
 
-            if (observations != null) {
-              observations.add(String.format("%s -> p.%d : %s \n---\n%s\n---", doc.docId(),
-                  pageIndex + 1, model.name(), snippet.replaceAll("(\r\n|\n)+", "\n")));
+              Fact fact = newFact(extractedWith, extractedBy, root, dataset, doc, model.name(),
+                  model.confidenceScore(), pageIndex + 1, page, snippet, 0, snippet.length());
+
+              facts.add(fact);
+
+              if (observations != null) {
+                observations.add(String.format("%s -> p.%d : %s \n---\n%s\n---", doc.docId(),
+                    pageIndex + 1, model.name(), snippet.replaceAll("(\r\n|\n)+", "\n")));
+              }
             }
           }
         }
