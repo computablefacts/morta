@@ -18,7 +18,6 @@ import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunct
 import com.computablefacts.nona.helpers.Files;
 import com.computablefacts.nona.helpers.Languages;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.errorprone.annotations.CheckReturnValue;
 import com.thoughtworks.xstream.XStream;
@@ -76,9 +75,7 @@ final public class Model {
   }
 
   public List<String> keywords(String text) {
-    return labelingFunctions_.stream().flatMap((lf) -> lf.matches(text).stream()).flatMap(
-        keyword -> Splitter.on(' ').omitEmptyStrings().trimResults().splitToList(keyword).stream())
-        .distinct().collect(Collectors.toList());
+    return Helpers.keywords(labelingFunctions_, text);
   }
 
   public double confidenceScore() {

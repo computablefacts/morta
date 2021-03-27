@@ -136,11 +136,7 @@ final public class TrainGenerativeModel extends CommandLine {
       observations.add(AsciiTable.format(Helpers.correlations(lfCorrelations), true));
 
       observations.add("Exploring vectors...");
-
-      observations.add(AsciiTable.format(
-              Helpers.vectors(labelModel.lfNames(), labelModel.lfLabels(),
-                  labelModel.vectors(train), labelModel.actual(train), labelModel.predicted(train)),
-              true));
+      observations.add(AsciiTable.format(Helpers.vectors(labelModel, train), true));
     }
 
     // Build alphabet (ngrams from 1 included to 6 excluded)

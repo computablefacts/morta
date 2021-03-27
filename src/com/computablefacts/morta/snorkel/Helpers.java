@@ -14,8 +14,12 @@ import java.util.stream.Collectors;
 
 import org.tartarus.snowball.SnowballStemmer;
 
+import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunction;
+import com.computablefacts.morta.snorkel.labelmodels.MedianLabelModel;
 import com.computablefacts.nona.helpers.Languages;
+import com.computablefacts.nona.helpers.SnippetExtractor;
 import com.computablefacts.nona.helpers.StringIterator;
+import com.computablefacts.nona.helpers.Strings;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -212,26 +216,32 @@ final public class Helpers {
     return matrix;
   }
 
-  public static String[][] vectors(Dictionary lfNames, Dictionary lfLabels,
-      List<Map.Entry<String, FeatureVector<Integer>>> instances, List<String> lfActualLabels,
-      List<String> lfPredictedLabels) {
+  public static String[][] vectors(MedianLabelModel<String> labelModel,
+      List<? extends IGoldLabel<String>> goldLabels) {
 
-    Preconditions.checkNotNull(lfNames, "lfNames should not be null");
-    Preconditions.checkNotNull(lfLabels, "lfLabels should not be null");
-    Preconditions.checkNotNull(instances, "instances should not be null");
-    Preconditions.checkNotNull(lfActualLabels, "lfActualLabels should not be null");
-    Preconditions.checkNotNull(lfPredictedLabels, "lfPredictedLabels should not be null");
+    Preconditions.checkNotNull(labelModel, "labelModel should not be null");
+    Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
+
+    Dictionary lfNames = labelModel.lfNames();
+    Dictionary lfLabels = labelModel.lfLabels();
+    List<? extends AbstractLabelingFunction<String>> labelingFunctions =
+        labelModel.labelingFunctions();
+    List<Map.Entry<String, FeatureVector<Integer>>> instances = labelModel.vectors(goldLabels);
+    List<String> lfActualLabels = labelModel.actual(goldLabels);
+    List<String> lfPredictedLabels = labelModel.predicted(goldLabels);
 
     Preconditions.checkArgument(instances.size() == lfActualLabels.size());
     Preconditions.checkArgument(instances.size() == lfPredictedLabels.size());
+    Preconditions.checkArgument(instances.size() == goldLabels.size());
 
-    String[][] rows = new String[instances.size() + 1][instances.get(0).getValue().size() + 2];
+    int disp = 3;
+    String[][] rows = new String[instances.size() + 1][instances.get(0).getValue().size() + disp];
 
     rows[0][0] = "Actual Label";
     rows[0][1] = "Predicted Label";
 
     for (int i = 0; i < lfNames.size(); i++) {
-      rows[0][i + 2] = lfNames.label(i);
+      rows[0][i + disp] = lfNames.label(i);
     }
 
     @Var
@@ -246,21 +256,25 @@ final public class Helpers {
         continue; // discard instance when the prediction matches the actual
       }
 
+      IGoldLabel<String> goldLabel = goldLabels.get(i);
+      List<String> keywords = keywords(labelingFunctions, goldLabel.data());
       FeatureVector<Integer> vector = instances.get(i).getValue();
 
       Preconditions.checkState(lfNames.size() == vector.size());
 
       rows[u][0] = actual;
       rows[u][1] = predicted;
+      rows[u][2] =
+          Strings.encode(SnippetExtractor.extract(keywords, goldLabel.data(), 300, 50, "..."));
 
       for (int k = 0; k < lfNames.size(); k++) {
-        rows[u][k + 2] = lfLabels.label(vector.get(k));
+        rows[u][k + disp] = lfLabels.label(vector.get(k));
       }
 
       u++;
     }
 
-    String[][] rowsNew = new String[u][instances.get(0).getValue().size() + 2];
+    String[][] rowsNew = new String[u][instances.get(0).getValue().size() + disp];
 
     for (int i = 0; i < u; i++) {
       for (int j = 0; j < rows[i].length; j++) {
@@ -278,5 +292,16 @@ final public class Helpers {
     // \p{Punct} -> Punctuation: One of !"#$%&'()*+,-./:;<=>?@[\]^_`{|}~
     return StringIterator.removeDiacriticalMarks(text).replaceAll("[^!?.,;:\\p{Alnum}\\p{L}]", " ")
         .replaceAll("\\s+", " ").toLowerCase();
+  }
+
+  public static List<String> keywords(
+      List<? extends AbstractLabelingFunction<String>> labelingFunctions, String text) {
+
+    Preconditions.checkNotNull(labelingFunctions, "labelingFunctions should not be null");
+    Preconditions.checkNotNull(text, "text should not be null");
+
+    return labelingFunctions.stream().flatMap((lf) -> lf.matches(text).stream()).flatMap(
+        keyword -> Splitter.on(' ').omitEmptyStrings().trimResults().splitToList(keyword).stream())
+        .distinct().collect(Collectors.toList());
   }
 }
