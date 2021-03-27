@@ -171,6 +171,14 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
       return new AbstractMap.SimpleEntry<>(lf, summary.get());
     }).collect(Collectors.toList());
 
+    // Apply each LF to each gold label
+    List<Integer> actual =
+        goldLabels.stream().map(MedianLabelModel::label).collect(Collectors.toList());
+
+    List<List<Integer>> instances =
+        goldLabels.stream().map(gl -> lfSummaries_.stream().map(s -> s.getKey().apply(gl.data()))
+            .collect(Collectors.toList())).collect(Collectors.toList());
+
     // Weight each LF
     AsciiProgressBar.ProgressBar bar = AsciiProgressBar.create();
     List<List<Double>> ok = new ArrayList<>(goldLabels.size());
@@ -180,14 +188,12 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
 
       bar.update(i, goldLabels.size(), "Weighting labeling functions...");
 
-      IGoldLabel<T> goldLabel = goldLabels.get(i);
-      T data = goldLabel.data();
-      int label = label(goldLabel);
+      int label = actual.get(i);
 
       if (label == OK) {
-        ok.add(score(lfSummaries_, label, data));
+        ok.add(score(instances.get(i), label));
       } else if (label == KO) {
-        ko.add(score(lfSummaries_, label, data));
+        ko.add(score(instances.get(i), label));
       } // discard ABSTAIN
     }
 
@@ -262,27 +268,23 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
    * "the LF totally agrees with the given label", 0 means "the LF abstained" and -1 means "the LF
    * totally disagrees with the given label".
    *
-   * @param lfSummaries
-   * @param label
-   * @param data
+   * @param labels output of each labeling function.
+   * @param label reference label.
    * @return vector
    */
-  private List<Double> score(
-      List<Map.Entry<? extends AbstractLabelingFunction<T>, Summary>> lfSummaries, int label,
-      T data) {
+  private List<Double> score(List<Integer> labels, int label) {
 
-    Preconditions.checkNotNull(lfSummaries, "lfSummaries should not be null");
+    Preconditions.checkNotNull(labels, "labels should not be null");
     Preconditions.checkArgument(label == ABSTAIN || label == OK || label == KO,
         "unknown label class");
-    Preconditions.checkNotNull(data, "data should not be null");
 
     List<Double> vector = new ArrayList<>();
 
-    for (Map.Entry<? extends ILabelingFunction<T>, Summary> lfSummary : lfSummaries) {
+    for (int i = 0; i < lfSummaries_.size(); i++) {
 
-      ILabelingFunction<T> lf = lfSummary.getKey();
+      Map.Entry<? extends ILabelingFunction<T>, Summary> lfSummary = lfSummaries_.get(i);
       Summary summary = lfSummary.getValue();
-      int lbl = lf.apply(data);
+      int lbl = labels.get(i);
 
       if (lbl == label) {
         vector.add(1.0 * (summary.correct() + summary.abstain())
@@ -365,8 +367,16 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
 
     Preconditions.checkNotNull(data, "data should not be null");
 
-    List<Double> ok = score(lfSummaries_, OK, data);
-    List<Double> ko = score(lfSummaries_, KO, data);
+    return prediction(
+        lfSummaries_.stream().map(s -> s.getKey().apply(data)).collect(Collectors.toList()));
+  }
+
+  private int prediction(List<Integer> labels) {
+
+    Preconditions.checkNotNull(labels, "labels should not be null");
+
+    List<Double> ok = score(labels, OK);
+    List<Double> ko = score(labels, KO);
 
     if (outputOkLabel(ok) && !outputKoLabel(ko)) {
       return OK;
