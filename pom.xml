@@ -43,7 +43,7 @@
         <error-prone.version>2.3.1</error-prone.version>
         <junit.version>4.13.1</junit.version>
         <equalsverifier.version>3.4.2</equalsverifier.version>
-        <jackson-dataformat-yaml.version>2.10.2</jackson-dataformat-yaml.version>
+        <jackson-dataformat-yaml.version>2.12.0</jackson-dataformat-yaml.version>
         <smile.version>2.5.1</smile.version>
         <openblas.version>0.3.10-1.5.4</openblas.version>
         <xstream.version>1.4.15</xstream.version>
