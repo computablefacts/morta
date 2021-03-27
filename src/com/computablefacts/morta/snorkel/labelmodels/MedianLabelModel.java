@@ -269,7 +269,7 @@ final public class MedianLabelModel<T> extends AbstractLabelModel<T> {
    * totally disagrees with the given label".
    *
    * @param labels output of each labeling function.
-   * @param label reference label.
+   * @param label expected label.
    * @return vector
    */
   private List<Double> score(List<Integer> labels, int label) {
