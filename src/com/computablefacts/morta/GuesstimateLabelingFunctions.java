@@ -12,7 +12,7 @@ import com.computablefacts.morta.docsetlabeler.DocSetLabelerImpl;
 import com.computablefacts.morta.snorkel.Helpers;
 import com.computablefacts.morta.snorkel.IGoldLabel;
 import com.computablefacts.morta.snorkel.labelingfunctions.MatchWildcardLabelingFunction;
-import com.computablefacts.morta.snorkel.labelmodels.MedianLabelModel;
+import com.computablefacts.morta.snorkel.labelmodels.TreeLabelModel;
 import com.computablefacts.nona.helpers.CommandLine;
 import com.computablefacts.nona.helpers.Languages;
 import com.computablefacts.nona.helpers.WildcardMatcher;
@@ -54,7 +54,7 @@ final public class GuesstimateLabelingFunctions extends CommandLine {
     // Pages for which LF must return OK
     observations.add("Building dataset for label OK...");
 
-    List<String> pagesOk = gls.stream().filter(gl -> MedianLabelModel.label(gl) == OK)
+    List<String> pagesOk = gls.stream().filter(gl -> TreeLabelModel.label(gl) == OK)
         .map(IGoldLabel::data).collect(Collectors.toList());
 
     observations.add(String.format("%d pages found (%d duplicates)", pagesOk.size(),
@@ -63,7 +63,7 @@ final public class GuesstimateLabelingFunctions extends CommandLine {
     // Pages for which LF must return KO
     observations.add("Building dataset for label KO...");
 
-    List<String> pagesKo = gls.stream().filter(gl -> MedianLabelModel.label(gl) == KO)
+    List<String> pagesKo = gls.stream().filter(gl -> TreeLabelModel.label(gl) == KO)
         .map(IGoldLabel::data).collect(Collectors.toList());
 
     observations.add(String.format("%d pages found (%d duplicates)", pagesKo.size(),

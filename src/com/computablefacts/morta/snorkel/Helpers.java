@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 import org.tartarus.snowball.SnowballStemmer;
 
 import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunction;
-import com.computablefacts.morta.snorkel.labelmodels.MedianLabelModel;
+import com.computablefacts.morta.snorkel.labelmodels.TreeLabelModel;
 import com.computablefacts.nona.helpers.Languages;
 import com.computablefacts.nona.helpers.SnippetExtractor;
 import com.computablefacts.nona.helpers.StringIterator;
@@ -216,7 +216,7 @@ final public class Helpers {
     return matrix;
   }
 
-  public static String[][] vectors(MedianLabelModel<String> labelModel,
+  public static String[][] vectors(TreeLabelModel<String> labelModel,
       List<? extends IGoldLabel<String>> goldLabels) {
 
     Preconditions.checkNotNull(labelModel, "labelModel should not be null");

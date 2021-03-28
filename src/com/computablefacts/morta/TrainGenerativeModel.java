@@ -14,7 +14,7 @@ import com.computablefacts.morta.snorkel.Helpers;
 import com.computablefacts.morta.snorkel.IGoldLabel;
 import com.computablefacts.morta.snorkel.Summary;
 import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunction;
-import com.computablefacts.morta.snorkel.labelmodels.MedianLabelModel;
+import com.computablefacts.morta.snorkel.labelmodels.TreeLabelModel;
 import com.computablefacts.morta.yaml.patterns.Pattern;
 import com.computablefacts.morta.yaml.patterns.Patterns;
 import com.computablefacts.nona.helpers.AsciiProgressBar;
@@ -115,14 +115,14 @@ final public class TrainGenerativeModel extends CommandLine {
     // Build label model
     observations.add("Building label model...");
 
-    MedianLabelModel<String> labelModel = new MedianLabelModel<>(lfs);
+    TreeLabelModel<String> labelModel = new TreeLabelModel<>(lfs);
     labelModel.fit(train);
 
     System.out.println(); // Cosmetic
 
     if (verbose) {
 
-      labelModel.lfSummaries().stream().map(Map.Entry::getValue)
+      labelModel.lfSummaries().stream()
           // Sort summaries by decreasing number of correct labels
           .sorted((o1, o2) -> Ints.compare(o2.correct(), o1.correct()))
           .forEach(summary -> observations.add(String.format("  %s", summary.toString())));

@@ -23,7 +23,7 @@ import com.google.common.collect.Table;
 
 import smile.stat.hypothesis.CorTest;
 
-public class MedianLabelModelTest {
+public class TreeLabelModelTest {
 
   @Test
   public void testLabelingFunctionsCorrelations() {
@@ -87,30 +87,30 @@ public class MedianLabelModelTest {
   @Test
   public void testPredict() {
 
-    MedianLabelModel<String> labelModel = labelModel();
+    TreeLabelModel<String> labelModel = labelModel();
     labelModel.fit(goldLabels());
 
     List<Integer> list = labelModel.predict(goldLabels());
 
-    Assert.assertEquals(Lists.newArrayList(KO, KO, KO, KO, KO, OK, KO, KO, KO, KO, KO, OK), list);
+    Assert.assertEquals(Lists.newArrayList(KO, KO, OK, KO, KO, OK, KO, KO, OK, KO, KO, OK), list);
   }
 
   @Test
   public void testConfusionMatrix() {
 
-    MedianLabelModel<String> labelModel = labelModel();
+    TreeLabelModel<String> labelModel = labelModel();
     labelModel.fit(goldLabels());
 
     ConfusionMatrix matrix = labelModel.confusionMatrix(goldLabels());
 
-    Assert.assertEquals(2, matrix.nbTruePositives());
+    Assert.assertEquals(4, matrix.nbTruePositives());
     Assert.assertEquals(8, matrix.nbTrueNegatives());
     Assert.assertEquals(0, matrix.nbFalsePositives());
-    Assert.assertEquals(2, matrix.nbFalseNegatives());
+    Assert.assertEquals(0, matrix.nbFalseNegatives());
   }
 
-  private MedianLabelModel<String> labelModel() {
-    return new MedianLabelModel<>(lfs());
+  private TreeLabelModel<String> labelModel() {
+    return new TreeLabelModel<>(lfs());
   }
 
   private List<AbstractLabelingFunction<String>> lfs() {

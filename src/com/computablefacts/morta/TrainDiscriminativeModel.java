@@ -24,7 +24,7 @@ import com.computablefacts.morta.snorkel.classifiers.LinearDiscriminantAnalysisC
 import com.computablefacts.morta.snorkel.classifiers.LogisticRegressionClassifier;
 import com.computablefacts.morta.snorkel.classifiers.QuadraticDiscriminantAnalysisClassifier;
 import com.computablefacts.morta.snorkel.classifiers.RegularizedDiscriminantAnalysisClassifier;
-import com.computablefacts.morta.snorkel.labelmodels.MedianLabelModel;
+import com.computablefacts.morta.snorkel.labelmodels.TreeLabelModel;
 import com.computablefacts.nona.helpers.AsciiProgressBar;
 import com.computablefacts.nona.helpers.CommandLine;
 import com.computablefacts.nona.helpers.ConfusionMatrix;
@@ -90,7 +90,7 @@ final public class TrainDiscriminativeModel extends CommandLine {
     // Load label model
     observations.add("Loading label model...");
 
-    MedianLabelModel<String> lm = (MedianLabelModel<String>) xStream
+    TreeLabelModel<String> lm = (TreeLabelModel<String>) xStream
         .fromXML(Files.compressedLineStream(labelModel, StandardCharsets.UTF_8)
             .map(Map.Entry::getValue).collect(Collectors.joining("\n")));
 
@@ -185,7 +185,7 @@ final public class TrainDiscriminativeModel extends CommandLine {
 
     ConfusionMatrix matrix = new ConfusionMatrix();
 
-    matrix.addAll(Pipeline.on(goldLabels).transform(MedianLabelModel::label).collect(),
+    matrix.addAll(Pipeline.on(goldLabels).transform(TreeLabelModel::label).collect(),
         classifier.predict(testInsts), OK, KO);
 
     return matrix;
