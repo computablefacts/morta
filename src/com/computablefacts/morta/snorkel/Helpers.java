@@ -265,7 +265,8 @@ final public class Helpers {
       rows[u][0] = actual;
       rows[u][1] = predicted;
       rows[u][2] =
-          Strings.encode(SnippetExtractor.extract(keywords, goldLabel.data(), 300, 50, "..."));
+          Strings.encode(SnippetExtractor.extract(keywords, goldLabel.data(), 300, 50, "..."))
+              .replace("%", "\\u0025");
 
       for (int k = 0; k < lfNames.size(); k++) {
         rows[u][k + disp] = lfLabels.label(vector.get(k));
