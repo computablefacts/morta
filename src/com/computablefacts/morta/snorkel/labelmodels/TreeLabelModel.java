@@ -170,23 +170,27 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
         .reversed()).collect(Collectors.toList());
 
     @Var
-    List<Aggregate<T>> aggregates = newAggregate(simpleAggregates, simpleAggregates);
-    tree_ = aggregates.get(0);
+    List<Aggregate<T>> aggregates =
+        filterAggregate(newAggregate(simpleAggregates, simpleAggregates));
 
-    while (true) {
+    while (!aggregates.isEmpty()) {
 
-      aggregates = newAggregate(aggregates, simpleAggregates,
-          tree_.confusionMatrix().matthewsCorrelationCoefficient());
+      double mccCutOff = aggregates.get(0).confusionMatrix().matthewsCorrelationCoefficient();
+      List<Aggregate<T>> newAggregates =
+          filterAggregate(newAggregate(aggregates, simpleAggregates, mccCutOff));
 
-      if (tree_.confusionMatrix().matthewsCorrelationCoefficient() < aggregates.get(0)
-          .confusionMatrix().matthewsCorrelationCoefficient()) {
-        tree_ = aggregates.get(0);
+      if (!newAggregates.isEmpty()
+          && mccCutOff < newAggregates.get(0).confusionMatrix().matthewsCorrelationCoefficient()) {
+        aggregates = newAggregates;
       } else {
         break;
       }
     }
 
-    tree_.reduce();
+    if (!aggregates.isEmpty()) {
+      tree_ = aggregates.get(0);
+      tree_.reduce();
+    }
   }
 
   /**
@@ -256,6 +260,22 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
     Preconditions.checkNotNull(data, "data should not be null");
 
     return tree_.apply(data);
+  }
+
+  private List<Aggregate<T>> filterAggregate(List<Aggregate<T>> aggregates) {
+
+    Preconditions.checkNotNull(aggregates, "aggregates should not be null");
+
+    if (aggregates.isEmpty()) {
+      return aggregates;
+    }
+
+    double bestMcc = aggregates.get(0).confusionMatrix().matthewsCorrelationCoefficient();
+    return aggregates.stream().filter(
+        aggregate -> Double.isFinite(aggregate.confusionMatrix().matthewsCorrelationCoefficient()))
+        .filter(
+            aggregate -> aggregate.confusionMatrix().matthewsCorrelationCoefficient() == bestMcc)
+        .collect(Collectors.toList());
   }
 
   private List<Aggregate<T>> newAggregate(List<Aggregate<T>> aggregates1,
