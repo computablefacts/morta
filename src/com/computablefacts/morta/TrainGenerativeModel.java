@@ -120,6 +120,8 @@ final public class TrainGenerativeModel extends CommandLine {
 
     System.out.println(); // Cosmetic
 
+    observations.add(String.format("Tree for label model is : %s", labelModel.toString()));
+
     if (verbose) {
 
       labelModel.lfSummaries().stream()

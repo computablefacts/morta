@@ -99,6 +99,11 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
   }
 
   @Override
+  public String toString() {
+    return tree_ == null ? "Invalid tree!" : tree_.toString();
+  }
+
+  @Override
   public Table<String, String, CorTest> labelingFunctionsCorrelations(
       List<? extends IGoldLabel<T>> goldLabels, Summary.eCorrelation correlation) {
 
@@ -384,6 +389,11 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
     }
 
     @Override
+    public String toString() {
+      return String.format("(%s OR %s)", aggregate1_.toString(), aggregate2_.toString());
+    }
+
+    @Override
     public List<Integer> actuals() {
       return aggregate1_.actuals();
     }
@@ -443,6 +453,11 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
       }
 
       confusionMatrix_.addAll(aggregate1.actuals(), predictions_, OK, KO);
+    }
+
+    @Override
+    public String toString() {
+      return String.format("(%s AND %s)", aggregate1_.toString(), aggregate2_.toString());
     }
 
     @Override
@@ -508,6 +523,11 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
     }
 
     @Override
+    public String toString() {
+      return String.format("(%s AND NOT %s)", aggregate1_.toString(), aggregate2_.toString());
+    }
+
+    @Override
     public List<Integer> actuals() {
       return aggregate1_.actuals();
     }
@@ -560,6 +580,11 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
       });
 
       confusionMatrix_.addAll(actuals_, predictions_, OK, KO);
+    }
+
+    @Override
+    public String toString() {
+      return labelingFunction_.name();
     }
 
     @Override
