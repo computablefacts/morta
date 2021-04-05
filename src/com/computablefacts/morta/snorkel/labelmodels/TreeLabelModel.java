@@ -258,6 +258,7 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
   private int predict(T data) {
 
     Preconditions.checkNotNull(data, "data should not be null");
+    Preconditions.checkState(tree_ != null, "tree should not be null");
 
     return tree_.apply(data);
   }
