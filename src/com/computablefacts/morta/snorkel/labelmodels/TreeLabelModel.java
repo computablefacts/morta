@@ -270,6 +270,7 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
       for (int j = 0; j < aggregates2.size(); j++) {
         aggregates.add(new AndAggregate<>(aggregates1.get(i), aggregates2.get(j)));
         aggregates.add(new OrAggregate<>(aggregates1.get(i), aggregates2.get(j)));
+        aggregates.add(new AndNotAggregate<>(aggregates1.get(i), aggregates2.get(j)));
       }
     }
     return aggregates.stream().filter(
@@ -300,6 +301,12 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
 
         if (aggregate2.confusionMatrix().matthewsCorrelationCoefficient() >= mccCutOff) {
           aggregates.add(aggregate2);
+        }
+
+        Aggregate<T> aggregate3 = new AndNotAggregate<>(aggregates1.get(i), aggregates2.get(j));
+
+        if (aggregate3.confusionMatrix().matthewsCorrelationCoefficient() >= mccCutOff) {
+          aggregates.add(aggregate3);
         }
       }
     }
@@ -442,6 +449,68 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
     @Override
     public @Nullable Integer apply(@Nullable T input) {
       return aggregate1_.apply(input) == OK && aggregate2_.apply(input) == OK ? OK : KO;
+    }
+  }
+
+  private static final class AndNotAggregate<T> implements Aggregate<T> {
+
+    private final List<Integer> predictions_ = new ArrayList<>();
+    private final ConfusionMatrix confusionMatrix_ = new ConfusionMatrix();
+    private final Aggregate<T> aggregate1_;
+    private final Aggregate<T> aggregate2_;
+
+    public AndNotAggregate(Aggregate<T> aggregate1, Aggregate<T> aggregate2) {
+
+      Preconditions.checkNotNull(aggregate1, "aggregate1 should not be null");
+      Preconditions.checkNotNull(aggregate2, "aggregate2 should not be null");
+
+      aggregate1_ = aggregate1;
+      aggregate2_ = aggregate2;
+
+      Preconditions.checkState(aggregate1.actuals().size() == aggregate2.actuals().size());
+      Preconditions.checkState(aggregate1.predictions().size() == aggregate2.predictions().size());
+
+      for (int i = 0; i < aggregate1.actuals().size(); i++) {
+
+        int actual1 = aggregate1.actuals().get(i);
+        int actual2 = aggregate2.actuals().get(i);
+
+        Preconditions.checkState(actual1 == actual2);
+
+        int prediction1 = aggregate1.predictions().get(i);
+        int prediction2 = aggregate2.predictions().get(i);
+
+        predictions_.add(prediction1 == OK && prediction2 != OK ? OK : KO);
+      }
+
+      confusionMatrix_.addAll(aggregate1.actuals(), predictions_, OK, KO);
+    }
+
+    @Override
+    public List<Integer> actuals() {
+      return aggregate1_.actuals();
+    }
+
+    @Override
+    public List<Integer> predictions() {
+      return predictions_;
+    }
+
+    @Override
+    public ConfusionMatrix confusionMatrix() {
+      return confusionMatrix_;
+    }
+
+    @Override
+    public void reduce() {
+      predictions_.clear();
+      aggregate1_.reduce();
+      aggregate2_.reduce();
+    }
+
+    @Override
+    public @Nullable Integer apply(@Nullable T input) {
+      return aggregate1_.apply(input) == OK && aggregate2_.apply(input) != OK ? OK : KO;
     }
   }
 
