@@ -4,8 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import javax.annotation.concurrent.NotThreadSafe;
 
@@ -118,27 +116,18 @@ final public class Model {
   }
 
   private Dictionary alphabet(String dir) {
-    return (Dictionary) xStream_
-        .fromXML(
-            Files
-                .compressedLineStream(new File(Constants.alphabetGz(dir, language_, model_)),
-                    StandardCharsets.UTF_8)
-                .map(Map.Entry::getValue).collect(Collectors.joining("\n")));
+    return (Dictionary) xStream_.fromXML(Files.loadCompressed(
+        new File(Constants.alphabetGz(dir, language_, model_)), StandardCharsets.UTF_8));
   }
 
   private AbstractClassifier classifier(String dir) {
-    return (AbstractClassifier) xStream_
-        .fromXML(
-            Files
-                .compressedLineStream(new File(Constants.classifierGz(dir, language_, model_)),
-                    StandardCharsets.UTF_8)
-                .map(Map.Entry::getValue).collect(Collectors.joining("\n")));
+    return (AbstractClassifier) xStream_.fromXML(Files.loadCompressed(
+        new File(Constants.classifierGz(dir, language_, model_)), StandardCharsets.UTF_8));
   }
 
   private List<AbstractLabelingFunction<String>> labelingFunctions(String dir) {
-    return (List<AbstractLabelingFunction<String>>) xStream_.fromXML(
-        Files.compressedLineStream(new File(Constants.labelingFunctionsGz(dir, language_, model_)),
-            StandardCharsets.UTF_8).map(Map.Entry::getValue).collect(Collectors.joining("\n")));
+    return (List<AbstractLabelingFunction<String>>) xStream_.fromXML(Files.loadCompressed(
+        new File(Constants.labelingFunctionsGz(dir, language_, model_)), StandardCharsets.UTF_8));
   }
 
   private String observations(String dir) {
