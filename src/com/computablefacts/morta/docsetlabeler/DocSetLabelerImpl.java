@@ -10,11 +10,12 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
-import com.computablefacts.morta.snorkel.Helpers;
 import org.tartarus.snowball.SnowballStemmer;
 
+import com.computablefacts.morta.snorkel.Helpers;
 import com.computablefacts.nona.helpers.AsciiProgressBar;
 import com.computablefacts.nona.helpers.BagOfTexts;
+import com.computablefacts.nona.helpers.DocSetLabeler;
 import com.computablefacts.nona.helpers.IBagOfTexts;
 import com.computablefacts.nona.helpers.Languages;
 import com.computablefacts.nona.helpers.Strings;
