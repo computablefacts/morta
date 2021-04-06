@@ -7,10 +7,8 @@ import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 import com.computablefacts.morta.snorkel.Dictionary;
 import com.computablefacts.morta.snorkel.FeatureVector;
@@ -82,8 +80,7 @@ final public class TrainDiscriminativeModel extends CommandLine {
     XStream xStream = Helpers.xStream();
 
     Dictionary alpha =
-        (Dictionary) xStream.fromXML(Files.compressedLineStream(alphabet, StandardCharsets.UTF_8)
-            .map(Map.Entry::getValue).collect(Collectors.joining("\n")));
+        (Dictionary) xStream.fromXML(Files.loadCompressed(alphabet, StandardCharsets.UTF_8));
 
     observations.add(String.format("Alphabet size is %d", alpha.size()));
 
@@ -91,8 +88,7 @@ final public class TrainDiscriminativeModel extends CommandLine {
     observations.add("Loading label model...");
 
     TreeLabelModel<String> lm = (TreeLabelModel<String>) xStream
-        .fromXML(Files.compressedLineStream(labelModel, StandardCharsets.UTF_8)
-            .map(Map.Entry::getValue).collect(Collectors.joining("\n")));
+        .fromXML(Files.loadCompressed(labelModel, StandardCharsets.UTF_8));
 
     // Apply CountVectorizer on gold labels
     observations.add("Applying 'CountVectorizer' on gold labels...");

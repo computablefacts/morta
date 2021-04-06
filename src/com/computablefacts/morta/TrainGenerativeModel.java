@@ -4,7 +4,6 @@ import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -83,8 +82,7 @@ final public class TrainGenerativeModel extends CommandLine {
     XStream xStream = Helpers.xStream();
 
     List<AbstractLabelingFunction<String>> lfs = (List<AbstractLabelingFunction<String>>) xStream
-        .fromXML(Files.compressedLineStream(labelingFunctions, StandardCharsets.UTF_8)
-            .map(Map.Entry::getValue).collect(Collectors.joining("\n")));
+        .fromXML(Files.loadCompressed(labelingFunctions, StandardCharsets.UTF_8));
 
     observations.add(String.format("%d labeling functions loaded", lfs.size()));
 
