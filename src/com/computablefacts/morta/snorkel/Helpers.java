@@ -239,6 +239,7 @@ final public class Helpers {
 
     rows[0][0] = "Actual Label";
     rows[0][1] = "Predicted Label";
+    rows[0][2] = "Snippet";
 
     for (int i = 0; i < lfNames.size(); i++) {
       rows[0][i + disp] = lfNames.label(i);
