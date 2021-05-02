@@ -313,16 +313,6 @@ final public class Helpers {
     return multiset;
   }
 
-  public static String normalize(String text) {
-
-    Preconditions.checkNotNull(text, "text should not be null");
-
-    // https://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html
-    // \p{Punct} -> Punctuation: One of !"#$%&'()*+,-./:;<=>?@[\]^_`{|}~
-    return StringIterator.removeDiacriticalMarks(text).replaceAll("[^!?.,;:\\p{Alnum}\\p{L}]", " ")
-        .replaceAll("\\s+", " ").toLowerCase();
-  }
-
   public static List<String> keywords(
       List<? extends AbstractLabelingFunction<String>> labelingFunctions, String text) {
 
@@ -332,5 +322,15 @@ final public class Helpers {
     return labelingFunctions.stream().flatMap((lf) -> lf.matches(text).stream()).flatMap(
         keyword -> Splitter.on(' ').omitEmptyStrings().trimResults().splitToList(keyword).stream())
         .distinct().collect(Collectors.toList());
+  }
+
+  private static String normalize(String text) {
+
+    Preconditions.checkNotNull(text, "text should not be null");
+
+    // https://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html
+    // \p{Punct} -> Punctuation: One of !"#$%&'()*+,-./:;<=>?@[\]^_`{|}~
+    return StringIterator.removeDiacriticalMarks(text).replaceAll("[^!?.,;:\\p{Alnum}\\p{L}]", " ")
+        .replaceAll("\\s+", " ").toLowerCase();
   }
 }

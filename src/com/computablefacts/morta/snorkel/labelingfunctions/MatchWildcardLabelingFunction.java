@@ -4,7 +4,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.computablefacts.morta.snorkel.Helpers;
 import com.computablefacts.nona.helpers.WildcardMatcher;
 import com.google.common.base.Strings;
 import com.google.errorprone.annotations.CheckReturnValue;
@@ -20,16 +19,15 @@ final public class MatchWildcardLabelingFunction extends AbstractLabelingFunctio
 
   @Override
   public Integer apply(String text) {
-    return WildcardMatcher.match(Helpers.normalize(text), pattern()) ? OK : ABSTAIN;
+    return WildcardMatcher.match(text, pattern()) ? OK : ABSTAIN;
   }
 
   @Override
   public Set<String> matches(String text) {
-    String newText = Helpers.normalize(text);
-    if (Strings.isNullOrEmpty(newText)) {
+    if (Strings.isNullOrEmpty(text)) {
       return new HashSet<>();
     }
-    return WildcardMatcher.match(newText, pattern())
+    return WildcardMatcher.match(text, pattern())
         ? WildcardMatcher.split(pattern()).stream().filter(p -> !"*".equals(p) && !"?".equals(p))
             .collect(Collectors.toSet())
         : new HashSet<>();
