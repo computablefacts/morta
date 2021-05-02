@@ -171,18 +171,18 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
           "Inconsistent state reached between LF and Summaries");
 
       return new SimpleAggregate<>(lf, goldLabels);
-    }).sorted(Comparator.comparingDouble((SimpleAggregate<T> s) -> s.confusionMatrix_.accuracy())
+    }).sorted(Comparator
+        .comparingDouble(
+            (SimpleAggregate<T> s) -> s.confusionMatrix_.matthewsCorrelationCoefficient())
         .reversed()).collect(Collectors.toList());
 
     @Var
-    List<Aggregate<T>> aggregates =
-        filterAggregate(newAggregate(simpleAggregates, simpleAggregates));
+    List<Aggregate<T>> aggregates = newAggregate(simpleAggregates, simpleAggregates);
 
     while (!aggregates.isEmpty()) {
 
       double mccCutOff = aggregates.get(0).confusionMatrix().matthewsCorrelationCoefficient();
-      List<Aggregate<T>> newAggregates =
-          filterAggregate(newAggregate(aggregates, simpleAggregates, mccCutOff));
+      List<Aggregate<T>> newAggregates = newAggregate(aggregates, simpleAggregates, mccCutOff);
 
       if (!newAggregates.isEmpty()
           && mccCutOff < newAggregates.get(0).confusionMatrix().matthewsCorrelationCoefficient()) {
@@ -266,22 +266,6 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
     Preconditions.checkState(tree_ != null, "tree should not be null");
 
     return tree_.apply(data);
-  }
-
-  private List<Aggregate<T>> filterAggregate(List<Aggregate<T>> aggregates) {
-
-    Preconditions.checkNotNull(aggregates, "aggregates should not be null");
-
-    if (aggregates.isEmpty()) {
-      return aggregates;
-    }
-
-    double bestMcc = aggregates.get(0).confusionMatrix().matthewsCorrelationCoefficient();
-    return aggregates.stream().filter(
-        aggregate -> Double.isFinite(aggregate.confusionMatrix().matthewsCorrelationCoefficient()))
-        .filter(
-            aggregate -> aggregate.confusionMatrix().matthewsCorrelationCoefficient() == bestMcc)
-        .collect(Collectors.toList());
   }
 
   private List<Aggregate<T>> newAggregate(List<Aggregate<T>> aggregates1,
