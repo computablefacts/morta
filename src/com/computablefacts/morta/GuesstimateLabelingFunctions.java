@@ -11,11 +11,11 @@ import java.util.stream.Collectors;
 import com.computablefacts.morta.docsetlabeler.DocSetLabelerImpl;
 import com.computablefacts.morta.snorkel.Helpers;
 import com.computablefacts.morta.snorkel.IGoldLabel;
-import com.computablefacts.morta.snorkel.labelingfunctions.MatchWildcardLabelingFunction;
+import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunction;
+import com.computablefacts.morta.snorkel.labelingfunctions.MatchGuesstimatedLabelingFunction;
 import com.computablefacts.morta.snorkel.labelmodels.TreeLabelModel;
 import com.computablefacts.nona.helpers.CommandLine;
 import com.computablefacts.nona.helpers.Languages;
-import com.computablefacts.nona.helpers.WildcardMatcher;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
@@ -94,10 +94,11 @@ final public class GuesstimateLabelingFunctions extends CommandLine {
 
       observations.add("Saving guesstimated labeling functions...");
 
-      List<MatchWildcardLabelingFunction> lfs = labels.stream()
-          .map(lbl -> new MatchWildcardLabelingFunction(
-              WildcardMatcher.compact("*" + lbl.getKey().replace(' ', '*') + "*")))
-          .collect(Collectors.toList());
+      List<AbstractLabelingFunction<String>> lfs =
+          labels.stream()
+              .map(lbl -> new MatchGuesstimatedLabelingFunction(
+                  Languages.eLanguage.valueOf(language), maxGroupSize, lbl.getKey()))
+              .collect(Collectors.toList());
 
       XStream xStream = Helpers.xStream();
 

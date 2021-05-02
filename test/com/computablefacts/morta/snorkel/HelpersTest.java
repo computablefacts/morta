@@ -65,8 +65,8 @@ public class HelpersTest {
     Function<String, List<String>> wordSplitter = Helpers.wordSplitter(Languages.eLanguage.FRENCH);
 
     Assert.assertEquals(
-        Lists.newArrayList("Monaco", "vid", "fourri", ":", "voitur", "des", "30", "€", "propos",
-            "lor", "d'un", "vent", "enchères."),
+        Lists.newArrayList("Monaco", "vid", "fourri", ":", "de", "voitur", "des", "30", "€",
+            "propos", "lor", "d'un", "vent", "enchères."),
         wordSplitter.apply(
             "Monaco vide sa fourrière : des voitures dès 30 € proposées lors d'une vente aux enchères."));
   }
