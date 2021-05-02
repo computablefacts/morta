@@ -32,6 +32,7 @@ final public class GuesstimateLabelingFunctions extends CommandLine {
     File goldLabels = getFileCommand(args, "gold_labels", null);
     int nbCandidatesToConsider = getIntCommand(args, "nb_candidates_to_consider", 100);
     int nbLabelsToReturn = getIntCommand(args, "nb_labels_to_return", 50);
+    int maxGroupSize = getIntCommand(args, "max_group_size", 4);
     boolean dryRun = getBooleanCommand(args, "dry_run", true);
     String outputDirectory = getStringCommand(args, "output_directory", null);
 
@@ -43,6 +44,7 @@ final public class GuesstimateLabelingFunctions extends CommandLine {
         "================================================================================\n= Guesstimate Labeling Functions\n================================================================================");
     observations.add(String.format("The label is %s", label));
     observations.add(String.format("The language is %s", language));
+    observations.add(String.format("The maximum ngram length is %d words", maxGroupSize));
     observations.add(String.format("The number of candidates to consider (DocSetLabeler) is %d",
         nbCandidatesToConsider));
     observations.add(
@@ -78,7 +80,8 @@ final public class GuesstimateLabelingFunctions extends CommandLine {
         pages.size() - Sets.newHashSet(pages).size()));
 
     // Guesstimate LF
-    DocSetLabelerImpl docSetLabeler = new DocSetLabelerImpl(Languages.eLanguage.valueOf(language));
+    DocSetLabelerImpl docSetLabeler =
+        new DocSetLabelerImpl(Languages.eLanguage.valueOf(language), maxGroupSize);
 
     observations.add("Starting DocSetLabeler...");
 

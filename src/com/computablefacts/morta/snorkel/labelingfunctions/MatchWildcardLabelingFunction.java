@@ -25,10 +25,11 @@ final public class MatchWildcardLabelingFunction extends AbstractLabelingFunctio
 
   @Override
   public Set<String> matches(String text) {
-    if (Strings.isNullOrEmpty(text)) {
+    String newText = Helpers.normalize(text);
+    if (Strings.isNullOrEmpty(newText)) {
       return new HashSet<>();
     }
-    return WildcardMatcher.match(text, pattern())
+    return WildcardMatcher.match(newText, pattern())
         ? WildcardMatcher.split(pattern()).stream().filter(p -> !"*".equals(p) && !"?".equals(p))
             .collect(Collectors.toSet())
         : new HashSet<>();

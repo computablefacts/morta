@@ -24,12 +24,14 @@ import com.google.common.base.CharMatcher;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
+import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
 import com.google.errorprone.annotations.CheckReturnValue;
 import com.google.errorprone.annotations.Var;
+import com.google.re2j.Pattern;
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.security.NoTypePermission;
 import com.thoughtworks.xstream.security.NullPermission;
@@ -78,11 +80,17 @@ final public class Helpers {
     Preconditions.checkNotNull(language, "language should not be null");
 
     SnowballStemmer stemmer = Languages.stemmer(language);
-    Set<String> stopwords = Languages.stopwords(language);
+    Set<String> stopwords = Languages.stopwords(language).stream().map(stopword -> {
+      stemmer.setCurrent(stopword);
+      if (stemmer.stem()) {
+        return stemmer.getCurrent();
+      }
+      return Helpers.normalize(stopword);
+    }).collect(Collectors.toSet());
 
     return s -> Splitter.on(CharMatcher.whitespace().or(CharMatcher.breakingWhitespace()))
         .trimResults().omitEmptyStrings().splitToList(s).stream()
-        .filter(word -> stopwords == null || !stopwords.contains(word)).map(word -> {
+        .filter(word -> !stopwords.contains(word)).map(word -> {
           stemmer.setCurrent(word);
           if (stemmer.stem()) {
             return stemmer.getCurrent();
@@ -103,26 +111,17 @@ final public class Helpers {
     Function<String, List<String>> wordSplitter = Helpers.wordSplitter(language);
 
     return text -> {
+      ngrams(language, sentenceSplitter, wordSplitter, maxGroupSize, text).entrySet()
+          .forEach(ngram -> {
 
-      List<List<String>> sentences = sentenceSplitter.apply(text).stream()
-          .map(sentence -> wordSplitter.apply(sentence)).collect(Collectors.toList());
+            String word = ngram.getElement();
+            int count = ngram.getCount();
 
-      for (int i = 0; i < sentences.size(); i++) {
-
-        List<String> sentence = sentences.get(i);
-
-        for (int j = 0; j < sentence.size(); j++) {
-          for (int l = j + 1; l < sentence.size() && l < j + maxGroupSize; l++) {
-
-            String ngram = Joiner.on(' ').join(sentence.subList(j, l));
-
-            if (!alphabet.containsKey(ngram)) {
-              alphabet.put(ngram, alphabet.size());
+            if (!alphabet.containsKey(word)) {
+              alphabet.put(word, alphabet.size());
             }
-            counts.add(ngram);
-          }
-        }
-      }
+            counts.add(word, count);
+          });
     };
   }
 
@@ -170,24 +169,16 @@ final public class Helpers {
 
       FeatureVector<Double> vector = new FeatureVector<>(alphabet.size(), 0.0);
 
-      List<List<String>> sentences = sentenceSplitter.apply(text).stream()
-          .map(sentence -> wordSplitter.apply(sentence)).collect(Collectors.toList());
+      ngrams(language, sentenceSplitter, wordSplitter, maxGroupSize, text).entrySet()
+          .forEach(ngram -> {
 
-      for (int i = 0; i < sentences.size(); i++) {
+            String word = ngram.getElement();
+            // int count = ngram.getCount();
 
-        List<String> sentence = sentences.get(i);
-
-        for (int j = 0; j < sentence.size(); j++) {
-          for (int l = j + 1; l < sentence.size() && l < j + maxGroupSize; l++) {
-
-            String ngram = Joiner.on(' ').join(sentence.subList(j, l));
-
-            if (alphabet.containsKey(ngram)) {
-              vector.set(alphabet.id(ngram), vector.get(alphabet.id(ngram)) + 1.0);
+            if (alphabet.containsKey(word)) {
+              vector.set(alphabet.id(word), vector.get(alphabet.id(word)) + 1.0);
             }
-          }
-        }
-      }
+          });
       return vector;
     };
   }
@@ -284,6 +275,42 @@ final public class Helpers {
       }
     }
     return rowsNew;
+  }
+
+  public static Multiset<String> ngrams(Languages.eLanguage language,
+      Function<String, List<String>> sentenceSplitter, Function<String, List<String>> wordSplitter,
+      int maxGroupSize, String text) {
+
+    Preconditions.checkNotNull(language, "language should not be null");
+    Preconditions.checkNotNull(sentenceSplitter, "sentenceSplitter should not be null");
+    Preconditions.checkNotNull(wordSplitter, "wordSplitter should not be null");
+    Preconditions.checkArgument(maxGroupSize > 0, "maxGroupSize must be > 0");
+    Preconditions.checkNotNull(text, "text should not be null");
+
+    List<List<String>> sentences = sentenceSplitter.apply(text).stream()
+        .map(sentence -> wordSplitter.apply(sentence)).collect(Collectors.toList());
+
+    Multiset<String> multiset = HashMultiset.create();
+
+    for (int i = 0; i < sentences.size(); i++) {
+
+      List<String> sentence = sentences.get(i);
+
+      for (int j = 0; j < sentence.size(); j++) {
+        for (int l = j + 1; l < sentence.size() && l < j + maxGroupSize; l++) {
+
+          List<String> words = sentence.subList(j, l).stream()
+              .map(word -> Strings.isNumber(word) ? word.replaceAll("\\d", "_") : word)
+              .collect(Collectors.toList());
+
+          if (!words.stream().allMatch(word -> Pattern.matches("[_]+", word))) {
+            String ngram = Joiner.on(' ').join(words);
+            multiset.add(ngram);
+          }
+        }
+      }
+    }
+    return multiset;
   }
 
   public static String normalize(String text) {
