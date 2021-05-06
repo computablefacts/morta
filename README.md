@@ -99,7 +99,7 @@ To add a dependency on Morta using Maven, use the following:
 <dependency>
   <groupId>com.computablefacts</groupId>
   <artifactId>morta</artifactId>
-  <version>0.x</version>
+  <version>1.x</version>
 </dependency>
 ```
 
@@ -112,7 +112,7 @@ using the following dependency:
 <dependency>
   <groupId>com.computablefacts</groupId>
   <artifactId>morta</artifactId>
-  <version>0.x-SNAPSHOT</version>
+  <version>1.x-SNAPSHOT</version>
 </dependency>
 ```
 
