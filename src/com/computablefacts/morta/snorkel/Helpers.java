@@ -7,12 +7,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import org.tartarus.snowball.SnowballStemmer;
 
 import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunction;
 import com.computablefacts.morta.snorkel.labelmodels.TreeLabelModel;
@@ -20,8 +16,6 @@ import com.computablefacts.nona.helpers.Languages;
 import com.computablefacts.nona.helpers.SnippetExtractor;
 import com.computablefacts.nona.helpers.StringIterator;
 import com.computablefacts.nona.helpers.Strings;
-import com.google.common.base.CharMatcher;
-import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.HashMultiset;
@@ -31,7 +25,6 @@ import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
 import com.google.errorprone.annotations.CheckReturnValue;
 import com.google.errorprone.annotations.Var;
-import com.google.re2j.Pattern;
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.security.NoTypePermission;
 import com.thoughtworks.xstream.security.NullPermission;
@@ -70,35 +63,6 @@ final public class Helpers {
     return df;
   }
 
-  public static Function<String, List<String>> sentenceSplitter() {
-    return s -> Splitter.on(CharMatcher.anyOf("!?.,;:")).trimResults().omitEmptyStrings()
-        .splitToList(normalize(s));
-  }
-
-  public static Function<String, List<String>> wordSplitter(Languages.eLanguage language) {
-
-    Preconditions.checkNotNull(language, "language should not be null");
-
-    SnowballStemmer stemmer = Languages.stemmer(language);
-    Set<String> stopwords = Languages.stopwords(language).stream().map(stopword -> {
-      stemmer.setCurrent(stopword);
-      if (stemmer.stem()) {
-        return stemmer.getCurrent();
-      }
-      return Helpers.normalize(stopword);
-    }).collect(Collectors.toSet());
-
-    return s -> Splitter.on(CharMatcher.whitespace().or(CharMatcher.breakingWhitespace()))
-        .trimResults().omitEmptyStrings().splitToList(s).stream()
-        .filter(word -> !stopwords.contains(word)).map(word -> {
-          stemmer.setCurrent(word);
-          if (stemmer.stem()) {
-            return stemmer.getCurrent();
-          }
-          return word;
-        }).collect(Collectors.toList());
-  }
-
   public static Consumer<String> alphabetBuilder(Languages.eLanguage language, Dictionary alphabet,
       Multiset<String> counts, int maxGroupSize) {
 
@@ -107,21 +71,17 @@ final public class Helpers {
     Preconditions.checkNotNull(counts, "counts should not be null");
     Preconditions.checkArgument(maxGroupSize > 0, "maxGroupSize must be > 0");
 
-    Function<String, List<String>> sentenceSplitter = Helpers.sentenceSplitter();
-    Function<String, List<String>> wordSplitter = Helpers.wordSplitter(language);
-
     return text -> {
-      ngrams(language, sentenceSplitter, wordSplitter, maxGroupSize, text).entrySet()
-          .forEach(ngram -> {
+      ngrams(language, maxGroupSize, text).entrySet().forEach(ngram -> {
 
-            String word = ngram.getElement();
-            int count = ngram.getCount();
+        String word = ngram.getElement();
+        int count = ngram.getCount();
 
-            if (!alphabet.containsKey(word)) {
-              alphabet.put(word, alphabet.size());
-            }
-            counts.add(word, count);
-          });
+        if (!alphabet.containsKey(word)) {
+          alphabet.put(word, alphabet.size());
+        }
+        counts.add(word, count);
+      });
     };
   }
 
@@ -162,23 +122,20 @@ final public class Helpers {
     Preconditions.checkNotNull(alphabet, "alphabet should not be null");
     Preconditions.checkArgument(maxGroupSize > 0, "maxGroupSize must be > 0");
 
-    Function<String, List<String>> sentenceSplitter = Helpers.sentenceSplitter();
-    Function<String, List<String>> wordSplitter = Helpers.wordSplitter(language);
-
     return text -> {
 
       FeatureVector<Double> vector = new FeatureVector<>(alphabet.size(), 0.0);
+      Multiset<String> ngrams = ngrams(language, maxGroupSize, text);
 
-      ngrams(language, sentenceSplitter, wordSplitter, maxGroupSize, text).entrySet()
-          .forEach(ngram -> {
+      ngrams.entrySet().forEach(ngram -> {
 
-            String word = ngram.getElement();
-            // int count = ngram.getCount();
+        String word = ngram.getElement();
+        int count = ngram.getCount();
 
-            if (alphabet.containsKey(word)) {
-              vector.set(alphabet.id(word), vector.get(alphabet.id(word)) + 1.0);
-            }
-          });
+        if (alphabet.containsKey(word)) {
+          vector.set(alphabet.id(word), (double) count);
+        }
+      });
       return vector;
     };
   }
@@ -277,40 +234,84 @@ final public class Helpers {
     return rowsNew;
   }
 
-  public static Multiset<String> ngrams(Languages.eLanguage language,
-      Function<String, List<String>> sentenceSplitter, Function<String, List<String>> wordSplitter,
-      int maxGroupSize, String text) {
+  public static Multiset<String> ngrams(Languages.eLanguage language, int maxGroupSize,
+      String text) {
 
     Preconditions.checkNotNull(language, "language should not be null");
-    Preconditions.checkNotNull(sentenceSplitter, "sentenceSplitter should not be null");
-    Preconditions.checkNotNull(wordSplitter, "wordSplitter should not be null");
     Preconditions.checkArgument(maxGroupSize > 0, "maxGroupSize must be > 0");
     Preconditions.checkNotNull(text, "text should not be null");
 
-    List<List<String>> sentences = sentenceSplitter.apply(text).stream()
-        .map(sentence -> wordSplitter.apply(sentence)).collect(Collectors.toList());
+    Multiset<String> ngrams = HashMultiset.create();
+    StringBuilder word = new StringBuilder();
+    @Var
+    String w1 = "";
+    @Var
+    String w2 = "";
+    @Var
+    String w3 = "";
+    @Var
+    String w4 = "";
+    @Var
+    String w5 = "";
+    StringIterator iterator = new StringIterator(text);
 
-    Multiset<String> multiset = HashMultiset.create();
+    while (iterator.hasNext()) {
 
-    for (int i = 0; i < sentences.size(); i++) {
+      char c = iterator.next();
 
-      List<String> sentence = sentences.get(i);
+      boolean isApostrophe = StringIterator.isApostrophe(c);
+      boolean isArrow = StringIterator.isArrow(c);
+      boolean isBracket = StringIterator.isBracket(c);
+      boolean isCjkSymbol = StringIterator.isCjkSymbol(c);
+      boolean isCurrency = StringIterator.isCurrency(c);
+      boolean isDoubleQuotationMark = StringIterator.isDoubleQuotationMark(c);
+      boolean isGeneralPunctuation = StringIterator.isGeneralPunctuation(c);
+      boolean isNumber = Character.isDigit((int) c);
+      boolean isListMark = StringIterator.isListMark(c);
+      boolean isPunctuation = StringIterator.isPunctuation(c);
+      boolean isQuotationMark = StringIterator.isQuotationMark(c);
+      boolean isSeparatorMark = StringIterator.isSeparatorMark(c);
+      boolean isSingleQuotationMark = StringIterator.isSingleQuotationMark(c);
+      boolean isTerminalMark = StringIterator.isTerminalMark(c);
+      boolean isWhitespace = StringIterator.isWhitespace(c);
 
-      for (int j = 0; j < sentence.size(); j++) {
-        for (int l = j + 1; l < sentence.size() && l < j + maxGroupSize; l++) {
+      if (!isNumber && !isApostrophe && !isArrow && !isWhitespace && !isPunctuation
+          && !isGeneralPunctuation && !isCurrency && !isCjkSymbol && !isListMark && !isTerminalMark
+          && !isSeparatorMark && !isQuotationMark && !isSingleQuotationMark
+          && !isDoubleQuotationMark && !isBracket) {
+        word.append(c);
+      } else {
 
-          List<String> words = sentence.subList(j, l).stream()
-              .map(word -> Strings.isNumber(word) ? word.replaceAll("\\d", "_") : word)
-              .collect(Collectors.toList());
+        String w = word.toString();
 
-          if (!words.stream().allMatch(word -> Pattern.matches("[_]+", word))) {
-            String ngram = Joiner.on(' ').join(words);
-            multiset.add(ngram);
+        if (w.length() > 0) {
+
+          w1 = w2;
+          w2 = w3;
+          w3 = w4;
+          w4 = w5;
+          w5 = w;
+
+          ngrams.add(w5);
+
+          if (maxGroupSize >= 2) {
+            ngrams.add(w4 + w5);
+          }
+          if (maxGroupSize >= 3) {
+            ngrams.add(w3 + w4 + w5);
+          }
+          if (maxGroupSize >= 4) {
+            ngrams.add(w2 + w3 + w4 + w5);
+          }
+          if (maxGroupSize >= 5) {
+            ngrams.add(w1 + w2 + w3 + w4 + w5);
           }
         }
+        word.setLength(0);
+        word.append('_');
       }
     }
-    return multiset;
+    return ngrams;
   }
 
   public static List<String> keywords(
@@ -320,17 +321,7 @@ final public class Helpers {
     Preconditions.checkNotNull(text, "text should not be null");
 
     return labelingFunctions.stream().flatMap((lf) -> lf.matches(text).stream()).flatMap(
-        keyword -> Splitter.on(' ').omitEmptyStrings().trimResults().splitToList(keyword).stream())
+        keyword -> Splitter.on('_').omitEmptyStrings().trimResults().splitToList(keyword).stream())
         .distinct().collect(Collectors.toList());
-  }
-
-  private static String normalize(String text) {
-
-    Preconditions.checkNotNull(text, "text should not be null");
-
-    // https://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html
-    // \p{Punct} -> Punctuation: One of !"#$%&'()*+,-./:;<=>?@[\]^_`{|}~
-    return StringIterator.removeDiacriticalMarks(text).replaceAll("[^!?.,;:\\p{Alnum}\\p{L}]", " ")
-        .replaceAll("\\s+", " ").toLowerCase();
   }
 }

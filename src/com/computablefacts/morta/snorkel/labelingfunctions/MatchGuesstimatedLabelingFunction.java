@@ -1,9 +1,7 @@
 package com.computablefacts.morta.snorkel.labelingfunctions;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
 
 import com.computablefacts.morta.snorkel.Helpers;
 import com.computablefacts.nona.helpers.Languages;
@@ -17,11 +15,10 @@ final public class MatchGuesstimatedLabelingFunction extends AbstractLabelingFun
 
   private final Languages.eLanguage language_;
   private final int maxGroupSize_;
-  private Function<String, List<String>> sentenceSplitter_;
-  private Function<String, List<String>> wordSplitter_;
+  private final double weight_;
 
   public MatchGuesstimatedLabelingFunction(Languages.eLanguage language, int maxGroupSize,
-      String pattern) {
+      String pattern, double weight) {
 
     super(pattern);
 
@@ -30,33 +27,24 @@ final public class MatchGuesstimatedLabelingFunction extends AbstractLabelingFun
 
     language_ = language;
     maxGroupSize_ = maxGroupSize;
+    weight_ = weight;
   }
 
   @Override
   public Integer apply(String text) {
 
-    Multiset<String> multiset =
-        Helpers.ngrams(language_, sentenceSplitter(), wordSplitter(), maxGroupSize_, text);
+    Multiset<String> ngrams = Helpers.ngrams(language_, maxGroupSize_, text);
 
-    return multiset.contains(name()) ? OK : ABSTAIN;
+    return ngrams.contains(name()) ? OK : ABSTAIN;
   }
 
   @Override
   public Set<String> matches(String text) {
-    return new HashSet<>(Splitter.on(' ').trimResults().omitEmptyStrings().splitToList(name()));
+    return new HashSet<>(Splitter.on('_').trimResults().omitEmptyStrings().splitToList(name()));
   }
 
-  private Function<String, List<String>> sentenceSplitter() {
-    if (sentenceSplitter_ == null) {
-      sentenceSplitter_ = Helpers.sentenceSplitter();
-    }
-    return sentenceSplitter_;
-  }
-
-  private Function<String, List<String>> wordSplitter() {
-    if (wordSplitter_ == null) {
-      wordSplitter_ = Helpers.wordSplitter(language_);
-    }
-    return wordSplitter_;
+  @Override
+  public double weight() {
+    return weight_;
   }
 }

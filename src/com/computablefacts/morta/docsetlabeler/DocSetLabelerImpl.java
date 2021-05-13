@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
 
 import javax.validation.constraints.NotNull;
 
@@ -28,8 +27,6 @@ final public class DocSetLabelerImpl extends DocSetLabeler {
 
   private final Languages.eLanguage language_;
   private final int maxGroupSize_;
-  private final Function<String, List<String>> sentenceSplitter_;
-  private final Function<String, List<String>> wordSplitter_;
 
   private final Multiset<String> ngramsCorpus_ = HashMultiset.create();
   private final Multiset<String> ngramsSubsetOk_ = HashMultiset.create();
@@ -46,8 +43,6 @@ final public class DocSetLabelerImpl extends DocSetLabeler {
 
     language_ = language;
     maxGroupSize_ = maxGroupSize;
-    sentenceSplitter_ = Helpers.sentenceSplitter();
-    wordSplitter_ = Helpers.wordSplitter(language);
   }
 
   @Override
@@ -60,8 +55,7 @@ final public class DocSetLabelerImpl extends DocSetLabeler {
 
       corpus.stream().peek(t -> bar.update(countCorpus_.incrementAndGet(), corpus.size(),
           "Loading the whole corpus...")).forEach(text -> {
-            Multiset<String> multiset =
-                Helpers.ngrams(language_, sentenceSplitter_, wordSplitter_, maxGroupSize_, text);
+            Multiset<String> multiset = Helpers.ngrams(language_, maxGroupSize_, text);
             ngramsCorpus_.addAll(multiset.elementSet());
           });
 
@@ -75,8 +69,7 @@ final public class DocSetLabelerImpl extends DocSetLabeler {
 
       subsetOk.stream().peek(t -> bar.update(countSubsetOk_.incrementAndGet(), subsetOk.size(),
           "Loading \"OK\" corpus...")).forEach(text -> {
-            Multiset<String> multiset =
-                Helpers.ngrams(language_, sentenceSplitter_, wordSplitter_, maxGroupSize_, text);
+            Multiset<String> multiset = Helpers.ngrams(language_, maxGroupSize_, text);
             ngramsSubsetOk_.addAll(multiset.elementSet());
           });
 
@@ -90,8 +83,7 @@ final public class DocSetLabelerImpl extends DocSetLabeler {
 
       subsetKo.stream().peek(t -> bar.update(countSubsetKo_.incrementAndGet(), subsetKo.size(),
           "Loading \"KO\" corpus...")).forEach(text -> {
-            Multiset<String> multiset =
-                Helpers.ngrams(language_, sentenceSplitter_, wordSplitter_, maxGroupSize_, text);
+            Multiset<String> multiset = Helpers.ngrams(language_, maxGroupSize_, text);
             ngramsSubsetKo_.addAll(multiset.elementSet());
           });
 
@@ -112,10 +104,9 @@ final public class DocSetLabelerImpl extends DocSetLabeler {
   @Override
   protected Set<String> candidates(String text) {
 
-    Multiset<String> multiset =
-        Helpers.ngrams(language_, sentenceSplitter_, wordSplitter_, maxGroupSize_, text);
+    Multiset<String> ngrams = Helpers.ngrams(language_, maxGroupSize_, text);
 
-    return Sets.intersection(multiset.elementSet(), ngramsSubsetOk_.elementSet());
+    return Sets.intersection(ngrams.elementSet(), ngramsSubsetOk_.elementSet());
   }
 
   @Override
@@ -147,7 +138,7 @@ final public class DocSetLabelerImpl extends DocSetLabeler {
       @NotNull List<Map.Entry<String, Double>> candidates) {
 
     // Here, candidates are ranked in decreasing weight
-    // Remove a candidate iif it is a substring of a higher ranked candidate
+    // Remove a candidate iif it is a substring or it is included in a higher ranked candidate
     List<Map.Entry<String, Double>> newCandidates = new ArrayList<>();
 
     for (int i = 0; i < candidates.size(); i++) {
@@ -160,7 +151,7 @@ final public class DocSetLabelerImpl extends DocSetLabeler {
 
         String prev = candidates.get(k).getKey();
 
-        if (prev.contains(cur)) {
+        if (prev.contains(cur) || cur.contains(prev)) {
           match = true;
           break;
         }

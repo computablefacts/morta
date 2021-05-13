@@ -23,4 +23,8 @@ public abstract class AbstractLabelingFunction<T> implements ILabelingFunction<T
   public Set<String> matches(String text) {
     return new HashSet<>();
   }
+
+  public double weight() {
+    return 1; // must be between 0 (worst) and 1 (best)
+  }
 }
