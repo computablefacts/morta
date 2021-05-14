@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunction;
 import com.computablefacts.morta.snorkel.labelmodels.TreeLabelModel;
 import com.computablefacts.nona.helpers.Languages;
+import com.computablefacts.nona.helpers.NGramIterator;
 import com.computablefacts.nona.helpers.SnippetExtractor;
 import com.computablefacts.nona.helpers.StringIterator;
 import com.computablefacts.nona.helpers.Strings;
@@ -72,7 +73,14 @@ final public class Helpers {
     Preconditions.checkArgument(maxGroupSize > 0, "maxGroupSize must be > 0");
 
     return text -> {
-      ngrams(language, maxGroupSize, text).entrySet().forEach(ngram -> {
+
+      Multiset<String> ngrams = ngrams(language, maxGroupSize, text);
+
+      for (int i = 1; i < maxGroupSize; i++) {
+        new NGramIterator(i, text, true).forEachRemaining(span -> ngrams.add(span.text()));
+      }
+
+      ngrams.entrySet().forEach(ngram -> {
 
         String word = ngram.getElement();
         int count = ngram.getCount();
@@ -126,6 +134,10 @@ final public class Helpers {
 
       FeatureVector<Double> vector = new FeatureVector<>(alphabet.size(), 0.0);
       Multiset<String> ngrams = ngrams(language, maxGroupSize, text);
+
+      for (int i = 1; i < maxGroupSize; i++) {
+        new NGramIterator(i, text, true).forEachRemaining(span -> ngrams.add(span.text()));
+      }
 
       ngrams.entrySet().forEach(ngram -> {
 
@@ -311,7 +323,7 @@ final public class Helpers {
         word.append('_');
       }
     }
-    return ngrams;
+    return patterns(ngrams);
   }
 
   public static List<String> keywords(
@@ -324,7 +336,7 @@ final public class Helpers {
         .collect(Collectors.toList());
   }
 
-  public static Multiset<String> patterns(Multiset<String> ngrams) {
+  private static Multiset<String> patterns(Multiset<String> ngrams) {
 
     Preconditions.checkNotNull(ngrams, "ngrams should not be null");
 
