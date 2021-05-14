@@ -56,9 +56,10 @@ final public class DocSetLabelerImpl extends DocSetLabeler {
       corpus.stream().peek(t -> bar.update(countCorpus_.incrementAndGet(), corpus.size(),
           "Loading the whole corpus...")).forEach(text -> {
             Multiset<String> multiset = Helpers.ngrams(language_, maxGroupSize_, text);
-            ngramsCorpus_.addAll(multiset.elementSet());
+            ngramsCorpus_.addAll(Helpers.patterns(multiset));
           });
 
+      countCorpus_.set(ngramsCorpus_.size());
       ngramsCorpus_.entrySet().removeIf(ngram -> ngram.getCount() == 1);
 
       System.out.println(); // Cosmetic
@@ -70,9 +71,10 @@ final public class DocSetLabelerImpl extends DocSetLabeler {
       subsetOk.stream().peek(t -> bar.update(countSubsetOk_.incrementAndGet(), subsetOk.size(),
           "Loading \"OK\" corpus...")).forEach(text -> {
             Multiset<String> multiset = Helpers.ngrams(language_, maxGroupSize_, text);
-            ngramsSubsetOk_.addAll(multiset.elementSet());
+            ngramsSubsetOk_.addAll(Helpers.patterns(multiset));
           });
 
+      countSubsetOk_.set(ngramsSubsetOk_.size());
       ngramsSubsetOk_.entrySet().removeIf(ngram -> ngram.getCount() == 1);
 
       System.out.println(); // Cosmetic
@@ -84,9 +86,10 @@ final public class DocSetLabelerImpl extends DocSetLabeler {
       subsetKo.stream().peek(t -> bar.update(countSubsetKo_.incrementAndGet(), subsetKo.size(),
           "Loading \"KO\" corpus...")).forEach(text -> {
             Multiset<String> multiset = Helpers.ngrams(language_, maxGroupSize_, text);
-            ngramsSubsetKo_.addAll(multiset.elementSet());
+            ngramsSubsetKo_.addAll(Helpers.patterns(multiset));
           });
 
+      countSubsetKo_.set(ngramsSubsetKo_.size());
       ngramsSubsetKo_.entrySet().removeIf(ngram -> ngram.getCount() == 1);
 
       System.out.println(); // Cosmetic
@@ -104,7 +107,8 @@ final public class DocSetLabelerImpl extends DocSetLabeler {
   @Override
   protected Set<String> candidates(String text) {
 
-    Multiset<String> ngrams = Helpers.ngrams(language_, maxGroupSize_, text);
+    Multiset<String> ngrams =
+        Helpers.patterns(Helpers.ngrams(language_, maxGroupSize_, text));
 
     return Sets.intersection(ngrams.elementSet(), ngramsSubsetOk_.elementSet());
   }

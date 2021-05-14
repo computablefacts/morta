@@ -3,6 +3,7 @@ package com.computablefacts.morta.snorkel;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
@@ -17,7 +18,6 @@ import com.computablefacts.nona.helpers.SnippetExtractor;
 import com.computablefacts.nona.helpers.StringIterator;
 import com.computablefacts.nona.helpers.Strings;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Splitter;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multiset;
@@ -320,8 +320,59 @@ final public class Helpers {
     Preconditions.checkNotNull(labelingFunctions, "labelingFunctions should not be null");
     Preconditions.checkNotNull(text, "text should not be null");
 
-    return labelingFunctions.stream().flatMap((lf) -> lf.matches(text).stream()).flatMap(
-        keyword -> Splitter.on('_').omitEmptyStrings().trimResults().splitToList(keyword).stream())
-        .distinct().collect(Collectors.toList());
+    return labelingFunctions.stream().flatMap((lf) -> lf.matches(text).stream()).distinct()
+        .collect(Collectors.toList());
+  }
+
+  public static Multiset<String> patterns(Multiset<String> ngrams) {
+
+    Preconditions.checkNotNull(ngrams, "ngrams should not be null");
+
+    Multiset<String> patterns = HashMultiset.create();
+
+    ngrams.entrySet().forEach(entry -> {
+
+      String ngram = entry.getElement();
+      int count = entry.getCount();
+
+      String lowercase = ngram.toLowerCase();
+      String uppercase = ngram.toUpperCase();
+      String noDiacritics = StringIterator.removeDiacriticalMarks(ngram);
+      StringBuilder builder = new StringBuilder(ngram.length());
+
+      @Var
+      boolean hasGroup = false;
+
+      for (int i = 0; i < ngram.length(); i++) {
+
+        char c1 = lowercase.charAt(i);
+        char c2 = uppercase.charAt(i);
+        char c3 = noDiacritics.charAt(i);
+
+        if (c1 == '_' && c2 == '_' && c3 == '_') {
+          if (hasGroup || builder.length() == 0) { // from our POV, _word <=> __word
+            builder.append('.');
+          }
+        } else {
+          builder.append('[');
+          builder.append(c1);
+          if (c1 != c2) {
+            builder.append(c2);
+          }
+          if (c1 != c2 && c1 != c3 && c2 != c3) {
+            builder.append(c3);
+          }
+          builder.append(']');
+          hasGroup = true;
+        }
+      }
+
+      String pattern = builder.toString();
+
+      if (!Arrays.stream(pattern.split("")).allMatch("."::equals)) {
+        patterns.add(pattern, count);
+      }
+    });
+    return patterns;
   }
 }

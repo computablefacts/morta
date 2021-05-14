@@ -95,8 +95,7 @@ final public class GuesstimateLabelingFunctions extends CommandLine {
       observations.add("Saving guesstimated labeling functions...");
 
       List<AbstractLabelingFunction<String>> lfs = labels.stream()
-          .map(lbl -> new MatchGuesstimatedLabelingFunction(Languages.eLanguage.valueOf(language),
-              maxGroupSize, lbl.getKey(), lbl.getValue()))
+          .map(lbl -> new MatchGuesstimatedLabelingFunction(lbl.getKey(), lbl.getValue()))
           .collect(Collectors.toList());
 
       XStream xStream = Helpers.xStream();
