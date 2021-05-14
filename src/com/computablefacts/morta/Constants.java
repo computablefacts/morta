@@ -13,11 +13,6 @@ final public class Constants {
     return (Strings.isNullOrEmpty(dir) ? "" : dir + File.separator) + "observations.txt";
   }
 
-  public static String countsXml(String dir, String language, String model) {
-    return (Strings.isNullOrEmpty(dir) ? "" : dir + File.separator) + "counts_for_" + model + "_"
-        + language + ".xml";
-  }
-
   public static String labelModelXml(String dir, String language, String model) {
     return (Strings.isNullOrEmpty(dir) ? "" : dir + File.separator) + "label_model_for_" + model
         + "_" + language + ".xml";
@@ -45,10 +40,6 @@ final public class Constants {
 
   public static String labelModelGz(String dir, String language, String model) {
     return labelModelXml(dir, language, model) + ".gz";
-  }
-
-  public static String countsGz(String dir, String language, String model) {
-    return countsXml(dir, language, model) + ".gz";
   }
 
   public static String alphabetGz(String dir, String language, String model) {

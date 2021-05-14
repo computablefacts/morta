@@ -8,7 +8,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunction;
@@ -62,65 +61,6 @@ final public class Helpers {
     df.setRoundingMode(RoundingMode.UP);
 
     return df;
-  }
-
-  public static Consumer<String> alphabetBuilder(Languages.eLanguage language, Dictionary alphabet,
-      Multiset<String> counts, int maxGroupSize) {
-
-    Preconditions.checkNotNull(language, "language should not be null");
-    Preconditions.checkNotNull(alphabet, "alphabet should not be null");
-    Preconditions.checkNotNull(counts, "counts should not be null");
-    Preconditions.checkArgument(maxGroupSize > 0, "maxGroupSize must be > 0");
-
-    return text -> {
-
-      Multiset<String> ngrams = ngrams(language, maxGroupSize, text);
-
-      for (int i = 1; i < maxGroupSize; i++) {
-        new NGramIterator(i, text, true).forEachRemaining(span -> ngrams.add(span.text()));
-      }
-
-      ngrams.entrySet().forEach(ngram -> {
-
-        String word = ngram.getElement();
-        int count = ngram.getCount();
-
-        if (!alphabet.containsKey(word)) {
-          alphabet.put(word, alphabet.size());
-        }
-        counts.add(word, count);
-      });
-    };
-  }
-
-  public static Dictionary alphabetReducer(Dictionary alphabet, Multiset<String> counts,
-      int nbGoldLabels) {
-
-    Preconditions.checkNotNull(alphabet, "alphabet should not be null");
-    Preconditions.checkNotNull(counts, "counts should not be null");
-    Preconditions.checkArgument(nbGoldLabels > 0, "nbGoldLabels must be > 0");
-
-    Dictionary newAlphabet = new Dictionary();
-    int minDf = (int) (0.01 * nbGoldLabels); // remove outliers
-    int maxDf = (int) (0.99 * nbGoldLabels); // remove outliers
-    @Var
-    int disp = 0;
-
-    for (int i = 0; i < alphabet.size(); i++) {
-
-      String ngram = alphabet.label(i);
-
-      if (counts.count(ngram) < minDf) {
-        disp++;
-        continue;
-      }
-      if (counts.count(ngram) > maxDf) {
-        disp++;
-        continue;
-      }
-      newAlphabet.put(ngram, i - disp);
-    }
-    return newAlphabet;
   }
 
   public static ITransformationFunction<String, FeatureVector<Double>> countVectorizer(

@@ -5,10 +5,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import com.computablefacts.morta.snorkel.Dictionary;
 import com.computablefacts.morta.snorkel.Helpers;
 import com.computablefacts.morta.snorkel.IGoldLabel;
 import com.computablefacts.morta.snorkel.Summary;
@@ -16,17 +14,13 @@ import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunct
 import com.computablefacts.morta.snorkel.labelmodels.TreeLabelModel;
 import com.computablefacts.morta.yaml.patterns.Pattern;
 import com.computablefacts.morta.yaml.patterns.Patterns;
-import com.computablefacts.nona.helpers.AsciiProgressBar;
 import com.computablefacts.nona.helpers.AsciiTable;
 import com.computablefacts.nona.helpers.CommandLine;
 import com.computablefacts.nona.helpers.ConfusionMatrix;
 import com.computablefacts.nona.helpers.Files;
-import com.computablefacts.nona.helpers.Languages;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.common.collect.HashMultiset;
-import com.google.common.collect.Multiset;
 import com.google.common.collect.Table;
 import com.google.common.primitives.Ints;
 import com.google.errorprone.annotations.CheckReturnValue;
@@ -139,27 +133,6 @@ final public class TrainGenerativeModel extends CommandLine {
       observations.add(AsciiTable.format(Helpers.vectors(labelModel, train), true));
     }
 
-    // Build alphabet (ngrams from 1 included to 6 excluded)
-    observations.add("Building alphabet...");
-
-    AtomicInteger count = new AtomicInteger(0);
-    AsciiProgressBar.ProgressBar bar = AsciiProgressBar.create();
-    @Var
-    Dictionary alphabet = new Dictionary();
-    Multiset<String> counts = HashMultiset.create();
-
-    gls.stream().peek(gl -> bar.update(count.incrementAndGet(), gls.size())).map(IGoldLabel::data)
-        .forEach(Helpers.alphabetBuilder(Languages.eLanguage.valueOf(language), alphabet, counts,
-            maxGroupSize));
-
-    System.out.println(); // Cosmetic
-    observations.add(String.format("Alphabet size is %d", alphabet.size()));
-    observations.add("Reducing alphabet...");
-
-    alphabet = Helpers.alphabetReducer(alphabet, counts, gls.size());
-
-    observations.add(String.format("The new alphabet size is %d", alphabet.size()));
-
     // Compute model accuracy
     if (verbose) {
 
@@ -188,24 +161,6 @@ final public class TrainGenerativeModel extends CommandLine {
       File output = new File(Constants.labelingFunctionsGz(outputDirectory, language, label));
 
       com.computablefacts.nona.helpers.Files.create(input, xStream.toXML(lfs));
-      com.computablefacts.nona.helpers.Files.gzip(input, output);
-      com.computablefacts.nona.helpers.Files.delete(input);
-
-      observations.add("Saving alphabet...");
-
-      input = new File(Constants.alphabetXml(outputDirectory, language, label));
-      output = new File(Constants.alphabetGz(outputDirectory, language, label));
-
-      com.computablefacts.nona.helpers.Files.create(input, xStream.toXML(alphabet));
-      com.computablefacts.nona.helpers.Files.gzip(input, output);
-      com.computablefacts.nona.helpers.Files.delete(input);
-
-      observations.add("Saving counts...");
-
-      input = new File(Constants.countsXml(outputDirectory, language, label));
-      output = new File(Constants.countsGz(outputDirectory, language, label));
-
-      com.computablefacts.nona.helpers.Files.create(input, xStream.toXML(counts));
       com.computablefacts.nona.helpers.Files.gzip(input, output);
       com.computablefacts.nona.helpers.Files.delete(input);
 
