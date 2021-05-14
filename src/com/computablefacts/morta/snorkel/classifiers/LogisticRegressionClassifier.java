@@ -1,5 +1,6 @@
 package com.computablefacts.morta.snorkel.classifiers;
 
+import java.util.Properties;
 import java.util.Set;
 
 import com.google.errorprone.annotations.CheckReturnValue;
@@ -16,7 +17,12 @@ final public class LogisticRegressionClassifier extends AbstractClassifier {
 
   @Override
   protected Classifier<double[]> train(Set<Integer> classes, double[][] instances, int[] labels) {
-    return classes.size() == 2 ? smile.classification.LogisticRegression.binomial(instances, labels)
-        : smile.classification.LogisticRegression.multinomial(instances, labels);
+
+    Properties properties = new Properties();
+    properties.setProperty("smile.logit.max.iterations", "1000");
+
+    return classes.size() == 2
+        ? smile.classification.LogisticRegression.binomial(instances, labels, properties)
+        : smile.classification.LogisticRegression.multinomial(instances, labels, properties);
   }
 }
