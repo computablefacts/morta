@@ -226,13 +226,13 @@ final public class TrainDiscriminativeModel extends CommandLine {
 
     return text -> {
 
-      Multiset<String> ngrams = Helpers.ngrams(language, maxGroupSize, text);
+      Multiset<String> features = Helpers.features(language, maxGroupSize, text);
 
       for (int i = 1; i < maxGroupSize; i++) {
-        new NGramIterator(i, text, true).forEachRemaining(span -> ngrams.add(span.text()));
+        new NGramIterator(i, text, true).forEachRemaining(span -> features.add(span.text()));
       }
 
-      ngrams.entrySet().forEach(ngram -> {
+      features.entrySet().forEach(ngram -> {
 
         String word = ngram.getElement();
         int count = ngram.getCount();

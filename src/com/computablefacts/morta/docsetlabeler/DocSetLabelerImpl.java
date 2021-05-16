@@ -55,8 +55,8 @@ final public class DocSetLabelerImpl extends DocSetLabeler {
 
       corpus.stream().peek(t -> bar.update(countCorpus_.incrementAndGet(), corpus.size(),
           "Loading the whole corpus...")).forEach(text -> {
-            Multiset<String> multiset = Helpers.ngrams(language_, maxGroupSize_, text);
-            ngramsCorpus_.addAll(multiset);
+            Multiset<String> features = Helpers.features(language_, maxGroupSize_, text);
+            ngramsCorpus_.addAll(features);
           });
 
       countCorpus_.set(ngramsCorpus_.size());
@@ -70,8 +70,8 @@ final public class DocSetLabelerImpl extends DocSetLabeler {
 
       subsetOk.stream().peek(t -> bar.update(countSubsetOk_.incrementAndGet(), subsetOk.size(),
           "Loading \"OK\" corpus...")).forEach(text -> {
-            Multiset<String> multiset = Helpers.ngrams(language_, maxGroupSize_, text);
-            ngramsSubsetOk_.addAll(multiset);
+            Multiset<String> features = Helpers.features(language_, maxGroupSize_, text);
+            ngramsSubsetOk_.addAll(features);
           });
 
       countSubsetOk_.set(ngramsSubsetOk_.size());
@@ -85,8 +85,8 @@ final public class DocSetLabelerImpl extends DocSetLabeler {
 
       subsetKo.stream().peek(t -> bar.update(countSubsetKo_.incrementAndGet(), subsetKo.size(),
           "Loading \"KO\" corpus...")).forEach(text -> {
-            Multiset<String> multiset = Helpers.ngrams(language_, maxGroupSize_, text);
-            ngramsSubsetKo_.addAll(multiset);
+            Multiset<String> features = Helpers.features(language_, maxGroupSize_, text);
+            ngramsSubsetKo_.addAll(features);
           });
 
       countSubsetKo_.set(ngramsSubsetKo_.size());
@@ -107,9 +107,9 @@ final public class DocSetLabelerImpl extends DocSetLabeler {
   @Override
   protected Set<String> candidates(String text) {
 
-    Multiset<String> ngrams = Helpers.ngrams(language_, maxGroupSize_, text);
+    Multiset<String> features = Helpers.features(language_, maxGroupSize_, text);
 
-    return Sets.intersection(ngrams.elementSet(), ngramsSubsetOk_.elementSet());
+    return Sets.intersection(features.elementSet(), ngramsSubsetOk_.elementSet());
   }
 
   @Override

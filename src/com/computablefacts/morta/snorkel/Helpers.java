@@ -73,13 +73,13 @@ final public class Helpers {
     return text -> {
 
       FeatureVector<Double> vector = new FeatureVector<>(alphabet.size(), 0.0);
-      Multiset<String> ngrams = ngrams(language, maxGroupSize, text);
+      Multiset<String> features = features(language, maxGroupSize, text);
 
       for (int i = 1; i < maxGroupSize; i++) {
-        new NGramIterator(i, text, true).forEachRemaining(span -> ngrams.add(span.text()));
+        new NGramIterator(i, text, true).forEachRemaining(span -> features.add(span.text()));
       }
 
-      ngrams.entrySet().forEach(ngram -> {
+      features.entrySet().forEach(ngram -> {
 
         String word = ngram.getElement();
         int count = ngram.getCount();
@@ -186,7 +186,7 @@ final public class Helpers {
     return rowsNew;
   }
 
-  public static Multiset<String> ngrams(Languages.eLanguage language, int maxGroupSize,
+  public static Multiset<String> features(Languages.eLanguage language, int maxGroupSize,
       String text) {
 
     Preconditions.checkNotNull(language, "language should not be null");
