@@ -13,11 +13,13 @@ import com.google.re2j.Pattern;
 final public class MatchRegexLabelingFunction extends AbstractLabelingFunction<String> {
 
   private final boolean isCaseSensitive_;
+  private final double weight_;
   private Pattern pattern_;
 
-  public MatchRegexLabelingFunction(String pattern, boolean isCaseSensitive) {
+  public MatchRegexLabelingFunction(String pattern, boolean isCaseSensitive, double weight) {
     super(pattern);
     isCaseSensitive_ = isCaseSensitive;
+    weight_ = weight;
   }
 
   @Override
@@ -38,6 +40,11 @@ final public class MatchRegexLabelingFunction extends AbstractLabelingFunction<S
       }
     }
     return set;
+  }
+
+  @Override
+  public double weight() {
+    return weight_;
   }
 
   private Pattern pattern() {

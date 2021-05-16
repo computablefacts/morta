@@ -173,7 +173,7 @@ final public class Patterns {
         return new MatchWildcardLabelingFunction(pattern.pattern_);
       }
       return new MatchRegexLabelingFunction(pattern.pattern_,
-          pattern.isCaseSensitive_ != null && pattern.isCaseSensitive_);
+          pattern.isCaseSensitive_ != null && pattern.isCaseSensitive_, 1.0);
     }).collect(Collectors.toList());
   }
 

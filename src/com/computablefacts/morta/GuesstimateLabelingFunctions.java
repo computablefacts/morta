@@ -12,7 +12,7 @@ import com.computablefacts.morta.docsetlabeler.DocSetLabelerImpl;
 import com.computablefacts.morta.snorkel.Helpers;
 import com.computablefacts.morta.snorkel.IGoldLabel;
 import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunction;
-import com.computablefacts.morta.snorkel.labelingfunctions.MatchGuesstimatedLabelingFunction;
+import com.computablefacts.morta.snorkel.labelingfunctions.MatchRegexLabelingFunction;
 import com.computablefacts.morta.snorkel.labelmodels.TreeLabelModel;
 import com.computablefacts.nona.helpers.CommandLine;
 import com.computablefacts.nona.helpers.Languages;
@@ -95,7 +95,7 @@ final public class GuesstimateLabelingFunctions extends CommandLine {
       observations.add("Saving guesstimated labeling functions...");
 
       List<AbstractLabelingFunction<String>> lfs = labels.stream()
-          .map(lbl -> new MatchGuesstimatedLabelingFunction(lbl.getKey(), lbl.getValue()))
+          .map(lbl -> new MatchRegexLabelingFunction(lbl.getKey(), true, lbl.getValue()))
           .collect(Collectors.toList());
 
       XStream xStream = Helpers.xStream();
