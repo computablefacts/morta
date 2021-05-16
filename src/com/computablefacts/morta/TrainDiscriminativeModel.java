@@ -6,10 +6,11 @@ import static com.computablefacts.morta.snorkel.ILabelingFunction.OK;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
 
 import com.computablefacts.morta.snorkel.Dictionary;
 import com.computablefacts.morta.snorkel.FeatureVector;
@@ -30,8 +31,6 @@ import com.computablefacts.nona.helpers.ConfusionMatrix;
 import com.computablefacts.nona.helpers.Files;
 import com.computablefacts.nona.helpers.Languages;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.HashMultiset;
-import com.google.common.collect.Multiset;
 import com.google.errorprone.annotations.CheckReturnValue;
 import com.google.errorprone.annotations.Var;
 import com.thoughtworks.xstream.XStream;
@@ -82,20 +81,33 @@ final public class TrainDiscriminativeModel extends CommandLine {
 
     AtomicInteger count = new AtomicInteger(0);
     AsciiProgressBar.ProgressBar bar = AsciiProgressBar.create();
-    @Var
-    Dictionary alphabet = new Dictionary();
-    Multiset<String> counts = HashMultiset.create();
+    Map<String, Double> features = new HashMap<>();
 
-    gls.stream().peek(gl -> bar.update(count.incrementAndGet(), gls.size())).map(IGoldLabel::data)
-        .forEach(
-            alphabetBuilder(Languages.eLanguage.valueOf(language), alphabet, counts, maxGroupSize));
+    gls.stream().filter(gl -> gl.isTruePositive() || gl.isFalseNegative())
+        .peek(gl -> bar.update(count.incrementAndGet(), gls.size())).map(IGoldLabel::data)
+        .forEach(text -> Helpers.features(Languages.eLanguage.valueOf(language), maxGroupSize, text)
+            .forEach((f, w) -> {
+              if (!features.containsKey(f)) {
+                features.put(f, w);
+              } else {
+                features.put(f, Math.max(features.get(f), w));
+              }
+            }));
 
     System.out.println(); // Cosmetic
 
-    observations.add(String.format("Alphabet size is %d", alphabet.size()));
+    observations.add(String.format("Alphabet size is %d", features.size()));
     observations.add("Reducing alphabet...");
 
-    alphabet = alphabetReducer(alphabet, counts, gls.size());
+    features.entrySet().removeIf(f -> f.getValue() < 0.01);
+
+    Dictionary alphabet = new Dictionary();
+
+    features.forEach((f, w) -> {
+      if (!alphabet.containsKey(f)) {
+        alphabet.put(f, alphabet.size());
+      }
+    });
 
     observations.add(String.format("The new alphabet size is %d", alphabet.size()));
 
@@ -213,60 +225,5 @@ final public class TrainDiscriminativeModel extends CommandLine {
         classifier.predict(testInsts), OK, KO);
 
     return matrix;
-  }
-
-  private static Consumer<String> alphabetBuilder(Languages.eLanguage language, Dictionary alphabet,
-      Multiset<String> counts, int maxGroupSize) {
-
-    Preconditions.checkNotNull(language, "language should not be null");
-    Preconditions.checkNotNull(alphabet, "alphabet should not be null");
-    Preconditions.checkNotNull(counts, "counts should not be null");
-    Preconditions.checkArgument(maxGroupSize > 0, "maxGroupSize must be > 0");
-
-    return text -> {
-
-      Multiset<String> features = Helpers.features(language, maxGroupSize, text);
-
-      features.entrySet().forEach(ngram -> {
-
-        String word = ngram.getElement();
-        int count = ngram.getCount();
-
-        if (!alphabet.containsKey(word)) {
-          alphabet.put(word, alphabet.size());
-        }
-        counts.add(word, count);
-      });
-    };
-  }
-
-  private static Dictionary alphabetReducer(Dictionary alphabet, Multiset<String> counts,
-      int nbGoldLabels) {
-
-    Preconditions.checkNotNull(alphabet, "alphabet should not be null");
-    Preconditions.checkNotNull(counts, "counts should not be null");
-    Preconditions.checkArgument(nbGoldLabels > 0, "nbGoldLabels must be > 0");
-
-    Dictionary newAlphabet = new Dictionary();
-    int minDf = (int) (0.01 * nbGoldLabels); // remove outliers
-    int maxDf = (int) (0.99 * nbGoldLabels); // remove outliers
-    @Var
-    int disp = 0;
-
-    for (int i = 0; i < alphabet.size(); i++) {
-
-      String ngram = alphabet.label(i);
-
-      if (counts.count(ngram) < minDf) {
-        disp++;
-        continue;
-      }
-      if (counts.count(ngram) > maxDf) {
-        disp++;
-        continue;
-      }
-      newAlphabet.put(ngram, i - disp);
-    }
-    return newAlphabet;
   }
 }

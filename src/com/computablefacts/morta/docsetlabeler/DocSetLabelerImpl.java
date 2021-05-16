@@ -1,6 +1,7 @@
 package com.computablefacts.morta.docsetlabeler;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -13,8 +14,6 @@ import com.computablefacts.nona.helpers.AsciiProgressBar;
 import com.computablefacts.nona.helpers.DocSetLabeler;
 import com.computablefacts.nona.helpers.Languages;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.HashMultiset;
-import com.google.common.collect.Multiset;
 import com.google.common.collect.Sets;
 import com.google.errorprone.annotations.CheckReturnValue;
 import com.google.errorprone.annotations.Var;
@@ -28,13 +27,8 @@ final public class DocSetLabelerImpl extends DocSetLabeler {
   private final Languages.eLanguage language_;
   private final int maxGroupSize_;
 
-  private final Multiset<String> ngramsCorpus_ = HashMultiset.create();
-  private final Multiset<String> ngramsSubsetOk_ = HashMultiset.create();
-  private final Multiset<String> ngramsSubsetKo_ = HashMultiset.create();
-
-  private final AtomicInteger countCorpus_ = new AtomicInteger(0);
-  private final AtomicInteger countSubsetOk_ = new AtomicInteger(0);
-  private final AtomicInteger countSubsetKo_ = new AtomicInteger(0);
+  private final Map<String, Double> subsetOk_ = new HashMap<>();
+  private final Map<String, Double> subsetKo_ = new HashMap<>();
 
   public DocSetLabelerImpl(Languages.eLanguage language, int maxGroupSize) {
 
@@ -49,48 +43,43 @@ final public class DocSetLabelerImpl extends DocSetLabeler {
   protected void init(@NotNull List<String> corpus, @NotNull List<String> subsetOk,
       @NotNull List<String> subsetKo) {
 
-    if (ngramsCorpus_.isEmpty()) {
+    if (subsetOk_.isEmpty()) {
 
       AsciiProgressBar.ProgressBar bar = AsciiProgressBar.create();
+      AtomicInteger count = new AtomicInteger(0);
 
-      corpus.stream().peek(t -> bar.update(countCorpus_.incrementAndGet(), corpus.size(),
-          "Loading the whole corpus...")).forEach(text -> {
-            Multiset<String> features = Helpers.features(language_, maxGroupSize_, text);
-            ngramsCorpus_.addAll(features);
-          });
+      subsetOk.stream()
+          .peek(
+              t -> bar.update(count.incrementAndGet(), subsetOk.size(), "Loading \"OK\" corpus..."))
+          .forEach(text -> Helpers.features(language_, maxGroupSize_, text).forEach((f, w) -> {
+            if (!subsetOk_.containsKey(f)) {
+              subsetOk_.put(f, w);
+            } else {
+              subsetOk_.put(f, Math.max(subsetOk_.get(f), w));
+            }
+          }));
 
-      countCorpus_.set(ngramsCorpus_.size());
-      ngramsCorpus_.entrySet().removeIf(ngram -> ngram.getCount() == 1);
+      subsetOk_.entrySet().removeIf(f -> f.getValue() < 0.01);
 
       System.out.println(); // Cosmetic
     }
-    if (ngramsSubsetOk_.isEmpty()) {
+    if (subsetKo_.isEmpty()) {
 
       AsciiProgressBar.ProgressBar bar = AsciiProgressBar.create();
+      AtomicInteger count = new AtomicInteger(0);
 
-      subsetOk.stream().peek(t -> bar.update(countSubsetOk_.incrementAndGet(), subsetOk.size(),
-          "Loading \"OK\" corpus...")).forEach(text -> {
-            Multiset<String> features = Helpers.features(language_, maxGroupSize_, text);
-            ngramsSubsetOk_.addAll(features);
-          });
+      subsetKo.stream()
+          .peek(
+              t -> bar.update(count.incrementAndGet(), subsetKo.size(), "Loading \"KO\" corpus..."))
+          .forEach(text -> Helpers.features(language_, maxGroupSize_, text).forEach((f, w) -> {
+            if (!subsetKo_.containsKey(f)) {
+              subsetKo_.put(f, w);
+            } else {
+              subsetKo_.put(f, Math.max(subsetKo_.get(f), w));
+            }
+          }));
 
-      countSubsetOk_.set(ngramsSubsetOk_.size());
-      ngramsSubsetOk_.entrySet().removeIf(ngram -> ngram.getCount() == 1);
-
-      System.out.println(); // Cosmetic
-    }
-    if (ngramsSubsetKo_.isEmpty()) {
-
-      AsciiProgressBar.ProgressBar bar = AsciiProgressBar.create();
-
-      subsetKo.stream().peek(t -> bar.update(countSubsetKo_.incrementAndGet(), subsetKo.size(),
-          "Loading \"KO\" corpus...")).forEach(text -> {
-            Multiset<String> features = Helpers.features(language_, maxGroupSize_, text);
-            ngramsSubsetKo_.addAll(features);
-          });
-
-      countSubsetKo_.set(ngramsSubsetKo_.size());
-      ngramsSubsetKo_.entrySet().removeIf(ngram -> ngram.getCount() == 1);
+      subsetKo_.entrySet().removeIf(f -> f.getValue() < 0.01);
 
       System.out.println(); // Cosmetic
     }
@@ -98,25 +87,27 @@ final public class DocSetLabelerImpl extends DocSetLabeler {
 
   @Override
   protected void uinit() {
-    ngramsSubsetOk_.clear();
-    countSubsetOk_.set(0);
-    ngramsSubsetKo_.clear();
-    countSubsetKo_.set(0);
+    subsetOk_.clear();
+    subsetKo_.clear();
   }
 
   @Override
   protected Set<String> candidates(String text) {
 
-    Multiset<String> features = Helpers.features(language_, maxGroupSize_, text);
+    Map<String, Double> features = Helpers.features(language_, maxGroupSize_, text);
 
-    return Sets.intersection(features.elementSet(), ngramsSubsetOk_.elementSet());
+    return Sets.intersection(features.keySet(), subsetOk_.keySet());
   }
 
   @Override
   protected double computeX(String text, String candidate) {
 
+    if (!subsetOk_.containsKey(candidate)) {
+      return 0.0000001;
+    }
+
     // the higher, the better
-    double freqOk = (double) ngramsSubsetOk_.count(candidate) / (double) countSubsetOk_.get();
+    double freqOk = subsetOk_.get(candidate);
 
     if (!Double.isFinite(freqOk) || freqOk == 0.0) {
       return 0.0000001;
@@ -127,8 +118,12 @@ final public class DocSetLabelerImpl extends DocSetLabeler {
   @Override
   protected double computeY(String text, String candidate) {
 
+    if (!subsetKo_.containsKey(candidate)) {
+      return 1.0;
+    }
+
     // the lower, the better
-    double freqKo = (double) ngramsSubsetKo_.count(candidate) / (double) countSubsetKo_.get();
+    double freqKo = subsetKo_.get(candidate);
 
     if (!Double.isFinite(freqKo) || freqKo == 0.0) {
       return 1.0;

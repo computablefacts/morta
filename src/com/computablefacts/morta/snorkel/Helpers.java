@@ -3,10 +3,13 @@ package com.computablefacts.morta.snorkel;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.OptionalDouble;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -72,15 +75,11 @@ final public class Helpers {
     return text -> {
 
       FeatureVector<Double> vector = new FeatureVector<>(alphabet.size(), 0.0);
-      Multiset<String> features = features(language, maxGroupSize, text);
+      Map<String, Double> features = features(language, maxGroupSize, text);
 
-      features.entrySet().forEach(ngram -> {
-
-        String word = ngram.getElement();
-        int count = ngram.getCount();
-
-        if (alphabet.containsKey(word)) {
-          vector.set(alphabet.id(word), (double) count);
+      features.forEach((f, w) -> {
+        if (alphabet.containsKey(f)) {
+          vector.set(alphabet.id(f), 1.0);
         }
       });
       return vector;
@@ -181,14 +180,19 @@ final public class Helpers {
     return rowsNew;
   }
 
-  public static Multiset<String> features(Languages.eLanguage language, int maxGroupSize,
+  public static Map<String, Double> features(Languages.eLanguage language, int maxGroupSize,
       String text) {
 
     Preconditions.checkNotNull(language, "language should not be null");
     Preconditions.checkArgument(maxGroupSize > 0, "maxGroupSize must be > 0");
     Preconditions.checkNotNull(text, "text should not be null");
 
-    Multiset<String> ngrams = HashMultiset.create();
+    Multiset<String>[] ngrams = new Multiset[16];
+
+    for (int i = 0; i < 16; i++) {
+      ngrams[i] = HashMultiset.create();
+    }
+
     StringBuilder word = new StringBuilder();
     @Var
     String w1 = "";
@@ -246,37 +250,49 @@ final public class Helpers {
           String w4Masked =
               IntStream.range(1, w4.length() + 1).mapToObj(i -> "_").collect(Collectors.joining());
 
-          ngrams.add(w5);
+          ngrams[0].add(w5);
 
           if (maxGroupSize >= 2) {
-            ngrams.add(w4 + w5);
+            ngrams[1].add(w4 + w5);
           }
           if (maxGroupSize >= 3) {
-            ngrams.add(w3 + w4 + w5);
-            ngrams.add(w3 + w4Masked + w5);
+            ngrams[2].add(w3 + w4 + w5);
+            ngrams[3].add(w3 + w4Masked + w5);
           }
           if (maxGroupSize >= 4) {
-            ngrams.add(w2 + w3 + w4 + w5);
-            ngrams.add(w2 + w3Masked + w4 + w5);
-            ngrams.add(w2 + w3 + w4Masked + w5);
-            ngrams.add(w2 + w3Masked + w4Masked + w5);
+            ngrams[4].add(w2 + w3 + w4 + w5);
+            ngrams[5].add(w2 + w3Masked + w4 + w5);
+            ngrams[6].add(w2 + w3 + w4Masked + w5);
+            ngrams[7].add(w2 + w3Masked + w4Masked + w5);
           }
           if (maxGroupSize >= 5) {
-            ngrams.add(w1 + w2 + w3 + w4 + w5);
-            ngrams.add(w1 + w2Masked + w3 + w4 + w5);
-            ngrams.add(w1 + w2 + w3Masked + w4 + w5);
-            ngrams.add(w1 + w2 + w3 + w4Masked + w5);
-            ngrams.add(w1 + w2Masked + w3Masked + w4 + w5);
-            ngrams.add(w1 + w2Masked + w3 + w4Masked + w5);
-            ngrams.add(w1 + w2 + w3Masked + w4Masked + w5);
-            ngrams.add(w1 + w2Masked + w3Masked + w4Masked + w5);
+            ngrams[8].add(w1 + w2 + w3 + w4 + w5);
+            ngrams[9].add(w1 + w2Masked + w3 + w4 + w5);
+            ngrams[10].add(w1 + w2 + w3Masked + w4 + w5);
+            ngrams[11].add(w1 + w2 + w3 + w4Masked + w5);
+            ngrams[12].add(w1 + w2Masked + w3Masked + w4 + w5);
+            ngrams[13].add(w1 + w2Masked + w3 + w4Masked + w5);
+            ngrams[14].add(w1 + w2 + w3Masked + w4Masked + w5);
+            ngrams[15].add(w1 + w2Masked + w3Masked + w4Masked + w5);
           }
         }
         word.setLength(0);
         word.append('_');
       }
     }
-    return patterns(ngrams);
+
+    Multiset<String>[] patterns = patterns(ngrams);
+
+    Map<String, Double> features = new HashMap<>();
+
+    Arrays.stream(patterns).flatMap(p -> p.elementSet().stream()).forEach(p -> {
+
+      OptionalDouble max = Arrays.stream(patterns).filter(pat -> pat.contains(p))
+          .mapToDouble(pat -> (double) pat.count(p) / (double) pat.size()).max();
+
+      features.put(p, max.orElse(0.0));
+    });
+    return features;
   }
 
   public static List<String> keywords(
@@ -289,69 +305,71 @@ final public class Helpers {
         .collect(Collectors.toList());
   }
 
-  private static Multiset<String> patterns(Multiset<String> ngrams) {
+  private static Multiset<String>[] patterns(Multiset<String>[] ngrams) {
 
     Preconditions.checkNotNull(ngrams, "ngrams should not be null");
 
-    Multiset<String> patterns = HashMultiset.create();
+    Multiset<String>[] patterns = new Multiset[ngrams.length];
 
-    ngrams.entrySet().forEach(entry -> {
+    for (int i = 0; i < ngrams.length; i++) {
 
-      String ngram = entry.getElement();
-      int count = entry.getCount();
+      int index = i;
 
-      String lowercase = ngram.toLowerCase();
-      String uppercase = ngram.toUpperCase();
-      String noDiacritics = StringIterator.removeDiacriticalMarks(ngram);
-      StringBuilder builder = new StringBuilder(ngram.length());
+      patterns[index] = HashMultiset.create();
 
-      for (int i = 0; i < ngram.length(); i++) {
-        if (builder.length() == 0 && ngram.charAt(i) == '_') {
-          continue; // from our POV, _word <=> word
-        }
+      ngrams[index].entrySet().forEach(entry -> {
 
-        char c1 = lowercase.charAt(i);
-        char c2 = uppercase.charAt(i);
-        char c3 = noDiacritics.charAt(i);
+        String ngram = entry.getElement();
+        int count = entry.getCount();
 
-        if (c1 == '_' && c2 == '_' && c3 == '_') {
-          if (builder.length() > 0) {
-            char prev = builder.charAt(builder.length() - 1);
-            if (prev == '.') {
-              builder.append('+');
-            } else if (prev != '+') {
-              builder.append('.');
+        String lowercase = ngram.toLowerCase();
+        String uppercase = ngram.toUpperCase();
+        StringBuilder builder = new StringBuilder(ngram.length());
+
+        for (int k = 0; k < ngram.length(); k++) {
+          if (builder.length() == 0 && ngram.charAt(k) == '_') {
+            continue; // from our POV, _word <=> word
+          }
+
+          char c1 = lowercase.charAt(k);
+          char c2 = uppercase.charAt(k);
+
+          if (c1 == '_' && c2 == '_') {
+            if (builder.length() > 0) {
+              char prev = builder.charAt(builder.length() - 1);
+              if (prev == '.') {
+                builder.append('+');
+              } else if (prev != '+') {
+                builder.append('.');
+              }
             }
+          } else {
+            builder.append('[');
+            builder.append(c1);
+            if (c1 != c2) {
+              builder.append(c2);
+            }
+            builder.append(']');
           }
-        } else {
-          builder.append('[');
-          builder.append(c1);
-          if (c1 != c2) {
-            builder.append(c2);
+        }
+
+        for (int k = builder.length() - 1; k >= 0; k--) {
+          if (builder.charAt(k) != '.' && builder.charAt(k) != '+') {
+            builder.setLength(k + 1);
+            break; // from our POV, word_ <=> word
           }
-          if (c1 != c2 && c1 != c3 && c2 != c3) {
-            builder.append(c3);
+        }
+
+        if (builder.length() > 0) {
+
+          String pattern = builder.toString();
+
+          if (!".+".equals(pattern)) {
+            patterns[index].add(pattern, count);
           }
-          builder.append(']');
         }
-      }
-
-      for (int i = builder.length() - 1; i >= 0; i--) {
-        if (builder.charAt(i) != '.' && builder.charAt(i) != '+') {
-          builder.setLength(i + 1);
-          break; // from our POV, word_ <=> word
-        }
-      }
-
-      if (builder.length() > 0) {
-
-        String pattern = builder.toString();
-
-        if (!".+".equals(pattern)) {
-          patterns.add(pattern, count);
-        }
-      }
-    });
+      });
+    }
     return patterns;
   }
 }

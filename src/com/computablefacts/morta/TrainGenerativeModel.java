@@ -50,7 +50,6 @@ final public class TrainGenerativeModel extends CommandLine {
         getStringCommand(args, "user_defined_labeling_functions", null);
     boolean dryRun = getBooleanCommand(args, "dry_run", true);
     boolean verbose = getBooleanCommand(args, "verbose", false);
-    int maxGroupSize = getIntCommand(args, "max_group_size", 5);
     String outputDirectory = getStringCommand(args, "output_directory", null);
 
     Observations observations = new Observations(new File(Constants.observations(outputDirectory)));
@@ -58,8 +57,6 @@ final public class TrainGenerativeModel extends CommandLine {
         "================================================================================\n= Train Generative Model\n================================================================================");
     observations.add(String.format("The label is %s", label));
     observations.add(String.format("The language is %s", language));
-    observations
-        .add(String.format("Max. group size for the 'CountVectorizer' is %d", maxGroupSize));
 
     // Load gold labels
     List<IGoldLabel<String>> gls = IGoldLabel.load(observations, goldLabels, label);
