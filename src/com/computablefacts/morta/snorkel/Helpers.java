@@ -13,7 +13,6 @@ import java.util.stream.IntStream;
 import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunction;
 import com.computablefacts.morta.snorkel.labelmodels.TreeLabelModel;
 import com.computablefacts.nona.helpers.Languages;
-import com.computablefacts.nona.helpers.NGramIterator;
 import com.computablefacts.nona.helpers.SnippetExtractor;
 import com.computablefacts.nona.helpers.StringIterator;
 import com.computablefacts.nona.helpers.Strings;
@@ -74,10 +73,6 @@ final public class Helpers {
 
       FeatureVector<Double> vector = new FeatureVector<>(alphabet.size(), 0.0);
       Multiset<String> features = features(language, maxGroupSize, text);
-
-      for (int i = 1; i < maxGroupSize; i++) {
-        new NGramIterator(i, text, true).forEachRemaining(span -> features.add(span.text()));
-      }
 
       features.entrySet().forEach(ngram -> {
 

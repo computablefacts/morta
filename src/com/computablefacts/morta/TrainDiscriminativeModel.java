@@ -29,7 +29,6 @@ import com.computablefacts.nona.helpers.CommandLine;
 import com.computablefacts.nona.helpers.ConfusionMatrix;
 import com.computablefacts.nona.helpers.Files;
 import com.computablefacts.nona.helpers.Languages;
-import com.computablefacts.nona.helpers.NGramIterator;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multiset;
@@ -227,10 +226,6 @@ final public class TrainDiscriminativeModel extends CommandLine {
     return text -> {
 
       Multiset<String> features = Helpers.features(language, maxGroupSize, text);
-
-      for (int i = 1; i < maxGroupSize; i++) {
-        new NGramIterator(i, text, true).forEachRemaining(span -> features.add(span.text()));
-      }
 
       features.entrySet().forEach(ngram -> {
 
