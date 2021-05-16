@@ -3,12 +3,12 @@ package com.computablefacts.morta.snorkel;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunction;
 import com.computablefacts.morta.snorkel.labelmodels.TreeLabelModel;
@@ -244,6 +244,13 @@ final public class Helpers {
           w4 = w5;
           w5 = w;
 
+          String w2Masked =
+              IntStream.range(1, w2.length() + 1).mapToObj(i -> "_").collect(Collectors.joining());
+          String w3Masked =
+              IntStream.range(1, w3.length() + 1).mapToObj(i -> "_").collect(Collectors.joining());
+          String w4Masked =
+              IntStream.range(1, w4.length() + 1).mapToObj(i -> "_").collect(Collectors.joining());
+
           ngrams.add(w5);
 
           if (maxGroupSize >= 2) {
@@ -251,12 +258,23 @@ final public class Helpers {
           }
           if (maxGroupSize >= 3) {
             ngrams.add(w3 + w4 + w5);
+            ngrams.add(w3 + w4Masked + w5);
           }
           if (maxGroupSize >= 4) {
             ngrams.add(w2 + w3 + w4 + w5);
+            ngrams.add(w2 + w3Masked + w4 + w5);
+            ngrams.add(w2 + w3 + w4Masked + w5);
+            ngrams.add(w2 + w3Masked + w4Masked + w5);
           }
           if (maxGroupSize >= 5) {
             ngrams.add(w1 + w2 + w3 + w4 + w5);
+            ngrams.add(w1 + w2Masked + w3 + w4 + w5);
+            ngrams.add(w1 + w2 + w3Masked + w4 + w5);
+            ngrams.add(w1 + w2 + w3 + w4Masked + w5);
+            ngrams.add(w1 + w2Masked + w3Masked + w4 + w5);
+            ngrams.add(w1 + w2Masked + w3 + w4Masked + w5);
+            ngrams.add(w1 + w2 + w3Masked + w4Masked + w5);
+            ngrams.add(w1 + w2Masked + w3Masked + w4Masked + w5);
           }
         }
         word.setLength(0);
@@ -292,18 +310,23 @@ final public class Helpers {
       String noDiacritics = StringIterator.removeDiacriticalMarks(ngram);
       StringBuilder builder = new StringBuilder(ngram.length());
 
-      @Var
-      boolean hasGroup = false;
-
       for (int i = 0; i < ngram.length(); i++) {
+        if (builder.length() == 0 && ngram.charAt(i) == '_') {
+          continue; // from our POV, _word <=> word
+        }
 
         char c1 = lowercase.charAt(i);
         char c2 = uppercase.charAt(i);
         char c3 = noDiacritics.charAt(i);
 
         if (c1 == '_' && c2 == '_' && c3 == '_') {
-          if (hasGroup || builder.length() == 0) { // from our POV, _word <=> __word
-            builder.append('.');
+          if (builder.length() > 0) {
+            char prev = builder.charAt(builder.length() - 1);
+            if (prev == '.') {
+              builder.append('+');
+            } else if (prev != '+') {
+              builder.append('.');
+            }
           }
         } else {
           builder.append('[');
@@ -315,14 +338,23 @@ final public class Helpers {
             builder.append(c3);
           }
           builder.append(']');
-          hasGroup = true;
         }
       }
 
-      String pattern = builder.toString();
+      for (int i = builder.length() - 1; i >= 0; i--) {
+        if (builder.charAt(i) != '.' && builder.charAt(i) != '+') {
+          builder.setLength(i + 1);
+          break; // from our POV, word_ <=> word
+        }
+      }
 
-      if (!Arrays.stream(pattern.split("")).allMatch("."::equals)) {
-        patterns.add(pattern, count);
+      if (builder.length() > 0) {
+
+        String pattern = builder.toString();
+
+        if (!".+".equals(pattern)) {
+          patterns.add(pattern, count);
+        }
       }
     });
     return patterns;
