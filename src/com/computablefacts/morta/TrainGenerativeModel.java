@@ -1,20 +1,28 @@
 package com.computablefacts.morta;
 
+import static com.computablefacts.morta.snorkel.ILabelingFunction.KO;
+import static com.computablefacts.morta.snorkel.ILabelingFunction.OK;
+
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.computablefacts.morta.snorkel.GoldLabel;
 import com.computablefacts.morta.snorkel.Helpers;
 import com.computablefacts.morta.snorkel.IGoldLabel;
 import com.computablefacts.morta.snorkel.Summary;
 import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunction;
+import com.computablefacts.morta.snorkel.labelmodels.AbstractLabelModel;
 import com.computablefacts.morta.snorkel.labelmodels.TreeLabelModel;
 import com.computablefacts.morta.yaml.patterns.Pattern;
 import com.computablefacts.morta.yaml.patterns.Patterns;
 import com.computablefacts.nona.helpers.AsciiTable;
+import com.computablefacts.nona.helpers.Codecs;
 import com.computablefacts.nona.helpers.CommandLine;
 import com.computablefacts.nona.helpers.ConfusionMatrix;
 import com.computablefacts.nona.helpers.Files;
@@ -172,8 +180,66 @@ final public class TrainGenerativeModel extends CommandLine {
       com.computablefacts.nona.helpers.Files.create(input, xStream.toXML(labelModel));
       com.computablefacts.nona.helpers.Files.gzip(input, output);
       com.computablefacts.nona.helpers.Files.delete(input);
+
+      observations.add("Saving new gold labels...");
+
+      input = new File(Constants.newGoldLabelsJson(outputDirectory, language, label));
+      output = new File(Constants.newGoldLabelsGz(outputDirectory, language, label));
+
+      com.computablefacts.nona.helpers.Files.create(input,
+          newGoldLabels(labelModel, gls).stream().map(gl -> {
+
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", gl.id());
+            map.put("label", gl.label());
+            map.put("data", gl.data());
+            map.put("is_true_positive", gl.isTruePositive());
+            map.put("is_false_positive", gl.isFalsePositive());
+            map.put("is_true_negative", gl.isTrueNegative());
+            map.put("is_false_negative", gl.isFalseNegative());
+
+            return Codecs.asString(map);
+          }).collect(Collectors.toList()));
+
+      com.computablefacts.nona.helpers.Files.gzip(input, output);
+      com.computablefacts.nona.helpers.Files.delete(input);
     }
 
     observations.flush();
+  }
+
+  private static List<IGoldLabel<String>> newGoldLabels(AbstractLabelModel<String> labelModel,
+      List<IGoldLabel<String>> gls) {
+
+    Preconditions.checkNotNull(labelModel, "labelModel should not be null");
+    Preconditions.checkNotNull(gls, "gls should not be null");
+
+    List<IGoldLabel<String>> goldLabels = new ArrayList<>(gls.size());
+    List<Integer> actual = gls.stream().map(TreeLabelModel::label).collect(Collectors.toList());
+    List<Integer> predicted = labelModel.predict(gls);
+
+    for (int i = 0; i < gls.size(); i++) {
+
+      int act = actual.get(i);
+      int pred = predicted.get(i);
+
+      if (act == pred) {
+        goldLabels.add(gls.get(i));
+      } else {
+
+        String id = gls.get(i).id();
+        String data = gls.get(i).data();
+        String label = gls.get(i).label();
+
+        boolean isTruePositive = false;
+        boolean isFalsePositive = pred == KO; // the user made a mistake ?
+        boolean isTrueNegative = false;
+        boolean isFalseNegative = pred == OK; // the user forgot one page ?
+
+        goldLabels.add(new GoldLabel(id, label, data, isTruePositive, isFalsePositive,
+            isTrueNegative, isFalseNegative));
+      }
+    }
+    return goldLabels;
   }
 }

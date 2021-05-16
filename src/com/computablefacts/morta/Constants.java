@@ -13,6 +13,11 @@ final public class Constants {
     return (Strings.isNullOrEmpty(dir) ? "" : dir + File.separator) + "observations.txt";
   }
 
+  public static String newGoldLabelsJson(String dir, String language, String model) {
+    return (Strings.isNullOrEmpty(dir) ? "" : dir + File.separator) + "new_gold_labels_for_" + model
+        + "_" + language + ".json";
+  }
+
   public static String labelModelXml(String dir, String language, String model) {
     return (Strings.isNullOrEmpty(dir) ? "" : dir + File.separator) + "label_model_for_" + model
         + "_" + language + ".xml";
@@ -36,6 +41,10 @@ final public class Constants {
   public static String labelingFunctionsXml(String dir, String language, String model) {
     return (Strings.isNullOrEmpty(dir) ? "" : dir + File.separator) + "labeling_functions_for_"
         + model + "_" + language + ".xml";
+  }
+
+  public static String newGoldLabelsGz(String dir, String language, String model) {
+    return newGoldLabelsJson(dir, language, model) + ".gz";
   }
 
   public static String labelModelGz(String dir, String language, String model) {
