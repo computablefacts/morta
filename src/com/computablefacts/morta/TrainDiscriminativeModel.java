@@ -47,7 +47,7 @@ final public class TrainDiscriminativeModel extends CommandLine {
     File labelModel = getFileCommand(args, "label_model", null);
     boolean dryRun = getBooleanCommand(args, "dry_run", true);
     boolean verbose = getBooleanCommand(args, "verbose", false);
-    int maxGroupSize = getIntCommand(args, "max_group_size", 4);
+    int maxGroupSize = getIntCommand(args, "max_group_size", 5);
     String clazzifier = getStringCommand(args, "classifier", "logit");
     String outputDirectory = getStringCommand(args, "output_directory", null);
 

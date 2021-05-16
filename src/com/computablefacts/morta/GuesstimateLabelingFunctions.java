@@ -32,7 +32,7 @@ final public class GuesstimateLabelingFunctions extends CommandLine {
     File goldLabels = getFileCommand(args, "gold_labels", null);
     int nbCandidatesToConsider = getIntCommand(args, "nb_candidates_to_consider", 100);
     int nbLabelsToReturn = getIntCommand(args, "nb_labels_to_return", 50);
-    int maxGroupSize = getIntCommand(args, "max_group_size", 4);
+    int maxGroupSize = getIntCommand(args, "max_group_size", 5);
     boolean dryRun = getBooleanCommand(args, "dry_run", true);
     String outputDirectory = getStringCommand(args, "output_directory", null);
 

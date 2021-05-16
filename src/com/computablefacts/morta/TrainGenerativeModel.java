@@ -50,7 +50,7 @@ final public class TrainGenerativeModel extends CommandLine {
         getStringCommand(args, "user_defined_labeling_functions", null);
     boolean dryRun = getBooleanCommand(args, "dry_run", true);
     boolean verbose = getBooleanCommand(args, "verbose", false);
-    int maxGroupSize = getIntCommand(args, "max_group_size", 4);
+    int maxGroupSize = getIntCommand(args, "max_group_size", 5);
     String outputDirectory = getStringCommand(args, "output_directory", null);
 
     Observations observations = new Observations(new File(Constants.observations(outputDirectory)));
