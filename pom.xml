@@ -47,7 +47,7 @@
         <jackson-dataformat-yaml.version>2.12.0</jackson-dataformat-yaml.version>
         <smile.version>2.5.1</smile.version>
         <openblas.version>0.3.10-1.5.4</openblas.version>
-        <xstream.version>1.4.16</xstream.version>
+        <xstream.version>1.4.17</xstream.version>
         <maven-shade-plugin.version>3.1.1</maven-shade-plugin.version>
         <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
         <maven-source-plugin.version>2.2.1</maven-source-plugin.version>
