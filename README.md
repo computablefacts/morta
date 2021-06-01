@@ -23,6 +23,7 @@ The format of a single Gold Label is :
     "id": "<uuid>",
     "label": "<model_name>",
     "data": "<text>",
+    "snippet": "<focus_in_text>",
     "is_true_positive": <true|false>,
     "is_true_negative": <true|false>,
     "is_false_positive": <true|false>,
