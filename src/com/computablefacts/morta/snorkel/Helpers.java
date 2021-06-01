@@ -11,7 +11,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.OptionalDouble;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunction;
 import com.computablefacts.morta.snorkel.labelmodels.TreeLabelModel;
@@ -187,9 +186,9 @@ final public class Helpers {
     Preconditions.checkArgument(maxGroupSize > 0, "maxGroupSize must be > 0");
     Preconditions.checkNotNull(text, "text should not be null");
 
-    Multiset<String>[] ngrams = new Multiset[16];
+    Multiset<String>[] ngrams = new Multiset[5];
 
-    for (int i = 0; i < 16; i++) {
+    for (int i = 0; i < 5; i++) {
       ngrams[i] = HashMultiset.create();
     }
 
@@ -243,13 +242,6 @@ final public class Helpers {
           w4 = w5;
           w5 = w;
 
-          String w2Masked =
-              IntStream.range(1, w2.length() + 1).mapToObj(i -> "_").collect(Collectors.joining());
-          String w3Masked =
-              IntStream.range(1, w3.length() + 1).mapToObj(i -> "_").collect(Collectors.joining());
-          String w4Masked =
-              IntStream.range(1, w4.length() + 1).mapToObj(i -> "_").collect(Collectors.joining());
-
           ngrams[0].add(w5);
 
           if (maxGroupSize >= 2) {
@@ -257,23 +249,12 @@ final public class Helpers {
           }
           if (maxGroupSize >= 3) {
             ngrams[2].add(w3 + w4 + w5);
-            ngrams[3].add(w3 + w4Masked + w5);
           }
           if (maxGroupSize >= 4) {
-            ngrams[4].add(w2 + w3 + w4 + w5);
-            ngrams[5].add(w2 + w3Masked + w4 + w5);
-            ngrams[6].add(w2 + w3 + w4Masked + w5);
-            ngrams[7].add(w2 + w3Masked + w4Masked + w5);
+            ngrams[3].add(w2 + w3 + w4 + w5);
           }
           if (maxGroupSize >= 5) {
-            ngrams[8].add(w1 + w2 + w3 + w4 + w5);
-            ngrams[9].add(w1 + w2Masked + w3 + w4 + w5);
-            ngrams[10].add(w1 + w2 + w3Masked + w4 + w5);
-            ngrams[11].add(w1 + w2 + w3 + w4Masked + w5);
-            ngrams[12].add(w1 + w2Masked + w3Masked + w4 + w5);
-            ngrams[13].add(w1 + w2Masked + w3 + w4Masked + w5);
-            ngrams[14].add(w1 + w2 + w3Masked + w4Masked + w5);
-            ngrams[15].add(w1 + w2Masked + w3Masked + w4Masked + w5);
+            ngrams[4].add(w1 + w2 + w3 + w4 + w5);
           }
         }
         word.setLength(0);

@@ -18,6 +18,9 @@ import com.computablefacts.nona.helpers.CommandLine;
 import com.computablefacts.nona.helpers.Languages;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
+import com.google.common.collect.HashMultiset;
+import com.google.common.collect.Multiset;
 import com.google.common.collect.Sets;
 import com.google.errorprone.annotations.CheckReturnValue;
 import com.thoughtworks.xstream.XStream;
@@ -32,7 +35,7 @@ final public class GuesstimateLabelingFunctions extends CommandLine {
     File goldLabels = getFileCommand(args, "gold_labels", null);
     int nbCandidatesToConsider = getIntCommand(args, "nb_candidates_to_consider", 100);
     int nbLabelsToReturn = getIntCommand(args, "nb_labels_to_return", 50);
-    int maxGroupSize = getIntCommand(args, "max_group_size", 5);
+    int maxGroupSize = getIntCommand(args, "max_group_size", 1);
     boolean dryRun = getBooleanCommand(args, "dry_run", true);
     String outputDirectory = getStringCommand(args, "output_directory", null);
 
@@ -62,6 +65,22 @@ final public class GuesstimateLabelingFunctions extends CommandLine {
     observations.add(String.format("%d pages found (%d duplicates)", pagesOk.size(),
         pagesOk.size() - Sets.newHashSet(pagesOk).size()));
 
+    List<String> snippets =
+        gls.stream().filter(gl -> TreeLabelModel.label(gl) == OK).map(IGoldLabel::snippet)
+            .filter(s -> !Strings.isNullOrEmpty(s)).collect(Collectors.toList());
+
+    observations.add(String.format("%d snippets extracted for label OK", snippets.size()));
+
+    Multiset<String> boosters = HashMultiset.create();
+
+    snippets
+        .stream().flatMap(s -> Helpers
+            .features(Languages.eLanguage.valueOf(language), maxGroupSize, s).keySet().stream())
+        .forEach(boosters::add);
+
+    observations.add(String.format("%d boosters extracted for label OK (%d uniques)",
+        boosters.size(), boosters.elementSet().size()));
+
     // Pages for which LF must return KO
     observations.add("Building dataset for label KO...");
 
@@ -81,7 +100,7 @@ final public class GuesstimateLabelingFunctions extends CommandLine {
 
     // Guesstimate LF
     DocSetLabelerImpl docSetLabeler =
-        new DocSetLabelerImpl(Languages.eLanguage.valueOf(language), maxGroupSize);
+        new DocSetLabelerImpl(Languages.eLanguage.valueOf(language), maxGroupSize, boosters);
 
     observations.add("Starting DocSetLabeler...");
 

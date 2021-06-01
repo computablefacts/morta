@@ -14,6 +14,7 @@ final public class GoldLabel implements IGoldLabel<String> {
   private final String id_;
   private final String label_;
   private final String data_;
+  private final String snippet_;
   private final boolean isTruePositive_;
   private final boolean isFalsePositive_;
   private final boolean isTrueNegative_;
@@ -26,6 +27,7 @@ final public class GoldLabel implements IGoldLabel<String> {
     id_ = (String) Preconditions.checkNotNull(json.get("id"), "id should not be null");
     label_ = (String) Preconditions.checkNotNull(json.get("label"), "label should not be null");
     data_ = (String) Preconditions.checkNotNull(json.get("data"), "data should not be null");
+    snippet_ = (String) json.get("snippet"); // optional
     isTruePositive_ = (Boolean) Preconditions.checkNotNull(json.get("is_true_positive"),
         "is_true_positive should not be null");
     isFalsePositive_ = (Boolean) Preconditions.checkNotNull(json.get("is_false_positive"),
@@ -48,6 +50,7 @@ final public class GoldLabel implements IGoldLabel<String> {
     id_ = Preconditions.checkNotNull(id, "id should not be null");
     label_ = Preconditions.checkNotNull(label, "label should not be null");
     data_ = Preconditions.checkNotNull(data, "data should not be null");
+    snippet_ = null; // optional
     isTruePositive_ = isTruePositive;
     isFalsePositive_ = isFalsePositive;
     isTrueNegative_ = isTrueNegative;
@@ -72,6 +75,7 @@ final public class GoldLabel implements IGoldLabel<String> {
     return com.google.common.base.Objects.equal(id(), gl.id())
         && com.google.common.base.Objects.equal(label(), gl.label())
         && com.google.common.base.Objects.equal(data(), gl.data())
+        && com.google.common.base.Objects.equal(snippet(), gl.snippet())
         && com.google.common.base.Objects.equal(isTruePositive(), gl.isTruePositive())
         && com.google.common.base.Objects.equal(isFalsePositive(), gl.isFalsePositive())
         && com.google.common.base.Objects.equal(isTrueNegative(), gl.isTrueNegative())
@@ -80,7 +84,7 @@ final public class GoldLabel implements IGoldLabel<String> {
 
   @Override
   public int hashCode() {
-    return Objects.hash(id(), label(), data(), isTruePositive(), isFalsePositive(),
+    return Objects.hash(id(), label(), data(), snippet(), isTruePositive(), isFalsePositive(),
         isTrueNegative(), isFalseNegative());
   }
 
@@ -88,7 +92,7 @@ final public class GoldLabel implements IGoldLabel<String> {
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this).add("id", id()).add("label", label())
-        .add("data", data()).add("is_true_positive", isTruePositive())
+        .add("data", data()).add("snippet", snippet()).add("is_true_positive", isTruePositive())
         .add("is_false_positive", isFalsePositive()).add("is_true_negative", isTrueNegative())
         .add("is_false_negative", isFalseNegative()).omitNullValues().toString();
   }
@@ -106,6 +110,11 @@ final public class GoldLabel implements IGoldLabel<String> {
   @Override
   public String data() {
     return data_;
+  }
+
+  @Override
+  public String snippet() {
+    return snippet_;
   }
 
   @Override

@@ -41,7 +41,7 @@ final public class ExecuteModel extends CommandLine {
     String language = getStringCommand(args, "language", null);
     String label = getStringCommand(args, "label", null);
     File archive = getFileCommand(args, "archive", null);
-    int maxGroupSize = getIntCommand(args, "max_group_size", 4);
+    int maxGroupSize = getIntCommand(args, "max_group_size", 1);
     String extractedWith = getStringCommand(args, "extracted_with", "morta");
     String extractedBy = getStringCommand(args, "extracted_by", "morta");
     String root = getStringCommand(args, "root", null);

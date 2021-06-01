@@ -14,6 +14,8 @@ import com.computablefacts.nona.helpers.AsciiProgressBar;
 import com.computablefacts.nona.helpers.DocSetLabeler;
 import com.computablefacts.nona.helpers.Languages;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.HashMultiset;
+import com.google.common.collect.Multiset;
 import com.google.common.collect.Sets;
 import com.google.errorprone.annotations.CheckReturnValue;
 import com.google.errorprone.annotations.Var;
@@ -29,14 +31,18 @@ final public class DocSetLabelerImpl extends DocSetLabeler {
 
   private final Map<String, Double> subsetOk_ = new HashMap<>();
   private final Map<String, Double> subsetKo_ = new HashMap<>();
+  private final Multiset<String> boosters_ = HashMultiset.create();
 
-  public DocSetLabelerImpl(Languages.eLanguage language, int maxGroupSize) {
+  public DocSetLabelerImpl(Languages.eLanguage language, int maxGroupSize,
+      Multiset<String> boosters) {
 
     Preconditions.checkNotNull(language, "language should not be null");
     Preconditions.checkArgument(maxGroupSize > 0, "maxGroupSize must be > 0");
+    Preconditions.checkNotNull(boosters, "boosters must be > 0");
 
     language_ = language;
     maxGroupSize_ = maxGroupSize;
+    boosters_.addAll(boosters);
   }
 
   @Override
@@ -59,8 +65,6 @@ final public class DocSetLabelerImpl extends DocSetLabeler {
             }
           }));
 
-      subsetOk_.entrySet().removeIf(f -> f.getValue() < 0.01);
-
       System.out.println(); // Cosmetic
     }
     if (subsetKo_.isEmpty()) {
@@ -79,8 +83,6 @@ final public class DocSetLabelerImpl extends DocSetLabeler {
             }
           }));
 
-      subsetKo_.entrySet().removeIf(f -> f.getValue() < 0.01);
-
       System.out.println(); // Cosmetic
     }
   }
@@ -95,8 +97,9 @@ final public class DocSetLabelerImpl extends DocSetLabeler {
   protected Set<String> candidates(String text) {
 
     Map<String, Double> features = Helpers.features(language_, maxGroupSize_, text);
+    Set<String> intersection = Sets.intersection(features.keySet(), subsetOk_.keySet());
 
-    return Sets.intersection(features.keySet(), subsetOk_.keySet());
+    return intersection;
   }
 
   @Override
@@ -112,7 +115,15 @@ final public class DocSetLabelerImpl extends DocSetLabeler {
     if (!Double.isFinite(freqOk) || freqOk == 0.0) {
       return 0.0000001;
     }
-    return freqOk; // the higher, the better
+
+    double boost;
+
+    if (boosters_.contains(candidate)) {
+      boost = (double) boosters_.count(candidate) / (double) boosters_.size();
+    } else {
+      boost = 0.0;
+    }
+    return freqOk + (1.0 - freqOk) * boost; // the higher, the better
   }
 
   @Override
@@ -128,7 +139,15 @@ final public class DocSetLabelerImpl extends DocSetLabeler {
     if (!Double.isFinite(freqKo) || freqKo == 0.0) {
       return 1.0;
     }
-    return 1.0 - freqKo; // the higher, the better
+
+    double boost;
+
+    if (boosters_.contains(candidate)) {
+      boost = (double) boosters_.count(candidate) / (double) boosters_.size();
+    } else {
+      boost = 0.0;
+    }
+    return 1.0 - (freqKo + (1.0 - freqKo) * boost); // the higher, the better
   }
 
   @Override
