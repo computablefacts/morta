@@ -228,4 +228,16 @@ public interface IGoldLabel<D> {
    * @return true iif the current gold label is a FN, false otherwise.
    */
   boolean isFalseNegative();
+
+  /**
+   * If {@code D} is an instance of {@link String}, an optional text snippet which must be a
+   * substring of {@link data()}. This text snippet is used by
+   * {@link com.computablefacts.morta.docsetlabeler.DocSetLabelerImpl} to boost terms included in
+   * it.
+   *
+   * @return a text snippet.
+   */
+  default String snippet() {
+    return "";
+  }
 }
