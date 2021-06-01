@@ -117,14 +117,14 @@ final public class TrainGenerativeModel extends CommandLine {
 
     System.out.println(); // Cosmetic
 
-    observations.add(String.format("Tree for label model is : %s", labelModel.toString()));
+    observations.add(String.format("Tree for label model is : %s", labelModel));
 
     if (verbose) {
 
       labelModel.lfSummaries().stream()
           // Sort summaries by decreasing number of correct labels
           .sorted((o1, o2) -> Ints.compare(o2.correct(), o1.correct()))
-          .forEach(summary -> observations.add(String.format("  %s", summary.toString())));
+          .forEach(summary -> observations.add(String.format("  %s", summary)));
 
       observations.add("Building correlation matrix for labeling functions...");
 
@@ -190,6 +190,7 @@ final public class TrainGenerativeModel extends CommandLine {
             map.put("id", gl.id());
             map.put("label", gl.label());
             map.put("data", gl.data());
+            map.put("snippet", gl.snippet());
             map.put("is_true_positive", gl.isTruePositive());
             map.put("is_false_positive", gl.isFalsePositive());
             map.put("is_true_negative", gl.isTrueNegative());
