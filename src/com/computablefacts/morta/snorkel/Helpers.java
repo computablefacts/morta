@@ -305,6 +305,8 @@ final public class Helpers {
 
         String lowercase = ngram.toLowerCase();
         String uppercase = ngram.toUpperCase();
+        String normalizedLowercase = StringIterator.removeDiacriticalMarks(lowercase);
+        String normalizedUppercase = StringIterator.removeDiacriticalMarks(uppercase);
         StringBuilder builder = new StringBuilder(ngram.length());
 
         for (int k = 0; k < ngram.length(); k++) {
@@ -314,6 +316,8 @@ final public class Helpers {
 
           char c1 = lowercase.charAt(k);
           char c2 = uppercase.charAt(k);
+          char c3 = normalizedLowercase.charAt(k);
+          char c4 = normalizedUppercase.charAt(k);
 
           if (c1 == '_' && c2 == '_') {
             if (builder.length() > 0) {
@@ -329,6 +333,12 @@ final public class Helpers {
             builder.append(c1);
             if (c1 != c2) {
               builder.append(c2);
+            }
+            if (c1 != c3 && c2 != c3) {
+              builder.append(c3);
+            }
+            if (c1 != c4 && c2 != c4 && c3 != c4) {
+              builder.append(c4);
             }
             builder.append(']');
           }
