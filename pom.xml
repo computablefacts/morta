@@ -40,7 +40,7 @@
 
     <properties>
         <junon.version>0.9</junon.version>
-        <nona.version>1.30</nona.version>
+        <nona.version>1.31</nona.version>
         <error-prone.version>2.3.1</error-prone.version>
         <junit.version>4.13.1</junit.version>
         <equalsverifier.version>3.4.2</equalsverifier.version>
