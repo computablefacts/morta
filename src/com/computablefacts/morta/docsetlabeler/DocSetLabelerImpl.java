@@ -1,16 +1,12 @@
 package com.computablefacts.morta.docsetlabeler;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.validation.constraints.NotNull;
 
+import com.computablefacts.asterix.console.AsciiProgressBar;
 import com.computablefacts.morta.snorkel.Helpers;
-import com.computablefacts.nona.helpers.AsciiProgressBar;
 import com.computablefacts.nona.helpers.DocSetLabeler;
 import com.computablefacts.nona.helpers.Languages;
 import com.google.common.base.Preconditions;

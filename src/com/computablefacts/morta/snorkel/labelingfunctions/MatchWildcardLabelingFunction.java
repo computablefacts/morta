@@ -4,7 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.computablefacts.nona.helpers.WildcardMatcher;
+import com.computablefacts.asterix.WildcardMatcher;
 import com.google.common.base.Strings;
 import com.google.errorprone.annotations.CheckReturnValue;
 

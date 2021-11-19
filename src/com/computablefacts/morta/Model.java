@@ -13,18 +13,15 @@ import com.computablefacts.morta.snorkel.Helpers;
 import com.computablefacts.morta.snorkel.ITransformationFunction;
 import com.computablefacts.morta.snorkel.classifiers.AbstractClassifier;
 import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunction;
-import com.computablefacts.nona.helpers.Files;
 import com.computablefacts.nona.helpers.Languages;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.errorprone.annotations.CheckReturnValue;
-import com.thoughtworks.xstream.XStream;
 
 @NotThreadSafe
 @CheckReturnValue
 final public class Model {
 
-  private final XStream xStream_ = Helpers.xStream();
   private final String language_;
   private final String model_;
   private final int maxGroupSize_;
@@ -116,18 +113,15 @@ final public class Model {
   }
 
   private Dictionary alphabet(String dir) {
-    return (Dictionary) xStream_.fromXML(Files.loadCompressed(
-        new File(Constants.alphabetGz(dir, language_, model_)), StandardCharsets.UTF_8));
+    return Helpers.deserialize(Constants.alphabetGz(dir, language_, model_));
   }
 
   private AbstractClassifier classifier(String dir) {
-    return (AbstractClassifier) xStream_.fromXML(Files.loadCompressed(
-        new File(Constants.classifierGz(dir, language_, model_)), StandardCharsets.UTF_8));
+    return Helpers.deserialize(Constants.classifierGz(dir, language_, model_));
   }
 
   private List<AbstractLabelingFunction<String>> labelingFunctions(String dir) {
-    return (List<AbstractLabelingFunction<String>>) xStream_.fromXML(Files.loadCompressed(
-        new File(Constants.labelingFunctionsGz(dir, language_, model_)), StandardCharsets.UTF_8));
+    return Helpers.deserialize(Constants.labelingFunctionsGz(dir, language_, model_));
   }
 
   private String observations(String dir) {

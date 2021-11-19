@@ -4,39 +4,22 @@ import static com.computablefacts.morta.snorkel.ILabelingFunction.KO;
 import static com.computablefacts.morta.snorkel.ILabelingFunction.OK;
 
 import java.io.File;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.computablefacts.asterix.console.AsciiProgressBar;
+import com.computablefacts.asterix.console.ConsoleApp;
+import com.computablefacts.morta.snorkel.*;
 import com.computablefacts.morta.snorkel.Dictionary;
-import com.computablefacts.morta.snorkel.FeatureVector;
-import com.computablefacts.morta.snorkel.Helpers;
-import com.computablefacts.morta.snorkel.IGoldLabel;
-import com.computablefacts.morta.snorkel.Pipeline;
-import com.computablefacts.morta.snorkel.classifiers.AbstractClassifier;
-import com.computablefacts.morta.snorkel.classifiers.FisherLinearDiscriminantClassifier;
-import com.computablefacts.morta.snorkel.classifiers.KNearestNeighborClassifier;
-import com.computablefacts.morta.snorkel.classifiers.LinearDiscriminantAnalysisClassifier;
-import com.computablefacts.morta.snorkel.classifiers.LogisticRegressionClassifier;
-import com.computablefacts.morta.snorkel.classifiers.QuadraticDiscriminantAnalysisClassifier;
-import com.computablefacts.morta.snorkel.classifiers.RegularizedDiscriminantAnalysisClassifier;
+import com.computablefacts.morta.snorkel.classifiers.*;
 import com.computablefacts.morta.snorkel.labelmodels.TreeLabelModel;
-import com.computablefacts.nona.helpers.AsciiProgressBar;
-import com.computablefacts.nona.helpers.CommandLine;
 import com.computablefacts.nona.helpers.ConfusionMatrix;
-import com.computablefacts.nona.helpers.Files;
 import com.computablefacts.nona.helpers.Languages;
 import com.google.common.base.Preconditions;
 import com.google.errorprone.annotations.CheckReturnValue;
-import com.google.errorprone.annotations.Var;
-import com.thoughtworks.xstream.XStream;
 
 @CheckReturnValue
-final public class TrainDiscriminativeModel extends CommandLine {
+final public class TrainDiscriminativeModel extends ConsoleApp {
 
   public static void main(String[] args) {
 
@@ -114,9 +97,7 @@ final public class TrainDiscriminativeModel extends CommandLine {
     // Load label model
     observations.add("Loading label model...");
 
-    XStream xStream = Helpers.xStream();
-    TreeLabelModel<String> lm = (TreeLabelModel<String>) xStream
-        .fromXML(Files.loadCompressed(labelModel, StandardCharsets.UTF_8));
+    TreeLabelModel<String> lm = Helpers.deserialize(labelModel.getAbsolutePath());
 
     // Apply CountVectorizer on gold labels
     observations.add("Applying 'CountVectorizer' on gold labels...");
@@ -182,23 +163,11 @@ final public class TrainDiscriminativeModel extends CommandLine {
 
       observations.add("Saving classifier...");
 
-      @Var
-      File input = new File(Constants.classifierXml(outputDirectory, language, label));
-      @Var
-      File output = new File(Constants.classifierGz(outputDirectory, language, label));
-
-      com.computablefacts.nona.helpers.Files.create(input, xStream.toXML(classifier));
-      com.computablefacts.nona.helpers.Files.gzip(input, output);
-      com.computablefacts.nona.helpers.Files.delete(input);
+      Helpers.serialize(Constants.classifierGz(outputDirectory, language, label), classifier);
 
       observations.add("Saving alphabet...");
 
-      input = new File(Constants.alphabetXml(outputDirectory, language, label));
-      output = new File(Constants.alphabetGz(outputDirectory, language, label));
-
-      com.computablefacts.nona.helpers.Files.create(input, xStream.toXML(alphabet));
-      com.computablefacts.nona.helpers.Files.gzip(input, output);
-      com.computablefacts.nona.helpers.Files.delete(input);
+      Helpers.serialize(Constants.alphabetGz(outputDirectory, language, label), alphabet);
     }
 
     observations.flush();

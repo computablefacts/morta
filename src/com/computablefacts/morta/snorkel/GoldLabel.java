@@ -3,7 +3,7 @@ package com.computablefacts.morta.snorkel;
 import java.util.Map;
 import java.util.Objects;
 
-import com.computablefacts.nona.Generated;
+import com.computablefacts.asterix.Generated;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.errorprone.annotations.CheckReturnValue;

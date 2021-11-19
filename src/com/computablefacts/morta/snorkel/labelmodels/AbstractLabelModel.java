@@ -1,25 +1,14 @@
 package com.computablefacts.morta.snorkel.labelmodels;
 
-import java.io.File;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
-import com.computablefacts.morta.snorkel.Dictionary;
-import com.computablefacts.morta.snorkel.FeatureVector;
-import com.computablefacts.morta.snorkel.Helpers;
-import com.computablefacts.morta.snorkel.IGoldLabel;
-import com.computablefacts.morta.snorkel.Pipeline;
-import com.computablefacts.morta.snorkel.Summary;
+import com.computablefacts.morta.snorkel.*;
 import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunction;
-import com.computablefacts.nona.helpers.Files;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Table;
 import com.google.errorprone.annotations.CheckReturnValue;
-import com.google.errorprone.annotations.Var;
-import com.thoughtworks.xstream.XStream;
 
 import smile.stat.hypothesis.CorTest;
 
@@ -51,37 +40,6 @@ public abstract class AbstractLabelModel<T> {
     lfNames_ = lfNames;
     lfLabels_ = lfLabels;
     lfs_ = new ArrayList<>(lfs);
-  }
-
-  public static <U extends AbstractLabelModel<?>> void serialize(String path, String filename,
-      U labelModel) {
-
-    Preconditions.checkNotNull(path, "path should not be null");
-    Preconditions.checkNotNull(filename, "filename should not be null");
-    Preconditions.checkNotNull(labelModel, "labelModel should not be null");
-
-    XStream xStream = Helpers.xStream();
-
-    @Var
-    File input = new File(path + "\\label_model_" + filename + ".xml");
-    @Var
-    File output = new File(path + "\\label_model_" + filename + ".xml.gz");
-
-    com.computablefacts.nona.helpers.Files.create(input, xStream.toXML(labelModel));
-    com.computablefacts.nona.helpers.Files.gzip(input, output);
-    com.computablefacts.nona.helpers.Files.delete(input);
-  }
-
-  public static <U extends AbstractLabelModel<?>> U deserialize(String path, String filename) {
-
-    Preconditions.checkNotNull(path, "path should not be null");
-    Preconditions.checkNotNull(filename, "filename should not be null");
-
-    XStream xStream = Helpers.xStream();
-    File input = new File(path + "\\label_model_" + filename + ".xml.gz");
-
-    return (U) xStream.fromXML(Files.compressedLineStream(input, StandardCharsets.UTF_8)
-        .map(Map.Entry::getValue).collect(Collectors.joining("\n")));
   }
 
   /**

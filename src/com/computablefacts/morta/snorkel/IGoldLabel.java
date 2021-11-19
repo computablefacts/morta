@@ -1,17 +1,13 @@
 package com.computablefacts.morta.snorkel;
 
 import java.io.File;
-import java.nio.charset.StandardCharsets;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
+import com.computablefacts.asterix.View;
+import com.computablefacts.asterix.codecs.JsonCodec;
+import com.computablefacts.asterix.console.AsciiProgressBar;
 import com.computablefacts.morta.Observations;
-import com.computablefacts.nona.helpers.AsciiProgressBar;
-import com.computablefacts.nona.helpers.Codecs;
 import com.computablefacts.nona.helpers.ConfusionMatrix;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -35,11 +31,10 @@ public interface IGoldLabel<D> {
 
     AsciiProgressBar.IndeterminateProgressBar bar = AsciiProgressBar.createIndeterminate();
 
-    List<IGoldLabel<String>> gls =
-        com.computablefacts.nona.helpers.Files.compressedLineStream(file, StandardCharsets.UTF_8)
-            .filter(e -> !Strings.isNullOrEmpty(e.getValue())).peek(e -> bar.update())
-            .map(e -> new GoldLabel(Codecs.asObject(e.getValue())))
-            .filter(gl -> label == null || label.equals(gl.label())).collect(Collectors.toList());
+    List<IGoldLabel<String>> gls = View.of(file, true).index()
+        .filter(e -> !Strings.isNullOrEmpty(e.getValue())).peek(e -> bar.update())
+        .map(e -> (IGoldLabel<String>) new GoldLabel(JsonCodec.asObject(e.getValue())))
+        .filter(gl -> label == null || label.equals(gl.label())).toList();
 
     bar.complete();
 

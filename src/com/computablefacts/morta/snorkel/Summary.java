@@ -2,14 +2,9 @@ package com.computablefacts.morta.snorkel;
 
 import static com.computablefacts.morta.snorkel.ILabelingFunction.ABSTAIN;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-import com.computablefacts.nona.Generated;
+import com.computablefacts.asterix.Generated;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;

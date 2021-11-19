@@ -4,10 +4,11 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import javax.annotation.concurrent.NotThreadSafe;
 
-import com.computablefacts.nona.helpers.Files;
+import com.computablefacts.asterix.View;
 import com.google.common.base.Stopwatch;
 import com.google.errorprone.annotations.CheckReturnValue;
 
@@ -29,11 +30,7 @@ final public class Observations {
     observations_.add(String.format("Elapsed time : %ds", stopwatch_.elapsed(TimeUnit.SECONDS)));
 
     if (file_ != null) {
-      if (file_.exists()) {
-        Files.append(file_, observations_);
-      } else {
-        Files.create(file_, observations_);
-      }
+      View.of(observations_).toFile(Function.identity(), file_, true);
       observations_.clear();
     }
 
@@ -56,11 +53,7 @@ final public class Observations {
   private void autoFlush() {
     if (file_ != null) {
       if (observations_.size() >= 50) {
-        if (file_.exists()) {
-          Files.append(file_, observations_);
-        } else {
-          Files.create(file_, observations_);
-        }
+        View.of(observations_).toFile(Function.identity(), file_, true);
         observations_.clear();
       }
     }

@@ -1,29 +1,23 @@
 package com.computablefacts.morta.snorkel;
 
+import java.io.File;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.OptionalDouble;
+import java.util.*;
 import java.util.stream.Collectors;
 
+import com.computablefacts.asterix.IO;
+import com.computablefacts.asterix.SnippetExtractor;
+import com.computablefacts.asterix.StringIterator;
+import com.computablefacts.asterix.View;
+import com.computablefacts.asterix.codecs.StringCodec;
 import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunction;
 import com.computablefacts.morta.snorkel.labelmodels.TreeLabelModel;
 import com.computablefacts.nona.helpers.Languages;
-import com.computablefacts.nona.helpers.SnippetExtractor;
-import com.computablefacts.nona.helpers.StringIterator;
 import com.computablefacts.nona.helpers.Strings;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.HashMultiset;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Multiset;
-import com.google.common.collect.Sets;
-import com.google.common.collect.Table;
+import com.google.common.collect.*;
 import com.google.errorprone.annotations.CheckReturnValue;
 import com.google.errorprone.annotations.Var;
 import com.thoughtworks.xstream.XStream;
@@ -38,18 +32,20 @@ final public class Helpers {
 
   private Helpers() {}
 
-  public static XStream xStream() {
+  public static <T> void serialize(String filename, T t) {
 
-    XStream xStream = new XStream();
-    xStream.addPermission(NoTypePermission.NONE);
-    xStream.addPermission(NullPermission.NULL);
-    xStream.addPermission(PrimitiveTypePermission.PRIMITIVES);
-    xStream.allowTypeHierarchy(Collection.class);
-    xStream.allowTypesByWildcard(
-        new String[] {"com.computablefacts.**", "com.google.common.collect.**", "java.lang.**",
-            "java.util.**", "java.io.File", "smile.classification.**"});
+    Preconditions.checkNotNull(t, "t should not be null");
+    Preconditions.checkNotNull(filename, "filename should not be null");
 
-    return xStream;
+    Preconditions.checkState(IO.writeCompressedText(new File(filename), xStream().toXML(t), false),
+        "%s cannot be written", filename);
+  }
+
+  public static <T> T deserialize(String filename) {
+
+    Preconditions.checkNotNull(filename, "filename should not be null");
+
+    return (T) xStream().fromXML(String.join("\n", View.of(new File(filename), true).toList()));
   }
 
   public static DecimalFormat decimalFormat() {
@@ -305,8 +301,8 @@ final public class Helpers {
 
         String lowercase = ngram.toLowerCase();
         String uppercase = ngram.toUpperCase();
-        String normalizedLowercase = StringIterator.removeDiacriticalMarks(lowercase);
-        String normalizedUppercase = StringIterator.removeDiacriticalMarks(uppercase);
+        String normalizedLowercase = StringCodec.removeDiacriticalMarks(lowercase);
+        String normalizedUppercase = StringCodec.removeDiacriticalMarks(uppercase);
         StringBuilder builder = new StringBuilder(ngram.length());
 
         for (int k = 0; k < ngram.length(); k++) {
@@ -362,5 +358,19 @@ final public class Helpers {
       });
     }
     return patterns;
+  }
+
+  private static XStream xStream() {
+
+    XStream xStream = new XStream();
+    xStream.addPermission(NoTypePermission.NONE);
+    xStream.addPermission(NullPermission.NULL);
+    xStream.addPermission(PrimitiveTypePermission.PRIMITIVES);
+    xStream.allowTypeHierarchy(Collection.class);
+    xStream.allowTypesByWildcard(
+        new String[] {"com.computablefacts.**", "com.google.common.collect.**", "java.lang.**",
+            "java.util.**", "java.io.File", "smile.classification.**"});
+
+    return xStream;
   }
 }

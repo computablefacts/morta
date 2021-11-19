@@ -1,27 +1,18 @@
 package com.computablefacts.morta.snorkel.labelmodels;
 
-import static com.computablefacts.morta.snorkel.ILabelingFunction.ABSTAIN;
-import static com.computablefacts.morta.snorkel.ILabelingFunction.KO;
-import static com.computablefacts.morta.snorkel.ILabelingFunction.OK;
+import static com.computablefacts.morta.snorkel.ILabelingFunction.*;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
+import com.computablefacts.asterix.Generated;
+import com.computablefacts.asterix.console.AsciiProgressBar;
+import com.computablefacts.morta.snorkel.*;
 import com.computablefacts.morta.snorkel.Dictionary;
-import com.computablefacts.morta.snorkel.FeatureVector;
-import com.computablefacts.morta.snorkel.IGoldLabel;
-import com.computablefacts.morta.snorkel.Pipeline;
-import com.computablefacts.morta.snorkel.Summary;
 import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunction;
-import com.computablefacts.nona.Generated;
-import com.computablefacts.nona.helpers.AsciiProgressBar;
 import com.computablefacts.nona.helpers.ConfusionMatrix;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;

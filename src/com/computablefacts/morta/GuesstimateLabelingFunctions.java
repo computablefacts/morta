@@ -8,13 +8,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.computablefacts.asterix.console.ConsoleApp;
 import com.computablefacts.morta.docsetlabeler.DocSetLabelerImpl;
 import com.computablefacts.morta.snorkel.Helpers;
 import com.computablefacts.morta.snorkel.IGoldLabel;
 import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunction;
 import com.computablefacts.morta.snorkel.labelingfunctions.MatchRegexLabelingFunction;
 import com.computablefacts.morta.snorkel.labelmodels.TreeLabelModel;
-import com.computablefacts.nona.helpers.CommandLine;
 import com.computablefacts.nona.helpers.Languages;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -23,10 +23,9 @@ import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Sets;
 import com.google.errorprone.annotations.CheckReturnValue;
-import com.thoughtworks.xstream.XStream;
 
 @CheckReturnValue
-final public class GuesstimateLabelingFunctions extends CommandLine {
+final public class GuesstimateLabelingFunctions extends ConsoleApp {
 
   public static void main(String[] args) {
 
@@ -117,16 +116,8 @@ final public class GuesstimateLabelingFunctions extends CommandLine {
           .map(lbl -> new MatchRegexLabelingFunction(lbl.getKey(), true, lbl.getValue()))
           .collect(Collectors.toList());
 
-      XStream xStream = Helpers.xStream();
-
-      File input =
-          new File(Constants.guesstimatedLabelingFunctionsXml(outputDirectory, language, label));
-      File output =
-          new File(Constants.guesstimatedLabelingFunctionsGz(outputDirectory, language, label));
-
-      com.computablefacts.nona.helpers.Files.create(input, xStream.toXML(lfs));
-      com.computablefacts.nona.helpers.Files.gzip(input, output);
-      com.computablefacts.nona.helpers.Files.delete(input);
+      Helpers.serialize(Constants.guesstimatedLabelingFunctionsGz(outputDirectory, language, label),
+          lfs);
     }
 
     observations.flush();

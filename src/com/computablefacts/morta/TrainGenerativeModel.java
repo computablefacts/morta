@@ -4,14 +4,13 @@ import static com.computablefacts.morta.snorkel.ILabelingFunction.KO;
 import static com.computablefacts.morta.snorkel.ILabelingFunction.OK;
 
 import java.io.File;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
+import com.computablefacts.asterix.View;
+import com.computablefacts.asterix.codecs.JsonCodec;
+import com.computablefacts.asterix.console.AsciiTable;
+import com.computablefacts.asterix.console.ConsoleApp;
 import com.computablefacts.morta.snorkel.GoldLabel;
 import com.computablefacts.morta.snorkel.Helpers;
 import com.computablefacts.morta.snorkel.IGoldLabel;
@@ -21,24 +20,18 @@ import com.computablefacts.morta.snorkel.labelmodels.AbstractLabelModel;
 import com.computablefacts.morta.snorkel.labelmodels.TreeLabelModel;
 import com.computablefacts.morta.yaml.patterns.Pattern;
 import com.computablefacts.morta.yaml.patterns.Patterns;
-import com.computablefacts.nona.helpers.AsciiTable;
-import com.computablefacts.nona.helpers.Codecs;
-import com.computablefacts.nona.helpers.CommandLine;
 import com.computablefacts.nona.helpers.ConfusionMatrix;
-import com.computablefacts.nona.helpers.Files;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Table;
 import com.google.common.primitives.Ints;
 import com.google.errorprone.annotations.CheckReturnValue;
-import com.google.errorprone.annotations.Var;
-import com.thoughtworks.xstream.XStream;
 
 import smile.stat.hypothesis.CorTest;
 
 @CheckReturnValue
-final public class TrainGenerativeModel extends CommandLine {
+final public class TrainGenerativeModel extends ConsoleApp {
 
   public static void main(String[] args) {
 
@@ -78,10 +71,8 @@ final public class TrainGenerativeModel extends CommandLine {
     // Load guesstimated labeling functions
     observations.add("Loading labeling functions...");
 
-    XStream xStream = Helpers.xStream();
-
-    List<AbstractLabelingFunction<String>> lfs = (List<AbstractLabelingFunction<String>>) xStream
-        .fromXML(Files.loadCompressed(labelingFunctions, StandardCharsets.UTF_8));
+    List<AbstractLabelingFunction<String>> lfs =
+        Helpers.deserialize(labelingFunctions.getAbsolutePath());
 
     observations.add(String.format("%d labeling functions loaded", lfs.size()));
 
@@ -160,47 +151,29 @@ final public class TrainGenerativeModel extends CommandLine {
 
       observations.add("Saving labeling functions...");
 
-      @Var
-      File input = new File(Constants.labelingFunctionsXml(outputDirectory, language, label));
-      @Var
-      File output = new File(Constants.labelingFunctionsGz(outputDirectory, language, label));
-
-      com.computablefacts.nona.helpers.Files.create(input, xStream.toXML(lfs));
-      com.computablefacts.nona.helpers.Files.gzip(input, output);
-      com.computablefacts.nona.helpers.Files.delete(input);
+      Helpers.serialize(Constants.labelingFunctionsGz(outputDirectory, language, label), lfs);
 
       observations.add("Saving label model...");
 
-      input = new File(Constants.labelModelXml(outputDirectory, language, label));
-      output = new File(Constants.labelModelGz(outputDirectory, language, label));
-
-      com.computablefacts.nona.helpers.Files.create(input, xStream.toXML(labelModel));
-      com.computablefacts.nona.helpers.Files.gzip(input, output);
-      com.computablefacts.nona.helpers.Files.delete(input);
+      Helpers.serialize(Constants.labelModelGz(outputDirectory, language, label), labelModel);
 
       observations.add("Saving new gold labels...");
 
-      input = new File(Constants.newGoldLabelsJson(outputDirectory, language, label));
-      output = new File(Constants.newGoldLabelsGz(outputDirectory, language, label));
+      View.of(newGoldLabels(labelModel, gls)).map(gl -> {
 
-      com.computablefacts.nona.helpers.Files.create(input,
-          newGoldLabels(labelModel, gls).stream().map(gl -> {
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", gl.id());
+        map.put("label", gl.label());
+        map.put("data", gl.data());
+        map.put("snippet", gl.snippet());
+        map.put("is_true_positive", gl.isTruePositive());
+        map.put("is_false_positive", gl.isFalsePositive());
+        map.put("is_true_negative", gl.isTrueNegative());
+        map.put("is_false_negative", gl.isFalseNegative());
 
-            Map<String, Object> map = new HashMap<>();
-            map.put("id", gl.id());
-            map.put("label", gl.label());
-            map.put("data", gl.data());
-            map.put("snippet", gl.snippet());
-            map.put("is_true_positive", gl.isTruePositive());
-            map.put("is_false_positive", gl.isFalsePositive());
-            map.put("is_true_negative", gl.isTrueNegative());
-            map.put("is_false_negative", gl.isFalseNegative());
-
-            return Codecs.asString(map);
-          }).collect(Collectors.toList()));
-
-      com.computablefacts.nona.helpers.Files.gzip(input, output);
-      com.computablefacts.nona.helpers.Files.delete(input);
+        return map;
+      }).toFile(JsonCodec::asString,
+          new File(Constants.newGoldLabelsGz(outputDirectory, language, label)), false, true);
     }
 
     observations.flush();

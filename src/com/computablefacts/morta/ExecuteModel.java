@@ -3,26 +3,24 @@ package com.computablefacts.morta;
 import static com.computablefacts.morta.snorkel.ILabelingFunction.OK;
 
 import java.io.File;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.computablefacts.asterix.SnippetExtractor;
+import com.computablefacts.asterix.View;
+import com.computablefacts.asterix.codecs.JsonCodec;
+import com.computablefacts.asterix.console.ConsoleApp;
 import com.computablefacts.junon.Fact;
 import com.computablefacts.junon.Metadata;
 import com.computablefacts.junon.Provenance;
-import com.computablefacts.nona.helpers.Codecs;
-import com.computablefacts.nona.helpers.CommandLine;
 import com.computablefacts.nona.helpers.Document;
-import com.computablefacts.nona.helpers.Files;
-import com.computablefacts.nona.helpers.SnippetExtractor;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
@@ -31,7 +29,7 @@ import com.google.common.collect.Lists;
 import com.google.errorprone.annotations.CheckReturnValue;
 
 @CheckReturnValue
-final public class ExecuteModel extends CommandLine {
+final public class ExecuteModel extends ConsoleApp {
 
   private static final Logger logger_ = LoggerFactory.getLogger(ExecuteModel.class);
   private static final char FORM_FEED = '\f';
@@ -80,53 +78,21 @@ final public class ExecuteModel extends CommandLine {
       observations.add("Processing documents...");
 
       AtomicInteger nbExtractedFacts = new AtomicInteger(0);
-      List<Fact> queue = new ArrayList<>(1000);
       List<Model> models = Lists.newArrayList(model);
 
-      Files.compressedLineStream(archive, StandardCharsets.UTF_8)
+      View.of(archive, true).index()
           .filter(e -> !Strings.isNullOrEmpty(e.getValue()) /* skip empty rows */).map(e -> {
             try {
-              return new Document(Codecs.asObject(e.getValue()));
+              return new Document(JsonCodec.asObject(e.getValue()));
             } catch (Exception ex) {
               logger_.error(Throwables.getStackTraceAsString(Throwables.getRootCause(ex)));
               logger_.error(String.format("An error occurred on line : \"%s\"", e.getKey()));
             }
             return null;
-          }).filter(Objects::nonNull).forEach(doc -> {
-
-            if (queue.size() >= 1000) {
-              if (output == null) {
-                queue.stream().map(Codecs::asString).forEach(System.out::println);
-              } else if (nbExtractedFacts.get() == queue.size()) {
-                Files.create(new File(output),
-                    queue.stream().map(Codecs::asString).collect(Collectors.toList()));
-              } else {
-                Files.append(new File(output),
-                    queue.stream().map(Codecs::asString).collect(Collectors.toList()));
-              }
-              queue.clear();
-            }
-
-            List<Fact> facts =
-                apply(observations, extractedWith, extractedBy, root, dataset, models, doc);
-
-            if (!facts.isEmpty()) {
-              queue.addAll(facts);
-              nbExtractedFacts.addAndGet(facts.size());
-            }
-          });
-
-      if (queue.size() > 0) {
-        if (output == null) {
-          queue.stream().map(Codecs::asString).forEach(System.out::println);
-        } else if (nbExtractedFacts.get() == queue.size()) {
-          Files.create(new File(output),
-              queue.stream().map(Codecs::asString).collect(Collectors.toList()));
-        } else {
-          Files.append(new File(output),
-              queue.stream().map(Codecs::asString).collect(Collectors.toList()));
-        }
-      }
+          }).filter(Objects::nonNull)
+          .map(doc -> apply(observations, extractedWith, extractedBy, root, dataset, models, doc))
+          .peek(facts -> nbExtractedFacts.addAndGet(facts.size()))
+          .toFile(JsonCodec::asString, new File(output), false);
 
       observations.add(String.format("Number of extracted facts : %d", nbExtractedFacts.get()));
     }
