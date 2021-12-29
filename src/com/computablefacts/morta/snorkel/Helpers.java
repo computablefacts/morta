@@ -1,10 +1,13 @@
 package com.computablefacts.morta.snorkel;
 
+import static com.computablefacts.morta.snorkel.ILabelingFunction.ABSTAIN;
+
 import java.io.File;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.computablefacts.asterix.IO;
@@ -58,6 +61,34 @@ final public class Helpers {
     df.setRoundingMode(RoundingMode.UP);
 
     return df;
+  }
+
+  /**
+   * For each data point, get the label output by each labeling functions.
+   *
+   * @param lfs labeling functions.
+   * @return pairs of (data point, {@link FeatureVector}). Each column of the {@link FeatureVector}
+   *         represents a distinct labeling function output. The first feature is the output of the
+   *         first labeling function, the second feature is the output of the second labeling
+   *         function, etc. Thus, the {@link FeatureVector} length is equal to the number of
+   *         labeling functions.
+   */
+  public static <D> Function<D, Map.Entry<D, FeatureVector<Integer>>> label(
+      List<? extends ILabelingFunction<D>> lfs) {
+
+    Preconditions.checkNotNull(lfs, "lfs should not be null");
+
+    return d -> {
+
+      FeatureVector<Integer> vector = new FeatureVector<>(lfs.size(), ABSTAIN);
+
+      for (int i = 0; i < lfs.size(); i++) {
+        ILabelingFunction<D> lf = lfs.get(i);
+        int label = lf.apply(d);
+        vector.set(i, label);
+      }
+      return new AbstractMap.SimpleEntry<>(d, vector);
+    };
   }
 
   public static ITransformationFunction<String, FeatureVector<Double>> countVectorizer(

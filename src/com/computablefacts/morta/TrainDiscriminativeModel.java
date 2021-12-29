@@ -7,10 +7,13 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.computablefacts.asterix.View;
 import com.computablefacts.asterix.console.AsciiProgressBar;
 import com.computablefacts.asterix.console.ConsoleApp;
-import com.computablefacts.morta.snorkel.*;
 import com.computablefacts.morta.snorkel.Dictionary;
+import com.computablefacts.morta.snorkel.FeatureVector;
+import com.computablefacts.morta.snorkel.Helpers;
+import com.computablefacts.morta.snorkel.IGoldLabel;
 import com.computablefacts.morta.snorkel.classifiers.*;
 import com.computablefacts.morta.snorkel.labelmodels.TreeLabelModel;
 import com.computablefacts.nona.helpers.ConfusionMatrix;
@@ -105,11 +108,10 @@ final public class TrainDiscriminativeModel extends ConsoleApp {
     count.set(0);
     bar.update(0, train.size());
 
-    List<FeatureVector<Double>> insts = Pipeline.on(train)
-        .peek(gl -> bar.update(count.incrementAndGet(), train.size())).transform(IGoldLabel::data)
-        .transform(
-            Helpers.countVectorizer(Languages.eLanguage.valueOf(language), alphabet, maxGroupSize))
-        .collect();
+    List<FeatureVector<Double>> insts = View.of(train)
+        .peek(gl -> bar.update(count.incrementAndGet(), train.size())).map(IGoldLabel::data)
+        .map(Helpers.countVectorizer(Languages.eLanguage.valueOf(language), alphabet, maxGroupSize))
+        .toList();
 
     System.out.println(); // Cosmetic
 
@@ -183,14 +185,13 @@ final public class TrainDiscriminativeModel extends ConsoleApp {
     Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
     Preconditions.checkNotNull(classifier, "classifier should not be null");
 
-    List<FeatureVector<Double>> testInsts = Pipeline.on(goldLabels).transform(IGoldLabel::data)
-        .transform(
-            Helpers.countVectorizer(Languages.eLanguage.valueOf(language), alphabet, maxGroupSize))
-        .collect();
+    List<FeatureVector<Double>> testInsts = View.of(goldLabels).map(IGoldLabel::data)
+        .map(Helpers.countVectorizer(Languages.eLanguage.valueOf(language), alphabet, maxGroupSize))
+        .toList();
 
     ConfusionMatrix matrix = new ConfusionMatrix();
 
-    matrix.addAll(Pipeline.on(goldLabels).transform(TreeLabelModel::label).collect(),
+    matrix.addAll(View.of(goldLabels).map(TreeLabelModel::label).toList(),
         classifier.predict(testInsts), OK, KO);
 
     return matrix;

@@ -5,12 +5,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import com.computablefacts.morta.snorkel.Pipeline;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.computablefacts.morta.snorkel.FeatureVector;
-import com.computablefacts.morta.snorkel.ILabelingFunction;
+import com.computablefacts.asterix.View;
 import com.google.common.collect.Lists;
 
 public class PipelineTest {
@@ -19,7 +17,7 @@ public class PipelineTest {
   public void testSlice() {
 
     List<Integer> evens =
-        Pipeline.on(Lists.newArrayList(1, 2, 3, 4, 5, 6)).slice(x -> x % 2 == 0).collect();
+        View.of(Lists.newArrayList(1, 2, 3, 4, 5, 6)).filter(x -> x % 2 == 0).toList();
 
     Assert.assertEquals(Lists.newArrayList(2, 4, 6), evens);
   }
@@ -27,8 +25,8 @@ public class PipelineTest {
   @Test
   public void testTransform() {
 
-    List<String> strings = Pipeline.on(Lists.newArrayList(1, 2, 3, 4, 5, 6))
-        .transform(x -> Integer.toString(x, 10)).collect();
+    List<String> strings =
+        View.of(Lists.newArrayList(1, 2, 3, 4, 5, 6)).map(x -> Integer.toString(x, 10)).toList();
 
     Assert.assertEquals(Lists.newArrayList("1", "2", "3", "4", "5", "6"), strings);
   }
@@ -70,7 +68,7 @@ public class PipelineTest {
     lfs.add(x -> x % 3 == 0 ? 1 : 0);
 
     List<Map.Entry<Integer, FeatureVector<Integer>>> labels =
-        Pipeline.on(Lists.newArrayList(1, 2, 3, 4, 5, 6)).label(lfs).collect();
+        View.of(Lists.newArrayList(1, 2, 3, 4, 5, 6)).map(Helpers.label(lfs)).toList();
 
     Assert.assertEquals(goldLabels, labels);
   }
@@ -108,8 +106,8 @@ public class PipelineTest {
     lfs.add(x -> x % 2 == 0 ? 1 : 0);
     lfs.add(x -> x % 3 == 0 ? 1 : 0);
 
-    List<FeatureVector<Integer>> labels = Pipeline.on(Lists.newArrayList(1, 2, 3, 4, 5, 6))
-        .label(lfs).transform(Map.Entry::getValue).collect();
+    List<FeatureVector<Integer>> labels = View.of(Lists.newArrayList(1, 2, 3, 4, 5, 6))
+        .map(Helpers.label(lfs)).map(Map.Entry::getValue).toList();
 
     Assert.assertEquals(goldLabels, labels);
   }

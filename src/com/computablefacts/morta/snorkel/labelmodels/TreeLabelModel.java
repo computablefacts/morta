@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import com.computablefacts.asterix.Generated;
+import com.computablefacts.asterix.View;
 import com.computablefacts.asterix.console.AsciiProgressBar;
 import com.computablefacts.morta.snorkel.*;
 import com.computablefacts.morta.snorkel.Dictionary;
@@ -105,9 +106,9 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
     AsciiProgressBar.ProgressBar bar = AsciiProgressBar.create();
 
     return Summary.labelingFunctionsCorrelations(lfNames(), lfLabels(),
-        Pipeline.on(goldLabels).transform(IGoldLabel::data)
+        View.of(goldLabels).map(IGoldLabel::data)
             .peek(d -> bar.update(count.incrementAndGet(), goldLabels.size(), "Correlating..."))
-            .label(lfs()).collect(),
+            .map(Helpers.label(lfs())).toList(),
         correlation);
   }
 
@@ -121,10 +122,10 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
     AsciiProgressBar.ProgressBar bar = AsciiProgressBar.create();
 
     return Summary.explore(lfNames(), lfLabels(),
-        Pipeline.on(goldLabels).transform(IGoldLabel::data)
+        View.of(goldLabels).map(IGoldLabel::data)
             .peek(d -> bar.update(count.incrementAndGet(), goldLabels.size(), "Exploring..."))
-            .label(lfs()).collect(),
-        Pipeline.on(goldLabels).transform(TreeLabelModel::label).collect());
+            .map(Helpers.label(lfs())).toList(),
+        View.of(goldLabels).map(TreeLabelModel::label).toList());
   }
 
   @Override
@@ -136,10 +137,10 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
     AsciiProgressBar.ProgressBar bar = AsciiProgressBar.create();
 
     return Summary.summarize(lfNames(), lfLabels(),
-        Pipeline.on(goldLabels).transform(IGoldLabel::data)
+        View.of(goldLabels).map(IGoldLabel::data)
             .peek(d -> bar.update(count.incrementAndGet(), goldLabels.size(), "Summarizing..."))
-            .label(lfs()).collect(),
-        Pipeline.on(goldLabels).transform(TreeLabelModel::label).collect());
+            .map(Helpers.label(lfs())).toList(),
+        View.of(goldLabels).map(TreeLabelModel::label).toList());
   }
 
   @Override
@@ -217,15 +218,15 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
 
     Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
 
-    return Pipeline.on(goldLabels).transform(IGoldLabel::data).label(lfs()).collect();
+    return View.of(goldLabels).map(IGoldLabel::data).map(Helpers.label(lfs())).toList();
   }
 
   public List<String> actual(List<? extends IGoldLabel<T>> goldLabels) {
 
     Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
 
-    return Pipeline.on(goldLabels).transform(TreeLabelModel::label)
-        .transform(pred -> labelingFunctionLabels().label(pred)).collect();
+    return View.of(goldLabels).map(TreeLabelModel::label)
+        .map(pred -> labelingFunctionLabels().label(pred)).toList();
   }
 
   public List<String> predicted(List<? extends IGoldLabel<T>> goldLabels) {

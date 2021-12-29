@@ -11,11 +11,8 @@ import java.util.stream.Collectors;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.computablefacts.morta.snorkel.Dictionary;
-import com.computablefacts.morta.snorkel.FeatureVector;
-import com.computablefacts.morta.snorkel.ILabelingFunction;
-import com.computablefacts.morta.snorkel.ITransformationFunction;
-import com.computablefacts.morta.snorkel.Pipeline;
+import com.computablefacts.asterix.View;
+import com.computablefacts.morta.snorkel.*;
 import com.computablefacts.morta.snorkel.labelmodels.MajorityLabelModel;
 import com.computablefacts.nona.helpers.ConfusionMatrix;
 import com.google.common.collect.Lists;
@@ -54,10 +51,10 @@ public class LogisticRegressionClassifierTest {
       return vector;
     };
 
-    List<FeatureVector<Double>> insts = Pipeline.on(instances).transform(transform).collect();
+    List<FeatureVector<Double>> insts = View.of(instances).map(transform).toList();
 
     List<FeatureVector<Double>> probs = MajorityLabelModel.probabilities(lfNames, lfLabels,
-        Pipeline.on(instances).label(lfs).transform(Map.Entry::getValue).collect());
+        View.of(instances).map(Helpers.label(lfs)).map(Map.Entry::getValue).toList());
 
     List<Integer> preds = MajorityLabelModel.predictions(lfNames, lfLabels, probs,
         MajorityLabelModel.eTieBreakPolicy.RANDOM, 0.00001);

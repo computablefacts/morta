@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.computablefacts.asterix.View;
 import com.computablefacts.morta.snorkel.*;
 import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunction;
 import com.google.common.base.Preconditions;
@@ -72,7 +73,7 @@ public abstract class AbstractLabelModel<T> {
     Preconditions.checkNotNull(correlation, "correlation should not be null");
 
     return Summary.labelingFunctionsCorrelations(lfNames_, lfLabels_,
-        Pipeline.on(goldLabels).transform(IGoldLabel::data).label(lfs_).collect(), correlation);
+        View.of(goldLabels).map(IGoldLabel::data).map(Helpers.label(lfs_)).toList(), correlation);
   }
 
   /**
@@ -87,8 +88,8 @@ public abstract class AbstractLabelModel<T> {
     Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
 
     return Summary.explore(lfNames_, lfLabels_,
-        Pipeline.on(goldLabels).transform(IGoldLabel::data).label(lfs_).collect(),
-        Pipeline.on(goldLabels).transform(gl -> lfLabels_.id(gl.label())).collect());
+        View.of(goldLabels).map(IGoldLabel::data).map(Helpers.label(lfs_)).toList(),
+        View.of(goldLabels).map(gl -> lfLabels_.id(gl.label())).toList());
   }
 
   /**
@@ -104,8 +105,8 @@ public abstract class AbstractLabelModel<T> {
     Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
 
     return Summary.summarize(lfNames_, lfLabels_,
-        Pipeline.on(goldLabels).transform(IGoldLabel::data).label(lfs_).collect(),
-        Pipeline.on(goldLabels).transform(gl -> lfLabels_.id(gl.label())).collect());
+        View.of(goldLabels).map(IGoldLabel::data).map(Helpers.label(lfs_)).toList(),
+        View.of(goldLabels).map(gl -> lfLabels_.id(gl.label())).toList());
   }
 
   public Dictionary labelingFunctionNames() {

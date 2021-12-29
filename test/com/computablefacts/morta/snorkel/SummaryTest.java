@@ -7,6 +7,7 @@ import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.computablefacts.asterix.View;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
@@ -40,8 +41,9 @@ public class SummaryTest {
 
     List<Integer> instances = Lists.newArrayList(1, 2, 3, 4, 5, 6);
 
-    Table<String, String, CorTest> correlations = Summary.labelingFunctionsCorrelations(lfNames,
-        lfLabels, Pipeline.on(instances).label(lfs).collect(), Summary.eCorrelation.PEARSON);
+    Table<String, String, CorTest> correlations =
+        Summary.labelingFunctionsCorrelations(lfNames, lfLabels,
+            View.of(instances).map(Helpers.label(lfs)).toList(), Summary.eCorrelation.PEARSON);
 
     Assert.assertEquals(9, correlations.size());
     Assert.assertEquals(1.0, correlations.get("isDivisibleBy2", "isDivisibleBy2").cor, 0.000001);
@@ -74,8 +76,9 @@ public class SummaryTest {
 
     List<Integer> instances = Lists.newArrayList(1, 2, 3, 4, 5, 6);
 
-    Table<String, String, CorTest> correlations = Summary.labelingFunctionsCorrelations(lfNames,
-        lfLabels, Pipeline.on(instances).label(lfs).collect(), Summary.eCorrelation.SPEARMAN);
+    Table<String, String, CorTest> correlations =
+        Summary.labelingFunctionsCorrelations(lfNames, lfLabels,
+            View.of(instances).map(Helpers.label(lfs)).toList(), Summary.eCorrelation.SPEARMAN);
 
     Assert.assertEquals(9, correlations.size());
     Assert.assertEquals(1.0, correlations.get("isDivisibleBy2", "isDivisibleBy2").cor, 0.000001);
@@ -108,8 +111,9 @@ public class SummaryTest {
 
     List<Integer> instances = Lists.newArrayList(1, 2, 3, 4, 5, 6);
 
-    Table<String, String, CorTest> correlations = Summary.labelingFunctionsCorrelations(lfNames,
-        lfLabels, Pipeline.on(instances).label(lfs).collect(), Summary.eCorrelation.KENDALL);
+    Table<String, String, CorTest> correlations =
+        Summary.labelingFunctionsCorrelations(lfNames, lfLabels,
+            View.of(instances).map(Helpers.label(lfs)).toList(), Summary.eCorrelation.KENDALL);
 
     Assert.assertEquals(9, correlations.size());
     Assert.assertEquals(1.0, correlations.get("isDivisibleBy2", "isDivisibleBy2").cor, 0.000001);
@@ -145,7 +149,8 @@ public class SummaryTest {
     List<Integer> goldLabels = Lists.newArrayList(0, 0, 0, 0, 0, 1);
 
     Table<String, Summary.eStatus, List<Map.Entry<Integer, FeatureVector<Integer>>>> table =
-        Summary.explore(lfNames, lfLabels, Pipeline.on(instances).label(lfs).collect(), goldLabels);
+        Summary.explore(lfNames, lfLabels, View.of(instances).map(Helpers.label(lfs)).toList(),
+            goldLabels);
 
     Assert.assertEquals(5, table.size());
 
@@ -196,8 +201,8 @@ public class SummaryTest {
 
     List<Integer> instances = Lists.newArrayList(1, 2, 3, 4, 5, 6);
 
-    List<Summary> summaries =
-        Summary.summarize(lfNames, lfLabels, Pipeline.on(instances).label(lfs).collect(), null);
+    List<Summary> summaries = Summary.summarize(lfNames, lfLabels,
+        View.of(instances).map(Helpers.label(lfs)).toList(), null);
 
     Summary summaryIsDivisibleBy2 = new Summary("isDivisibleBy2", Sets.newHashSet("OK", "KO"), 1.0,
         0.5, 0.5, -1, -1, -1, Sets.newHashSet("isDivisibleBy3"), Sets.newHashSet("isDivisibleBy3"));
@@ -233,7 +238,7 @@ public class SummaryTest {
     lfs.add(x -> x % 6 == 0 ? 1 : 0);
 
     List<Summary> summaries = Summary.summarize(lfNames, lfLabels,
-        Pipeline.on(Lists.newArrayList(1, 2, 3, 4, 5, 6)).label(lfs).collect(), goldLabels);
+        View.of(Lists.newArrayList(1, 2, 3, 4, 5, 6)).map(Helpers.label(lfs)).toList(), goldLabels);
     Summary summaryIsDivisibleBy2 = new Summary("isDivisibleBy2", Sets.newHashSet("OK", "KO"), 1.0,
         0.6666666666666666, 0.5, 4, 2, 0, Sets.newHashSet("isDivisibleBy6", "isDivisibleBy3"),
         Sets.newHashSet("isDivisibleBy6", "isDivisibleBy3"));

@@ -4,8 +4,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.computablefacts.asterix.View;
 import com.computablefacts.morta.snorkel.FeatureVector;
-import com.computablefacts.morta.snorkel.Pipeline;
 import com.google.common.base.Preconditions;
 import com.google.errorprone.annotations.CheckReturnValue;
 
@@ -45,7 +45,7 @@ public abstract class AbstractClassifier {
     Preconditions.checkState(classifier_ != null,
         "classifier should be trained before calling predict(...)");
 
-    return Pipeline.on(instances).transform(this::predict).collect();
+    return View.of(instances).map(this::predict).toList();
   }
 
   /**

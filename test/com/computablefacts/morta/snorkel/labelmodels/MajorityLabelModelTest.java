@@ -1,8 +1,6 @@
 package com.computablefacts.morta.snorkel.labelmodels;
 
-import static com.computablefacts.morta.snorkel.ILabelingFunction.ABSTAIN;
-import static com.computablefacts.morta.snorkel.ILabelingFunction.KO;
-import static com.computablefacts.morta.snorkel.ILabelingFunction.OK;
+import static com.computablefacts.morta.snorkel.ILabelingFunction.*;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -12,13 +10,8 @@ import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.computablefacts.morta.snorkel.Dictionary;
-import com.computablefacts.morta.snorkel.FeatureVector;
-import com.computablefacts.morta.snorkel.GoldLabel;
-import com.computablefacts.morta.snorkel.IGoldLabel;
-import com.computablefacts.morta.snorkel.ILabelingFunction;
-import com.computablefacts.morta.snorkel.Pipeline;
-import com.computablefacts.morta.snorkel.Summary;
+import com.computablefacts.asterix.View;
+import com.computablefacts.morta.snorkel.*;
 import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunction;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -140,7 +133,7 @@ public class MajorityLabelModelTest {
     List<Integer> instances = Lists.newArrayList(1, 2, 3, 4, 5, 6);
 
     List<FeatureVector<Double>> probabilities = MajorityLabelModel.probabilities(lfNames,
-        lfLabels(), Pipeline.on(instances).label(lfs).transform(Map.Entry::getValue).collect());
+        lfLabels(), View.of(instances).map(Helpers.label(lfs)).map(Map.Entry::getValue).toList());
 
     Assert.assertEquals(instances.size(), probabilities.size());
     Assert.assertEquals(goldProbs, probabilities);

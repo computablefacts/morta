@@ -7,11 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import com.computablefacts.morta.snorkel.Dictionary;
-import com.computablefacts.morta.snorkel.FeatureVector;
-import com.computablefacts.morta.snorkel.IGoldLabel;
-import com.computablefacts.morta.snorkel.ILabelingFunction;
-import com.computablefacts.morta.snorkel.Pipeline;
+import com.computablefacts.asterix.View;
+import com.computablefacts.morta.snorkel.*;
 import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunction;
 import com.google.common.base.Preconditions;
 import com.google.errorprone.annotations.CheckReturnValue;
@@ -217,9 +214,9 @@ final public class MajorityLabelModel<T> extends AbstractLabelModel<T> {
 
     Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
 
-    return predictions(
-        lfNames(), lfLabels(), probabilities(lfNames(), lfLabels(), Pipeline.on(goldLabels)
-            .transform(IGoldLabel::data).label(lfs()).transform(Map.Entry::getValue).collect()),
+    return predictions(lfNames(), lfLabels(),
+        probabilities(lfNames(), lfLabels(), View.of(goldLabels).map(IGoldLabel::data)
+            .map(Helpers.label(lfs())).map(Map.Entry::getValue).toList()),
         tieBreakPolicy_, tolerance_);
   }
 
