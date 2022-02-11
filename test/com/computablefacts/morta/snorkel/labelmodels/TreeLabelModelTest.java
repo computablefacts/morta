@@ -11,12 +11,12 @@ import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.computablefacts.asterix.ConfusionMatrix;
 import com.computablefacts.morta.snorkel.FeatureVector;
 import com.computablefacts.morta.snorkel.GoldLabel;
 import com.computablefacts.morta.snorkel.IGoldLabel;
 import com.computablefacts.morta.snorkel.Summary;
 import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunction;
-import com.computablefacts.nona.helpers.ConfusionMatrix;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Table;

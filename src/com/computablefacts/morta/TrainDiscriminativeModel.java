@@ -7,6 +7,7 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.computablefacts.asterix.ConfusionMatrix;
 import com.computablefacts.asterix.View;
 import com.computablefacts.asterix.console.AsciiProgressBar;
 import com.computablefacts.asterix.console.ConsoleApp;
@@ -16,7 +17,6 @@ import com.computablefacts.morta.snorkel.Helpers;
 import com.computablefacts.morta.snorkel.IGoldLabel;
 import com.computablefacts.morta.snorkel.classifiers.*;
 import com.computablefacts.morta.snorkel.labelmodels.TreeLabelModel;
-import com.computablefacts.nona.helpers.ConfusionMatrix;
 import com.computablefacts.nona.helpers.Languages;
 import com.google.common.base.Preconditions;
 import com.google.errorprone.annotations.CheckReturnValue;

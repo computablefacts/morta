@@ -7,6 +7,7 @@ import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.computablefacts.asterix.ConfusionMatrix;
 import com.computablefacts.asterix.View;
 import com.computablefacts.asterix.codecs.JsonCodec;
 import com.computablefacts.asterix.console.AsciiTable;
@@ -20,7 +21,6 @@ import com.computablefacts.morta.snorkel.labelmodels.AbstractLabelModel;
 import com.computablefacts.morta.snorkel.labelmodels.TreeLabelModel;
 import com.computablefacts.morta.yaml.patterns.Pattern;
 import com.computablefacts.morta.yaml.patterns.Patterns;
-import com.computablefacts.nona.helpers.ConfusionMatrix;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;

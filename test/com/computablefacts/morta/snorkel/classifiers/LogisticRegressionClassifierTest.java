@@ -11,10 +11,10 @@ import java.util.stream.Collectors;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.computablefacts.asterix.ConfusionMatrix;
 import com.computablefacts.asterix.View;
 import com.computablefacts.morta.snorkel.*;
 import com.computablefacts.morta.snorkel.labelmodels.MajorityLabelModel;
-import com.computablefacts.nona.helpers.ConfusionMatrix;
 import com.google.common.collect.Lists;
 
 public class LogisticRegressionClassifierTest {

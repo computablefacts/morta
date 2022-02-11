@@ -145,15 +145,11 @@
                                     <reason>Morta must not inherit from Nona</reason>
                                     <bannedImport>com.computablefacts.nona.**</bannedImport>
                                     <exclusions>
-                                        <exclusion>com.computablefacts.morta.ExecuteModel</exclusion>
                                         <exclusion>com.computablefacts.morta.GuesstimateLabelingFunctions</exclusion>
                                         <exclusion>com.computablefacts.morta.Model</exclusion>
-                                        <exclusion>com.computablefacts.morta.TrainGenerativeModel</exclusion>
                                         <exclusion>com.computablefacts.morta.TrainDiscriminativeModel</exclusion>
                                         <exclusion>com.computablefacts.morta.docsetlabeler.DocSetLabelerImpl</exclusion>
                                         <exclusion>com.computablefacts.morta.snorkel.Helpers</exclusion>
-                                        <exclusion>com.computablefacts.morta.snorkel.IGoldLabel</exclusion>
-                                        <exclusion>com.computablefacts.morta.snorkel.labelmodels.TreeLabelModel</exclusion>
                                     </exclusions>
                                 </restrictImports>
                                 <restrictImports

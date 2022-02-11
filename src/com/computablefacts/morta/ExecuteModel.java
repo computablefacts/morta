@@ -13,6 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.computablefacts.asterix.Document;
 import com.computablefacts.asterix.SnippetExtractor;
 import com.computablefacts.asterix.View;
 import com.computablefacts.asterix.codecs.JsonCodec;
@@ -20,7 +21,6 @@ import com.computablefacts.asterix.console.ConsoleApp;
 import com.computablefacts.junon.Fact;
 import com.computablefacts.junon.Metadata;
 import com.computablefacts.junon.Provenance;
-import com.computablefacts.nona.helpers.Document;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;

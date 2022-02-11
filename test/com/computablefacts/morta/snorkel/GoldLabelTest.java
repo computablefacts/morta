@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.computablefacts.nona.helpers.ConfusionMatrix;
+import com.computablefacts.asterix.ConfusionMatrix;
 import com.google.common.collect.Sets;
 
 import nl.jqno.equalsverifier.EqualsVerifier;

@@ -4,11 +4,11 @@ import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.computablefacts.asterix.ConfusionMatrix;
 import com.computablefacts.asterix.View;
 import com.computablefacts.asterix.codecs.JsonCodec;
 import com.computablefacts.asterix.console.AsciiProgressBar;
 import com.computablefacts.morta.Observations;
-import com.computablefacts.nona.helpers.ConfusionMatrix;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
