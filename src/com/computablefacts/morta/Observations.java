@@ -53,7 +53,7 @@ final public class Observations {
   private void autoFlush() {
     if (file_ != null) {
       if (observations_.size() >= 50) {
-        View.of(observations_).toFile(Function.identity(), file_, true);
+        View.of(observations_).toFile(Function.identity(), file_, file_.exists());
         observations_.clear();
       }
     }
