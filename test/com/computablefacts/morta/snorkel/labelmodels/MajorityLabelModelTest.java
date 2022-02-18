@@ -210,7 +210,7 @@ public class MajorityLabelModelTest {
   }
 
   private MajorityLabelModel<String> labelModel() {
-    return new MajorityLabelModel<>(lfNames(), lfLabels(), lfs());
+    return new MajorityLabelModel<>(lfs());
   }
 
   private Dictionary lfNames() {

@@ -1,6 +1,6 @@
 package com.computablefacts.morta.snorkel.labelmodels;
 
-import static com.computablefacts.morta.snorkel.ILabelingFunction.ABSTAIN;
+import static com.computablefacts.morta.snorkel.ILabelingFunction.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,23 +21,41 @@ final public class MajorityLabelModel<T> extends AbstractLabelModel<T> {
   private final double tolerance_;
 
   public MajorityLabelModel(MajorityLabelModel<T> labelModel) {
-    this(labelModel.lfNames(), labelModel.lfLabels(), labelModel.lfs(), labelModel.tieBreakPolicy(),
-        labelModel.tolerance());
+    this(labelModel.lfs(), labelModel.tieBreakPolicy(), labelModel.tolerance());
   }
 
-  public MajorityLabelModel(Dictionary lfNames, Dictionary lfLabels,
-      List<? extends AbstractLabelingFunction<T>> lfs) {
-    this(lfNames, lfLabels, lfs, eTieBreakPolicy.RANDOM, 0.00001);
+  public MajorityLabelModel(List<? extends AbstractLabelingFunction<T>> lfs) {
+    this(lfs, eTieBreakPolicy.RANDOM, 0.00001);
   }
 
-  private MajorityLabelModel(Dictionary lfNames, Dictionary lfLabels,
-      List<? extends AbstractLabelingFunction<T>> lfs, eTieBreakPolicy tieBreakPolicy,
-      double tolerance) {
+  private MajorityLabelModel(List<? extends AbstractLabelingFunction<T>> lfs,
+      eTieBreakPolicy tieBreakPolicy, double tolerance) {
 
-    super(lfNames, lfLabels, lfs);
+    super(lfsNames(lfs), lfsLabels(), lfs);
 
     tieBreakPolicy_ = tieBreakPolicy == null ? eTieBreakPolicy.RANDOM : tieBreakPolicy;
     tolerance_ = tolerance < 0 ? 0.00001 : tolerance;
+  }
+
+  private static <T> Dictionary lfsNames(List<? extends AbstractLabelingFunction<T>> lfs) {
+
+    Preconditions.checkNotNull(lfs, "lfs should not be null");
+
+    Dictionary lfNames = new Dictionary();
+
+    for (int i = 0; i < lfs.size(); i++) {
+      lfNames.put(lfs.get(i).name(), i);
+    }
+    return lfNames;
+  }
+
+  private static Dictionary lfsLabels() {
+
+    Dictionary lfOutputs = new Dictionary();
+    lfOutputs.put("KO", KO);
+    lfOutputs.put("OK", OK);
+
+    return lfOutputs;
   }
 
   /**
