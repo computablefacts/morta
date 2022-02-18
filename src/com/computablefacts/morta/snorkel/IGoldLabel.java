@@ -1,5 +1,7 @@
 package com.computablefacts.morta.snorkel;
 
+import static com.computablefacts.morta.snorkel.ILabelingFunction.OK;
+
 import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -9,11 +11,101 @@ import com.computablefacts.asterix.View;
 import com.computablefacts.asterix.codecs.JsonCodec;
 import com.computablefacts.asterix.console.AsciiProgressBar;
 import com.computablefacts.morta.Observations;
+import com.computablefacts.morta.snorkel.labelmodels.TreeLabelModel;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 
 public interface IGoldLabel<D> {
+
+  /**
+   * Extract the list of labels.
+   *
+   * @param file gold labels as JSON objects stored inside a gzip file.
+   * @return a list of labels.
+   */
+  static Set<String> labels(File file) {
+
+    Preconditions.checkNotNull(file, "file should not be null");
+    Preconditions.checkArgument(file.exists(), "file should exist : %s", file);
+
+    AsciiProgressBar.IndeterminateProgressBar bar = AsciiProgressBar.createIndeterminate();
+
+    Set<String> gls = View.of(file, true).index().filter(e -> !Strings.isNullOrEmpty(e.getValue()))
+        .peek(e -> bar.update())
+        .map(e -> (IGoldLabel<String>) new GoldLabel(JsonCodec.asObject(e.getValue())))
+        .map(gl -> gl.label()).toSet();
+
+    bar.complete();
+
+    System.out.println(); // Cosmetic
+
+    return gls;
+  }
+
+  static void exportPagesToSpacy(File input, File output, String label) {
+
+    Preconditions.checkNotNull(input, "input should not be null");
+    Preconditions.checkArgument(input.exists(), "input should exist : %s", input);
+    Preconditions.checkNotNull(output, "output should not be null");
+    Preconditions.checkArgument(!output.exists(), "output should not exist : %s", output);
+    Preconditions.checkNotNull(label, "label should not be null");
+
+    AsciiProgressBar.IndeterminateProgressBar bar = AsciiProgressBar.createIndeterminate();
+
+    View.of(input, true).index().filter(e -> !Strings.isNullOrEmpty(e.getValue()))
+        .peek(e -> bar.update())
+        .map(e -> (IGoldLabel<String>) new GoldLabel(JsonCodec.asObject(e.getValue())))
+        .filter(gl -> !Strings.isNullOrEmpty(gl.data())).filter(gl -> label.equals(gl.label()))
+        .map(gl -> {
+
+          Map<String, Object> metadata = new HashMap<>();
+          metadata.put("source", String.format("%s/%s", gl.id(), label));
+
+          Map<String, Object> map = new HashMap<>();
+          map.put("text", gl.data());
+          map.put("label", TreeLabelModel.label(gl) == OK);
+          map.put("meta", metadata);
+
+          return map;
+        }).toFile(JsonCodec::asString, output, true);
+
+    bar.complete();
+
+    System.out.println(); // Cosmetic
+  }
+
+  static void exportSnippetsToSpacy(File input, File output, String label) {
+
+    Preconditions.checkNotNull(input, "input should not be null");
+    Preconditions.checkArgument(input.exists(), "input should exist : %s", input);
+    Preconditions.checkNotNull(output, "output should not be null");
+    Preconditions.checkArgument(!output.exists(), "output should not exist : %s", output);
+    Preconditions.checkNotNull(label, "label should not be null");
+
+    AsciiProgressBar.IndeterminateProgressBar bar = AsciiProgressBar.createIndeterminate();
+
+    View.of(input, true).index().filter(e -> !Strings.isNullOrEmpty(e.getValue()))
+        .peek(e -> bar.update())
+        .map(e -> (IGoldLabel<String>) new GoldLabel(JsonCodec.asObject(e.getValue())))
+        .filter(gl -> !Strings.isNullOrEmpty(gl.snippet())).filter(gl -> label.equals(gl.label()))
+        .map(gl -> {
+
+          Map<String, Object> metadata = new HashMap<>();
+          metadata.put("source", String.format("%s/%s", gl.id(), label));
+
+          Map<String, Object> map = new HashMap<>();
+          map.put("text", gl.snippet());
+          map.put("label", TreeLabelModel.label(gl) == OK);
+          map.put("meta", metadata);
+
+          return map;
+        }).toFile(JsonCodec::asString, output, true);
+
+    bar.complete();
+
+    System.out.println(); // Cosmetic
+  }
 
   /**
    * Load gold labels from a gzip file.
