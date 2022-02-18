@@ -30,7 +30,7 @@ final public class Observations {
     observations_.add(String.format("Elapsed time : %ds", stopwatch_.elapsed(TimeUnit.SECONDS)));
 
     if (file_ != null) {
-      View.of(observations_).toFile(Function.identity(), file_, true);
+      View.of(observations_).toFile(Function.identity(), file_, file_.exists());
       observations_.clear();
     }
 
