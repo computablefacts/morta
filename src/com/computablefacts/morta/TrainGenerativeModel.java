@@ -207,8 +207,10 @@ final public class TrainGenerativeModel extends ConsoleApp {
         boolean isTrueNegative = false;
         boolean isFalseNegative = pred == OK; // the user forgot one page ?
 
-        goldLabels.add(new GoldLabel(id, label, data, isTruePositive, isFalsePositive,
-            isTrueNegative, isFalseNegative));
+        if ((isFalsePositive ? 1 : 0) + (isFalseNegative ? 1 : 0) == 1) {
+          goldLabels.add(new GoldLabel(id, label, data, isTruePositive, isFalsePositive,
+              isTrueNegative, isFalseNegative));
+        }
       }
     }
     return goldLabels;
