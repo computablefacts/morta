@@ -1,20 +1,22 @@
 package com.computablefacts.morta.docsetlabeler;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
-import com.computablefacts.asterix.DocSetLabeler;
-import com.computablefacts.asterix.console.AsciiProgressBar;
+import org.knallgrau.utils.textcat.TextCategorizer;
+
 import com.computablefacts.morta.snorkel.Helpers;
 import com.computablefacts.nona.helpers.Languages;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.HashMultiset;
+import com.google.common.base.Strings;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Sets;
 import com.google.errorprone.annotations.CheckReturnValue;
 import com.google.errorprone.annotations.Var;
+import com.google.re2j.Matcher;
+import com.google.re2j.Pattern;
 
 /**
  * Guesstimate interesting patterns from positively/negatively annotated texts.
@@ -24,126 +26,87 @@ final public class DocSetLabelerImpl extends DocSetLabeler {
 
   private final Languages.eLanguage language_;
   private final int maxGroupSize_;
+  private final TextCategorizer categorizer_;
+  private final int length_;
+  private final int max_;
 
-  private final Map<String, Double> subsetOk_ = new HashMap<>();
-  private final Map<String, Double> subsetKo_ = new HashMap<>();
-  private final Multiset<String> boosters_ = HashMultiset.create();
+  private final Set<String> boosters_ = new HashSet<>();
 
   public DocSetLabelerImpl(Languages.eLanguage language, int maxGroupSize,
-      Multiset<String> boosters) {
+      Multiset<String> boosters, TextCategorizer categorizer, int length) {
 
     Preconditions.checkNotNull(language, "language should not be null");
     Preconditions.checkArgument(maxGroupSize > 0, "maxGroupSize must be > 0");
     Preconditions.checkNotNull(boosters, "boosters must be > 0");
+    Preconditions.checkNotNull(categorizer, "categorizer must be > 0");
 
     language_ = language;
     maxGroupSize_ = maxGroupSize;
+    categorizer_ = categorizer;
+    length_ = length;
     boosters_.addAll(boosters);
+    max_ = boosters_.stream().mapToInt(String::length).max().orElse(0);
   }
 
   @Override
   protected void init(@NotNull List<String> corpus, @NotNull List<String> subsetOk,
-      @NotNull List<String> subsetKo) {
-
-    if (subsetOk_.isEmpty()) {
-
-      AsciiProgressBar.ProgressBar bar = AsciiProgressBar.create();
-      AtomicInteger count = new AtomicInteger(0);
-
-      subsetOk.stream()
-          .peek(
-              t -> bar.update(count.incrementAndGet(), subsetOk.size(), "Loading \"OK\" corpus..."))
-          .forEach(text -> Helpers.features(language_, maxGroupSize_, text).forEach((f, w) -> {
-            if (!subsetOk_.containsKey(f)) {
-              subsetOk_.put(f, w);
-            } else {
-              subsetOk_.put(f, Math.max(subsetOk_.get(f), w));
-            }
-          }));
-
-      System.out.println(); // Cosmetic
-    }
-    if (subsetKo_.isEmpty()) {
-
-      AsciiProgressBar.ProgressBar bar = AsciiProgressBar.create();
-      AtomicInteger count = new AtomicInteger(0);
-
-      subsetKo.stream()
-          .peek(
-              t -> bar.update(count.incrementAndGet(), subsetKo.size(), "Loading \"KO\" corpus..."))
-          .forEach(text -> Helpers.features(language_, maxGroupSize_, text).forEach((f, w) -> {
-            if (!subsetKo_.containsKey(f)) {
-              subsetKo_.put(f, w);
-            } else {
-              subsetKo_.put(f, Math.max(subsetKo_.get(f), w));
-            }
-          }));
-
-      System.out.println(); // Cosmetic
-    }
-  }
+      @NotNull List<String> subsetKo) {}
 
   @Override
-  protected void uinit() {
-    subsetOk_.clear();
-    subsetKo_.clear();
-  }
+  protected void uinit() {}
 
   @Override
   protected Set<String> candidates(String text) {
 
     Map<String, Double> features = Helpers.features(language_, maxGroupSize_, text);
-    Set<String> intersection = Sets.intersection(features.keySet(), subsetOk_.keySet());
+    Set<String> intersection = Sets.intersection(features.keySet(), boosters_);
+    List<String> list = new ArrayList<>(intersection);
+    list.sort(Comparator.comparingInt(String::length).reversed());
 
-    return intersection;
+    return Sets.newHashSet(list.subList(0, Math.min(list.size(), 20)));
   }
 
   @Override
   protected double computeX(String text, String candidate) {
-
-    if (!subsetOk_.containsKey(candidate)) {
-      return 0.0000001;
-    }
-
-    // the higher, the better
-    double freqOk = subsetOk_.get(candidate);
-
-    if (!Double.isFinite(freqOk) || freqOk == 0.0) {
-      return 0.0000001;
-    }
-
-    double boost;
-
     if (boosters_.contains(candidate)) {
-      boost = (double) boosters_.count(candidate) / (double) boosters_.size();
-    } else {
-      boost = 0.0;
+      return (double) candidate.length() / (double) max_;
     }
-    return freqOk + (1.0 - freqOk) * boost; // the higher, the better
+    return Double.MIN_VALUE;
   }
 
   @Override
   protected double computeY(String text, String candidate) {
 
-    if (!subsetKo_.containsKey(candidate)) {
+    Set<String> set = new HashSet<>();
+
+    if (!Strings.isNullOrEmpty(text)) {
+
+      Pattern pattern = Pattern.compile(candidate, Pattern.MULTILINE | Pattern.DOTALL);
+      Matcher matcher = pattern.matcher(text);
+
+      while (matcher.find()) {
+
+        int start = matcher.start();
+        int end = matcher.end();
+
+        int newStart = Math.max(0, start - ((length_ - (end - start)) / 2));
+        int newEnd = Math.min(text.length(), end + ((length_ - (end - start)) / 2));
+
+        set.add(text.substring(newStart, newEnd));
+      }
+    }
+    if (set.isEmpty()) {
+      return Double.MIN_VALUE;
+    }
+
+    Set<String> ok = set.stream()
+        .filter(span -> "OK".equals(categorizer_.categorize(span.replaceAll("\\s+", " "))))
+        .collect(Collectors.toSet());
+
+    if (!ok.isEmpty()) {
       return 1.0;
     }
-
-    // the lower, the better
-    double freqKo = subsetKo_.get(candidate);
-
-    if (!Double.isFinite(freqKo) || freqKo == 0.0) {
-      return 1.0;
-    }
-
-    double boost;
-
-    if (boosters_.contains(candidate)) {
-      boost = (double) boosters_.count(candidate) / (double) boosters_.size();
-    } else {
-      boost = 0.0;
-    }
-    return 1.0 - (freqKo + (1.0 - freqKo) * boost); // the higher, the better
+    return Double.MIN_VALUE;
   }
 
   @Override
