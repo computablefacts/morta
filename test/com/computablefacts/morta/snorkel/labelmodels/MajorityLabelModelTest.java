@@ -213,16 +213,6 @@ public class MajorityLabelModelTest {
     return new MajorityLabelModel<>(lfs());
   }
 
-  private Dictionary lfNames() {
-
-    Dictionary lfNames = new Dictionary();
-    lfNames.put("isDivisibleBy2", 0);
-    lfNames.put("isDivisibleBy3", 1);
-    lfNames.put("isDivisibleBy6", 2);
-
-    return lfNames;
-  }
-
   private Dictionary lfLabels() {
 
     Dictionary lfLabels = new Dictionary();
@@ -236,21 +226,21 @@ public class MajorityLabelModelTest {
 
     List<AbstractLabelingFunction<String>> lfs = new ArrayList<>();
 
-    lfs.add(new AbstractLabelingFunction<String>("lf_mod_2") {
+    lfs.add(new AbstractLabelingFunction<String>("isDivisibleBy2") {
 
       @Override
       public Integer apply(String x) {
         return Integer.parseInt(x, 10) % 2 == 0 ? OK : KO;
       }
     });
-    lfs.add(new AbstractLabelingFunction<String>("lf_mod_3") {
+    lfs.add(new AbstractLabelingFunction<String>("isDivisibleBy3") {
 
       @Override
       public Integer apply(String x) {
         return Integer.parseInt(x, 10) % 3 == 0 ? OK : KO;
       }
     });
-    lfs.add(new AbstractLabelingFunction<String>("lf_mod_6") {
+    lfs.add(new AbstractLabelingFunction<String>("isDivisibleBy6") {
 
       @Override
       public Integer apply(String x) {

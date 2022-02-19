@@ -309,7 +309,7 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
         int prediction1 = aggregate1.predictions().get(i);
         int prediction2 = aggregate2.predictions().get(i);
 
-        predictions_.add(prediction1 == OK || prediction2 == OK ? OK : KO);
+        predictions_.add(reduce(prediction1, prediction2));
       }
 
       confusionMatrix_.addAll(aggregate1.actuals(), predictions_, OK, KO);
@@ -343,8 +343,16 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
     }
 
     @Override
-    public @Nullable Integer apply(@Nullable T input) {
-      return aggregate1_.apply(input) == OK || aggregate2_.apply(input) == OK ? OK : KO;
+    public Integer apply(@Nullable T input) {
+
+      int prediction1 = aggregate1_.apply(input);
+      int prediction2 = aggregate2_.apply(input);
+
+      return reduce(prediction1, prediction2);
+    }
+
+    private int reduce(int prediction1, int prediction2) {
+      return prediction1 == OK || prediction2 == OK ? OK : KO;
     }
   }
 
@@ -376,7 +384,7 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
         int prediction1 = aggregate1.predictions().get(i);
         int prediction2 = aggregate2.predictions().get(i);
 
-        predictions_.add(prediction1 == OK && prediction2 == OK ? OK : KO);
+        predictions_.add(reduce(prediction1, prediction2));
       }
 
       confusionMatrix_.addAll(aggregate1.actuals(), predictions_, OK, KO);
@@ -410,8 +418,16 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
     }
 
     @Override
-    public @Nullable Integer apply(@Nullable T input) {
-      return aggregate1_.apply(input) == OK && aggregate2_.apply(input) == OK ? OK : KO;
+    public Integer apply(@Nullable T input) {
+
+      int prediction1 = aggregate1_.apply(input);
+      int prediction2 = aggregate2_.apply(input);
+
+      return reduce(prediction1, prediction2);
+    }
+
+    private int reduce(int prediction1, int prediction2) {
+      return prediction1 == OK && prediction2 == OK ? OK : KO;
     }
   }
 
@@ -443,7 +459,7 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
         int prediction1 = aggregate1.predictions().get(i);
         int prediction2 = aggregate2.predictions().get(i);
 
-        predictions_.add(prediction1 == OK && prediction2 == KO ? OK : KO);
+        predictions_.add(reduce(prediction1, prediction2));
       }
 
       confusionMatrix_.addAll(aggregate1.actuals(), predictions_, OK, KO);
@@ -477,8 +493,16 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
     }
 
     @Override
-    public @Nullable Integer apply(@Nullable T input) {
-      return aggregate1_.apply(input) == OK && aggregate2_.apply(input) == KO ? OK : KO;
+    public Integer apply(@Nullable T input) {
+
+      int prediction1 = aggregate1_.apply(input);
+      int prediction2 = aggregate2_.apply(input);
+
+      return reduce(prediction1, prediction2);
+    }
+
+    private int reduce(int prediction1, int prediction2) {
+      return prediction1 == OK && (prediction2 == KO || prediction2 == ABSTAIN) ? OK : KO;
     }
   }
 
@@ -500,7 +524,7 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
       goldLabels.forEach(goldLabel -> {
 
         int actual = label(goldLabel);
-        int prediction = labelingFunction.apply(goldLabel.data());
+        int prediction = apply(goldLabel.data());
 
         actuals_.add(actual);
         predictions_.add(prediction);
@@ -536,8 +560,9 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
     }
 
     @Override
-    public @Nullable Integer apply(@Nullable T input) {
-      return labelingFunction_.apply(input);
+    public Integer apply(@Nullable T input) {
+      int prediction = labelingFunction_.apply(input);
+      return prediction == OK ? OK : KO;
     }
   }
 }
