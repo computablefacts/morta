@@ -2,7 +2,10 @@ package com.computablefacts.morta.snorkel.labelmodels;
 
 import static com.computablefacts.morta.snorkel.ILabelingFunction.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -13,13 +16,11 @@ import com.computablefacts.asterix.Generated;
 import com.computablefacts.asterix.View;
 import com.computablefacts.asterix.console.AsciiProgressBar;
 import com.computablefacts.morta.snorkel.*;
-import com.computablefacts.morta.snorkel.Dictionary;
 import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunction;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Table;
 import com.google.errorprone.annotations.CheckReturnValue;
-import com.google.errorprone.annotations.Var;
 
 import smile.stat.hypothesis.CorTest;
 
@@ -154,35 +155,20 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
     // Map each LF to its summary
     lfSummaries_ = summarize(goldLabels);
 
-    List<Aggregate<T>> simpleAggregates = lfs().stream().map(lf -> {
+    List<Aggregate<T>> aggregates1 = lfs().stream().map(lf -> new SimpleAggregate<>(lf, goldLabels))
+        .collect(Collectors.toList());
+    List<Aggregate<T>> aggregates2 = newAggregate(aggregates1, aggregates1);
+    List<Aggregate<T>> aggregates3 = newAggregate(aggregates2, aggregates1);
+    List<Aggregate<T>> aggregates4 =
+        newAggregate(aggregates3.stream().filter(a -> a.confusionMatrix().f1Score() >= 0.5d)
+            .collect(Collectors.toList()), aggregates1);
 
-      Optional<Summary> summary =
-          lfSummaries_.stream().filter(s -> s.label().equals(lf.name())).findFirst();
-
-      Preconditions.checkState(summary.isPresent(),
-          "Inconsistent state reached between LF and Summaries");
-
-      return new SimpleAggregate<>(lf, goldLabels);
-    }).sorted(Comparator
-        .comparingDouble(
-            (SimpleAggregate<T> s) -> s.confusionMatrix_.matthewsCorrelationCoefficient())
-        .reversed()).collect(Collectors.toList());
-
-    @Var
-    List<Aggregate<T>> aggregates = newAggregate(simpleAggregates, simpleAggregates);
-
-    while (!aggregates.isEmpty()) {
-
-      double mccCutOff = aggregates.get(0).confusionMatrix().matthewsCorrelationCoefficient();
-      List<Aggregate<T>> newAggregates = newAggregate(aggregates, simpleAggregates, mccCutOff);
-
-      if (!newAggregates.isEmpty()
-          && mccCutOff < newAggregates.get(0).confusionMatrix().matthewsCorrelationCoefficient()) {
-        aggregates = newAggregates;
-      } else {
-        break;
-      }
-    }
+    List<Aggregate<T>> aggregates = new ArrayList<>(aggregates1);
+    aggregates.addAll(aggregates2);
+    aggregates.addAll(aggregates3);
+    aggregates.addAll(aggregates4);
+    aggregates.sort(
+        Comparator.comparingDouble((Aggregate<T> a) -> a.confusionMatrix().f1Score()).reversed());
 
     if (!aggregates.isEmpty()) {
       tree_ = aggregates.get(0);
@@ -273,49 +259,14 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
         aggregates.add(new AndAggregate<>(aggregates1.get(i), aggregates2.get(j)));
         aggregates.add(new OrAggregate<>(aggregates1.get(i), aggregates2.get(j)));
         aggregates.add(new AndNotAggregate<>(aggregates1.get(i), aggregates2.get(j)));
+        aggregates.add(new AndNotAggregate<>(aggregates2.get(j), aggregates1.get(i)));
       }
     }
-    return aggregates.stream().filter(
-        aggregate -> Double.isFinite(aggregate.confusionMatrix().matthewsCorrelationCoefficient()))
-        .sorted(Comparator.comparingDouble((Aggregate<T> aggregate) -> aggregate.confusionMatrix()
-            .matthewsCorrelationCoefficient()).reversed())
-        .collect(Collectors.toList());
-  }
-
-  private List<Aggregate<T>> newAggregate(List<Aggregate<T>> aggregates1,
-      List<Aggregate<T>> aggregates2, double mccCutOff) {
-
-    Preconditions.checkNotNull(aggregates1, "aggregates1 should not be null");
-    Preconditions.checkNotNull(aggregates2, "aggregates2 should not be null");
-
-    List<Aggregate<T>> aggregates = new ArrayList<>();
-
-    for (int i = 0; i < aggregates1.size(); i++) {
-      for (int j = 0; j < aggregates2.size(); j++) {
-
-        Aggregate<T> aggregate1 = new AndAggregate<>(aggregates1.get(i), aggregates2.get(j));
-
-        if (aggregate1.confusionMatrix().matthewsCorrelationCoefficient() >= mccCutOff) {
-          aggregates.add(aggregate1);
-        }
-
-        Aggregate<T> aggregate2 = new OrAggregate<>(aggregates1.get(i), aggregates2.get(j));
-
-        if (aggregate2.confusionMatrix().matthewsCorrelationCoefficient() >= mccCutOff) {
-          aggregates.add(aggregate2);
-        }
-
-        Aggregate<T> aggregate3 = new AndNotAggregate<>(aggregates1.get(i), aggregates2.get(j));
-
-        if (aggregate3.confusionMatrix().matthewsCorrelationCoefficient() >= mccCutOff) {
-          aggregates.add(aggregate3);
-        }
-      }
-    }
-    return aggregates.stream().filter(
-        aggregate -> Double.isFinite(aggregate.confusionMatrix().matthewsCorrelationCoefficient()))
-        .sorted(Comparator.comparingDouble((Aggregate<T> aggregate) -> aggregate.confusionMatrix()
-            .matthewsCorrelationCoefficient()).reversed())
+    return aggregates.parallelStream()
+        .filter(aggregate -> Double.isFinite(aggregate.confusionMatrix().f1Score()))
+        .sorted(Comparator
+            .comparingDouble((Aggregate<T> aggregate) -> aggregate.confusionMatrix().f1Score())
+            .reversed())
         .collect(Collectors.toList());
   }
 
