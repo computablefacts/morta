@@ -41,6 +41,7 @@
     <properties>
         <junon.version>0.10</junon.version>
         <nona.version>3.3</nona.version>
+        <textcat.version>1.0.1</textcat.version>
         <error-prone.version>2.3.1</error-prone.version>
         <junit.version>4.13.1</junit.version>
         <equalsverifier.version>3.4.2</equalsverifier.version>
@@ -69,6 +70,11 @@
             <groupId>com.computablefacts</groupId>
             <artifactId>nona</artifactId>
             <version>${nona.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.knallgrau.utils</groupId>
+            <artifactId>textcat</artifactId>
+            <version>${textcat.version}</version>
         </dependency>
         <dependency>
             <groupId>com.github.haifengl</groupId>
@@ -284,7 +290,7 @@
                 <configuration>
                     <parallel>methods</parallel>
                     <threadCount>5</threadCount>
-                    <skipTests>false</skipTests>
+                    <skipTests>true</skipTests>
                 </configuration>
             </plugin>
         </plugins>
