@@ -206,10 +206,8 @@ final public class Helpers {
     return rowsNew;
   }
 
-  public static Map<String, Double> features(Languages.eLanguage language, int maxGroupSize,
-      String text) {
+  public static Multiset<String>[] ngrams(int maxGroupSize, String text) {
 
-    Preconditions.checkNotNull(language, "language should not be null");
     Preconditions.checkArgument(maxGroupSize > 0, "maxGroupSize must be > 0");
     Preconditions.checkNotNull(text, "text should not be null");
 
@@ -288,9 +286,18 @@ final public class Helpers {
         word.append('_');
       }
     }
+    return ngrams;
+  }
 
+  public static Map<String, Double> features(Languages.eLanguage language, int maxGroupSize,
+      String text) {
+
+    Preconditions.checkNotNull(language, "language should not be null");
+    Preconditions.checkArgument(maxGroupSize > 0, "maxGroupSize must be > 0");
+    Preconditions.checkNotNull(text, "text should not be null");
+
+    Multiset<String>[] ngrams = ngrams(maxGroupSize, text);
     Multiset<String>[] patterns = patterns(ngrams);
-
     Map<String, Double> features = new HashMap<>();
 
     Arrays.stream(patterns).flatMap(p -> p.elementSet().stream()).forEach(p -> {

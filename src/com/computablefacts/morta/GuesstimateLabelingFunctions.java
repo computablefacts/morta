@@ -8,9 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.knallgrau.utils.textcat.FingerPrint;
-import org.knallgrau.utils.textcat.TextCategorizer;
-
 import com.computablefacts.asterix.ConfusionMatrix;
 import com.computablefacts.asterix.View;
 import com.computablefacts.asterix.codecs.JsonCodec;
@@ -22,6 +19,8 @@ import com.computablefacts.morta.snorkel.IGoldLabel;
 import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunction;
 import com.computablefacts.morta.snorkel.labelingfunctions.MatchRegexLabelingFunction;
 import com.computablefacts.morta.snorkel.labelmodels.TreeLabelModel;
+import com.computablefacts.morta.textcat.FingerPrint;
+import com.computablefacts.morta.textcat.TextCategorizer;
 import com.computablefacts.nona.helpers.Languages;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -126,11 +125,11 @@ final public class GuesstimateLabelingFunctions extends ConsoleApp {
     observations.add(String.format("Average snippet length is %f", avgLength));
 
     FingerPrint fpOk = new FingerPrint();
-    fpOk.setCategory("OK");
+    fpOk.category("OK");
     fpOk.create(ok.toString());
 
     FingerPrint fpKo = new FingerPrint();
-    fpKo.setCategory("KO");
+    fpKo.category("KO");
     fpKo.create(ko.toString());
 
     double weight = testFingerprints(observations, goldLabels, label, fpOk, fpKo);
@@ -191,14 +190,14 @@ final public class GuesstimateLabelingFunctions extends ConsoleApp {
               String category = guesser.categorize(gl.snippet().replaceAll("\\s+", " "));
 
               if ("unknown".equals(category)) {
-                observations.add("We encountered an unknown TextCat category -> " + gl.snippet());
+                observations.add("Unknown TextCat category -> " + gl.snippet());
                 return 1;
               }
-              if (TreeLabelModel.label(gl) == OK && category.endsWith("OK")) {
+              if (TreeLabelModel.label(gl) == OK && "OK".equals(category)) {
                 matrix.addTruePositives(1);
-              } else if (TreeLabelModel.label(gl) == KO && category.endsWith("KO")) {
+              } else if (TreeLabelModel.label(gl) == KO && "KO".equals(category)) {
                 matrix.addTrueNegatives(1);
-              } else if (TreeLabelModel.label(gl) == OK && category.endsWith("KO")) {
+              } else if (TreeLabelModel.label(gl) == OK && "KO".equals(category)) {
                 matrix.addFalseNegatives(1);
               } else {
                 matrix.addFalsePositives(1);

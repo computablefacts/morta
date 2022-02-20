@@ -5,9 +5,6 @@ import static com.computablefacts.morta.snorkel.ILabelingFunction.OK;
 
 import java.io.File;
 
-import org.knallgrau.utils.textcat.FingerPrint;
-import org.knallgrau.utils.textcat.TextCategorizer;
-
 import com.computablefacts.asterix.ConfusionMatrix;
 import com.computablefacts.asterix.View;
 import com.computablefacts.asterix.codecs.JsonCodec;
@@ -16,6 +13,8 @@ import com.computablefacts.asterix.console.ConsoleApp;
 import com.computablefacts.morta.snorkel.GoldLabel;
 import com.computablefacts.morta.snorkel.IGoldLabel;
 import com.computablefacts.morta.snorkel.labelmodels.TreeLabelModel;
+import com.computablefacts.morta.textcat.FingerPrint;
+import com.computablefacts.morta.textcat.TextCategorizer;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.errorprone.annotations.CheckReturnValue;
@@ -56,11 +55,11 @@ final public class TrainSnippetClassifier extends ConsoleApp {
     System.out.println("avg snippet length : " + avgLength);
 
     FingerPrint fpOk = new FingerPrint();
-    fpOk.setCategory("OK");
+    fpOk.category("OK");
     fpOk.create(builderOk.toString());
 
     FingerPrint fpKo = new FingerPrint();
-    fpKo.setCategory("KO");
+    fpKo.category("KO");
     fpKo.create(builderKo.toString());
 
     testFingerprints(goldLabels, label, fpOk, fpKo);

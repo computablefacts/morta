@@ -5,9 +5,8 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
-import org.knallgrau.utils.textcat.TextCategorizer;
-
 import com.computablefacts.morta.snorkel.Helpers;
+import com.computablefacts.morta.textcat.TextCategorizer;
 import com.computablefacts.nona.helpers.Languages;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
