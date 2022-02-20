@@ -13,6 +13,11 @@ final public class Constants {
     return (Strings.isNullOrEmpty(dir) ? "" : dir + File.separator) + "observations.txt";
   }
 
+  public static String spacyGoldLabelsJson(String dir, String language, String model) {
+    return (Strings.isNullOrEmpty(dir) ? "" : dir + File.separator) + "spacy_gold_labels_for_"
+        + model + "_" + language + ".json";
+  }
+
   public static String newGoldLabelsJson(String dir, String language, String model) {
     return (Strings.isNullOrEmpty(dir) ? "" : dir + File.separator) + "new_gold_labels_for_" + model
         + "_" + language + ".json";

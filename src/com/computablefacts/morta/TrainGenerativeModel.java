@@ -174,6 +174,10 @@ final public class TrainGenerativeModel extends ConsoleApp {
         return map;
       }).toFile(JsonCodec::asString,
           new File(Constants.newGoldLabelsGz(outputDirectory, language, label)), false, true);
+
+      IGoldLabel.exportSnippetsToSpacy(
+          new File(Constants.newGoldLabelsGz(outputDirectory, language, label)),
+          new File(Constants.spacyGoldLabelsJson(outputDirectory, language, label)), label);
     }
 
     observations.flush();

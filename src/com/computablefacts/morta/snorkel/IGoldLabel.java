@@ -68,7 +68,7 @@ public interface IGoldLabel<D> {
           map.put("meta", metadata);
 
           return map;
-        }).toFile(JsonCodec::asString, output, true);
+        }).toFile(JsonCodec::asString, output, false);
 
     bar.complete();
 
