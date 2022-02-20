@@ -16,6 +16,7 @@ public abstract class AbstractClassifier {
 
   private Classifier<double[]> classifier_;
   private double mcc_;
+  private double f1_;
 
   /**
    * Set the Matthews correlation coefficient associated with this label model.
@@ -31,6 +32,22 @@ public abstract class AbstractClassifier {
    */
   public double mcc() {
     return mcc_;
+  }
+
+  /**
+   * Set the F1 score associated with this label model.
+   *
+   * @param f1 F1 score.
+   */
+  public void f1(double f1) {
+    f1_ = f1;
+  }
+
+  /**
+   * Get the F1 score associated with this label model.
+   */
+  public double f1() {
+    return f1_;
   }
 
   /**

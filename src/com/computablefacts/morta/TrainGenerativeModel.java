@@ -112,7 +112,7 @@ final public class TrainGenerativeModel extends ConsoleApp {
 
     if (verbose) {
 
-      labelModel.lfSummaries().stream()
+      labelModel.summarize(train).stream()
           // Sort summaries by decreasing number of correct labels
           .sorted((o1, o2) -> Ints.compare(o2.correct(), o1.correct()))
           .forEach(summary -> observations.add(String.format("  %s", summary)));

@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import com.computablefacts.asterix.ConfusionMatrix;
-import com.computablefacts.asterix.Generated;
 import com.computablefacts.asterix.View;
 import com.computablefacts.asterix.console.AsciiProgressBar;
 import com.computablefacts.morta.snorkel.*;
@@ -34,26 +33,22 @@ import smile.stat.hypothesis.CorTest;
 @CheckReturnValue
 final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
 
-  private List<Summary> lfSummaries_;
   private Aggregate<T> tree_;
 
   public TreeLabelModel(TreeLabelModel<T> labelModel) {
-    this(labelModel.lfs(), labelModel.lfSummaries(), labelModel.tree_);
+    this(labelModel.lfs(), labelModel.tree_);
   }
 
   public TreeLabelModel(List<? extends AbstractLabelingFunction<T>> lfs) {
     super(lfsNames(lfs), lfsLabels(), lfs);
   }
 
-  private TreeLabelModel(List<? extends AbstractLabelingFunction<T>> lfs, List<Summary> lfSummaries,
-      Aggregate<T> tree) {
+  private TreeLabelModel(List<? extends AbstractLabelingFunction<T>> lfs, Aggregate<T> tree) {
 
     super(lfsNames(lfs), lfsLabels(), lfs);
 
-    Preconditions.checkNotNull(lfSummaries, "lfSummaries should not be null");
     Preconditions.checkNotNull(tree, "tree should not be null");
 
-    lfSummaries_ = new ArrayList<>(lfSummaries);
     tree_ = tree;
   }
 
@@ -152,9 +147,6 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
         goldLabels.stream().allMatch(gl -> gl.label().equals(goldLabels.get(0).label())),
         "gold labels must be identical");
 
-    // Map each LF to its summary
-    lfSummaries_ = summarize(goldLabels);
-
     List<Aggregate<T>> aggregates1 = lfs().stream().map(lf -> new SimpleAggregate<>(lf, goldLabels))
         .collect(Collectors.toList());
     List<Aggregate<T>> aggregates2 = newAggregate(aggregates1, aggregates1);
@@ -192,11 +184,6 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
 
     return goldLabels.stream().map(IGoldLabel::data).map(this::predict)
         .collect(Collectors.toList());
-  }
-
-  @Generated
-  public List<Summary> lfSummaries() {
-    return lfSummaries_;
   }
 
   public List<Map.Entry<T, FeatureVector<Integer>>> vectors(

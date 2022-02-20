@@ -152,6 +152,7 @@ final public class TrainDiscriminativeModel extends ConsoleApp {
 
     ConfusionMatrix matrix = confusionMatrix(language, alphabet, maxGroupSize, gls, classifier);
     classifier.mcc(matrix.matthewsCorrelationCoefficient());
+    classifier.f1(matrix.f1Score());
 
     observations.add("Computing confusion matrix for the WHOLE dataset...");
     observations.add(matrix.toString());
