@@ -31,48 +31,16 @@ public interface IGoldLabel<D> {
 
     AsciiProgressBar.IndeterminateProgressBar bar = AsciiProgressBar.createIndeterminate();
 
-    Set<String> gls = View.of(file, true).index().filter(e -> !Strings.isNullOrEmpty(e.getValue()))
-        .peek(e -> bar.update())
-        .map(e -> (IGoldLabel<String>) new GoldLabel(JsonCodec.asObject(e.getValue())))
-        .map(gl -> gl.label()).toSet();
+    Set<String> gls =
+        View.of(file, true).filter(str -> !Strings.isNullOrEmpty(str)).peek(str -> bar.update())
+            .map(str -> (IGoldLabel<String>) new GoldLabel(JsonCodec.asObject(str)))
+            .map(gl -> gl.label()).toSet();
 
     bar.complete();
 
     System.out.println(); // Cosmetic
 
     return gls;
-  }
-
-  static void exportPagesToSpacy(File input, File output, String label) {
-
-    Preconditions.checkNotNull(input, "input should not be null");
-    Preconditions.checkArgument(input.exists(), "input should exist : %s", input);
-    Preconditions.checkNotNull(output, "output should not be null");
-    Preconditions.checkArgument(!output.exists(), "output should not exist : %s", output);
-    Preconditions.checkNotNull(label, "label should not be null");
-
-    AsciiProgressBar.IndeterminateProgressBar bar = AsciiProgressBar.createIndeterminate();
-
-    View.of(input, true).index().filter(e -> !Strings.isNullOrEmpty(e.getValue()))
-        .peek(e -> bar.update())
-        .map(e -> (IGoldLabel<String>) new GoldLabel(JsonCodec.asObject(e.getValue())))
-        .filter(gl -> !Strings.isNullOrEmpty(gl.data())).filter(gl -> label.equals(gl.label()))
-        .map(gl -> {
-
-          Map<String, Object> metadata = new HashMap<>();
-          metadata.put("source", String.format("%s/%s", gl.id(), label));
-
-          Map<String, Object> map = new HashMap<>();
-          map.put("text", gl.data());
-          map.put("label", TreeLabelModel.label(gl) == OK);
-          map.put("meta", metadata);
-
-          return map;
-        }).toFile(JsonCodec::asString, output, true);
-
-    bar.complete();
-
-    System.out.println(); // Cosmetic
   }
 
   static void exportSnippetsToSpacy(File input, File output, String label) {
@@ -85,18 +53,18 @@ public interface IGoldLabel<D> {
 
     AsciiProgressBar.IndeterminateProgressBar bar = AsciiProgressBar.createIndeterminate();
 
-    View.of(input, true).index().filter(e -> !Strings.isNullOrEmpty(e.getValue()))
-        .peek(e -> bar.update())
-        .map(e -> (IGoldLabel<String>) new GoldLabel(JsonCodec.asObject(e.getValue())))
+    View.of(input, true).filter(str -> !Strings.isNullOrEmpty(str)).peek(str -> bar.update())
+        .map(str -> (IGoldLabel<String>) new GoldLabel(JsonCodec.asObject(str)))
         .filter(gl -> !Strings.isNullOrEmpty(gl.snippet())).filter(gl -> label.equals(gl.label()))
         .map(gl -> {
 
           Map<String, Object> metadata = new HashMap<>();
-          metadata.put("source", String.format("%s/%s", gl.id(), label));
+          metadata.put("source", gl.id());
+          metadata.put("answer", TreeLabelModel.label(gl) == OK ? "OK" : "KO");
 
           Map<String, Object> map = new HashMap<>();
           map.put("text", gl.snippet());
-          map.put("label", TreeLabelModel.label(gl) == OK);
+          map.put("label", label);
           map.put("meta", metadata);
 
           return map;
