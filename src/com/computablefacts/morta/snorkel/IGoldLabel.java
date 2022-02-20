@@ -43,7 +43,7 @@ public interface IGoldLabel<D> {
     return gls;
   }
 
-  static void exportSnippetsToSpacy(File input, File output, String label) {
+  static void toSpacy(File input, File output, String label) {
 
     Preconditions.checkNotNull(input, "input should not be null");
     Preconditions.checkArgument(input.exists(), "input should exist : %s", input);
@@ -60,10 +60,10 @@ public interface IGoldLabel<D> {
 
           Map<String, Object> metadata = new HashMap<>();
           metadata.put("source", gl.id());
-          metadata.put("answer", TreeLabelModel.label(gl) == OK ? "OK" : "KO");
+          metadata.put("expected", TreeLabelModel.label(gl) == OK ? "OK" : "KO");
 
           Map<String, Object> map = new HashMap<>();
-          map.put("text", gl.snippet());
+          map.put("text", gl.data());
           map.put("label", label);
           map.put("meta", metadata);
 
