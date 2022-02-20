@@ -20,6 +20,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Table;
 import com.google.errorprone.annotations.CheckReturnValue;
+import com.google.errorprone.annotations.Var;
 
 import smile.stat.hypothesis.CorTest;
 
@@ -151,9 +152,7 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
         .collect(Collectors.toList());
     List<Aggregate<T>> aggregates2 = newAggregate(aggregates1, aggregates1);
     List<Aggregate<T>> aggregates3 = newAggregate(aggregates2, aggregates1);
-    List<Aggregate<T>> aggregates4 =
-        newAggregate(aggregates3.stream().filter(a -> a.confusionMatrix().f1Score() >= 0.5d)
-            .collect(Collectors.toList()), aggregates1);
+    List<Aggregate<T>> aggregates4 = newAggregate(aggregates3, aggregates1);
 
     List<Aggregate<T>> aggregates = new ArrayList<>(aggregates1);
     aggregates.addAll(aggregates2);
@@ -243,10 +242,39 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
 
     for (int i = 0; i < aggregates1.size(); i++) {
       for (int j = 0; j < aggregates2.size(); j++) {
-        aggregates.add(new AndAggregate<>(aggregates1.get(i), aggregates2.get(j)));
-        aggregates.add(new OrAggregate<>(aggregates1.get(i), aggregates2.get(j)));
-        aggregates.add(new AndNotAggregate<>(aggregates1.get(i), aggregates2.get(j)));
-        aggregates.add(new AndNotAggregate<>(aggregates2.get(j), aggregates1.get(i)));
+
+        double firstF1 = aggregates1.get(i).confusionMatrix().f1Score();
+        double secondF1 = aggregates2.get(j).confusionMatrix().f1Score();
+
+        @Var
+        Aggregate<T> aggregate = new AndAggregate<>(aggregates1.get(i), aggregates2.get(j));
+        @Var
+        double f1 = aggregate.confusionMatrix().f1Score();
+
+        if (f1 >= firstF1 || f1 >= secondF1) {
+          aggregates.add(aggregate);
+        }
+
+        aggregate = new OrAggregate<>(aggregates1.get(i), aggregates2.get(j));
+        f1 = aggregate.confusionMatrix().f1Score();
+
+        if (f1 >= firstF1 || f1 >= secondF1) {
+          aggregates.add(aggregate);
+        }
+
+        aggregate = new AndNotAggregate<>(aggregates1.get(i), aggregates2.get(j));
+        f1 = aggregate.confusionMatrix().f1Score();
+
+        if (f1 >= firstF1 || f1 >= secondF1) {
+          aggregates.add(aggregate);
+        }
+
+        aggregate = new AndNotAggregate<>(aggregates2.get(j), aggregates1.get(i));
+        f1 = aggregate.confusionMatrix().f1Score();
+
+        if (f1 >= firstF1 || f1 >= secondF1) {
+          aggregates.add(aggregate);
+        }
       }
     }
     return aggregates.parallelStream()
@@ -254,7 +282,7 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
         .sorted(Comparator
             .comparingDouble((Aggregate<T> aggregate) -> aggregate.confusionMatrix().f1Score())
             .reversed())
-        .collect(Collectors.toList());
+        .limit(100).collect(Collectors.toList());
   }
 
   private interface Aggregate<T> extends Function<T, Integer> {
