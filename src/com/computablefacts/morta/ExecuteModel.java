@@ -46,7 +46,7 @@ final public class ExecuteModel extends ConsoleApp {
     String dataset = getStringCommand(args, "dataset", null);
     String input = getStringCommand(args, "input", null);
     String output = getStringCommand(args, "output", null);
-    double threshold = getDoubleCommand(args, "threshold", 0.7);
+    double threshold = getDoubleCommand(args, "threshold", 0.6);
     String outputDirectory = getStringCommand(args, "output_directory", null);
 
     Observations observations = new Observations(new File(Constants.observations(outputDirectory)));
