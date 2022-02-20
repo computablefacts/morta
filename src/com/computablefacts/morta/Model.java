@@ -103,11 +103,7 @@ final public class Model {
     observations_ = observations(dir);
 
     if (classifier_ != null) {
-      if (Double.isNaN(classifier_.mcc()) || Double.isInfinite(classifier_.mcc())) {
-        confidenceScore_ = -1.0;
-      } else {
-        confidenceScore_ = (classifier_.mcc() + 1.0) / 2.0; // Rescale MCC between 0 and 1
-      }
+      confidenceScore_ = classifier_.f1();
     }
     return isValid();
   }
