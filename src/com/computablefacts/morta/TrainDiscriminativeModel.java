@@ -142,24 +142,19 @@ final public class TrainDiscriminativeModel extends ConsoleApp {
     classifier.train(insts, preds);
 
     // Compute model accuracy
-    if (verbose) {
+    observations.add("Computing confusion matrix for the TRAIN dataset...");
+    observations
+        .add(confusionMatrix(language, alphabet, maxGroupSize, train, classifier).toString());
 
-      observations.add("Computing confusion matrix for the TRAIN dataset...");
-      observations
-          .add(confusionMatrix(language, alphabet, maxGroupSize, train, classifier).toString());
-
-      observations.add("Computing confusion matrix for the TEST dataset...");
-      observations
-          .add(confusionMatrix(language, alphabet, maxGroupSize, test, classifier).toString());
-    }
+    observations.add("Computing confusion matrix for the TEST dataset...");
+    observations
+        .add(confusionMatrix(language, alphabet, maxGroupSize, test, classifier).toString());
 
     ConfusionMatrix matrix = confusionMatrix(language, alphabet, maxGroupSize, gls, classifier);
     classifier.mcc(matrix.matthewsCorrelationCoefficient());
 
-    if (verbose) {
-      observations.add("Computing confusion matrix for the WHOLE dataset...");
-      observations.add(matrix.toString());
-    }
+    observations.add("Computing confusion matrix for the WHOLE dataset...");
+    observations.add(matrix.toString());
 
     if (!dryRun) {
 

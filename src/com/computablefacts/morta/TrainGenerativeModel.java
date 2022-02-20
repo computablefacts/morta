@@ -130,22 +130,17 @@ final public class TrainGenerativeModel extends ConsoleApp {
     }
 
     // Compute model accuracy
-    if (verbose) {
+    observations.add("Computing confusion matrix for the TRAIN dataset...");
+    observations.add(labelModel.confusionMatrix(train).toString());
 
-      observations.add("Computing confusion matrix for the TRAIN dataset...");
-      observations.add(labelModel.confusionMatrix(train).toString());
-
-      observations.add("Computing confusion matrix for the TEST dataset...");
-      observations.add(labelModel.confusionMatrix(test).toString());
-    }
+    observations.add("Computing confusion matrix for the TEST dataset...");
+    observations.add(labelModel.confusionMatrix(test).toString());
 
     ConfusionMatrix matrix = labelModel.confusionMatrix(gls);
     labelModel.mcc(matrix.matthewsCorrelationCoefficient());
 
-    if (verbose) {
-      observations.add("Computing confusion matrix for the WHOLE dataset...");
-      observations.add(matrix.toString());
-    }
+    observations.add("Computing confusion matrix for the WHOLE dataset...");
+    observations.add(matrix.toString());
 
     if (!dryRun) {
 
