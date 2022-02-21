@@ -4,10 +4,7 @@ import static com.computablefacts.morta.snorkel.ILabelingFunction.OK;
 
 import java.io.File;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
@@ -46,7 +43,9 @@ final public class ExecuteModel extends ConsoleApp {
     String dataset = getStringCommand(args, "dataset", null);
     String input = getStringCommand(args, "input", null);
     String output = getStringCommand(args, "output", null);
-    double threshold = getDoubleCommand(args, "threshold", 0.6);
+    double threshold = getDoubleCommand(args, "threshold", 0.5);
+    boolean verbose = getBooleanCommand(args, "verbose", false);
+    String format = getStringCommand(args, "format", "facts");
     String outputDirectory = getStringCommand(args, "output_directory", null);
 
     Observations observations = new Observations(new File(Constants.observations(outputDirectory)));
@@ -90,9 +89,25 @@ final public class ExecuteModel extends ConsoleApp {
             }
             return null;
           }).filter(Objects::nonNull)
-          .map(doc -> apply(observations, extractedWith, extractedBy, root, dataset, models, doc))
-          .peek(facts -> nbExtractedFacts.addAndGet(facts.size()))
-          .toFile(JsonCodec::asString, new File(output), false);
+          .map(doc -> apply(verbose ? observations : null, extractedWith, extractedBy, root,
+              dataset, models, doc))
+          .filter(facts -> !facts.isEmpty()).peek(facts -> nbExtractedFacts.addAndGet(facts.size()))
+          .flatten(View::of).map(fact -> {
+
+            if (!"spacy".equals(format)) {
+              return fact;
+            }
+
+            Map<String, Object> metadata = new HashMap<>();
+            metadata.put("source", fact.provenances_.get(0).sourceStore_);
+            metadata.put("expected", fact.type_);
+
+            Map<String, Object> map = new HashMap<>();
+            map.put("text", fact.provenances_.get(0).string_);
+            map.put("meta", metadata);
+
+            return map;
+          }).toFile(JsonCodec::asString, new File(output), false);
 
       observations.add(String.format("Number of extracted facts : %d", nbExtractedFacts.get()));
     }
@@ -213,7 +228,7 @@ final public class ExecuteModel extends ConsoleApp {
     fact.metadata(Lists.newArrayList(new Metadata("Comment", "extracted_with", extractedWith),
         new Metadata("Comment", "extracted_by", extractedBy),
         new Metadata("Comment", "extraction_date", Instant.now().toString())));
-    fact.provenance(new Provenance(sourceType, sourceStore, null, null, null, page, null, span,
+    fact.provenance(new Provenance(sourceType, sourceStore, null, null, null, page, string, span,
         startIndex, endIndex));
 
     return fact;
