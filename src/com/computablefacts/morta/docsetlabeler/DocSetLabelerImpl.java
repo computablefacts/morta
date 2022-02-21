@@ -1,13 +1,15 @@
 package com.computablefacts.morta.docsetlabeler;
 
+import static com.computablefacts.morta.IGoldLabel.SANITIZE_SNIPPET;
+import static com.computablefacts.morta.Repository.ACCEPT;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
-import com.computablefacts.morta.snorkel.Helpers;
+import com.computablefacts.morta.Helpers;
 import com.computablefacts.morta.textcat.TextCategorizer;
-import com.computablefacts.nona.helpers.Languages;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Multiset;
@@ -23,7 +25,6 @@ import com.google.re2j.Pattern;
 @CheckReturnValue
 final public class DocSetLabelerImpl extends DocSetLabeler {
 
-  private final Languages.eLanguage language_;
   private final int maxGroupSize_;
   private final TextCategorizer categorizer_;
   private final int length_;
@@ -31,15 +32,13 @@ final public class DocSetLabelerImpl extends DocSetLabeler {
 
   private final Set<String> boosters_ = new HashSet<>();
 
-  public DocSetLabelerImpl(Languages.eLanguage language, int maxGroupSize,
-      Multiset<String> boosters, TextCategorizer categorizer, int length) {
+  public DocSetLabelerImpl(int maxGroupSize, Multiset<String> boosters, TextCategorizer categorizer,
+      int length) {
 
-    Preconditions.checkNotNull(language, "language should not be null");
     Preconditions.checkArgument(maxGroupSize > 0, "maxGroupSize must be > 0");
     Preconditions.checkNotNull(boosters, "boosters must be > 0");
     Preconditions.checkNotNull(categorizer, "categorizer must be > 0");
 
-    language_ = language;
     maxGroupSize_ = maxGroupSize;
     categorizer_ = categorizer;
     length_ = length;
@@ -57,7 +56,7 @@ final public class DocSetLabelerImpl extends DocSetLabeler {
   @Override
   protected Set<String> candidates(String text) {
 
-    Map<String, Double> features = Helpers.features(language_, maxGroupSize_, text);
+    Map<String, Double> features = Helpers.features(maxGroupSize_, text);
     Set<String> intersection = Sets.intersection(features.keySet(), boosters_);
     List<String> list = new ArrayList<>(intersection);
     list.sort(Comparator.comparingInt(String::length).reversed());
@@ -99,7 +98,8 @@ final public class DocSetLabelerImpl extends DocSetLabeler {
     }
 
     Set<String> ok = set.stream()
-        .filter(span -> "OK".equals(categorizer_.categorize(span.replaceAll("\\s+", " "))))
+        .filter(
+            span -> ACCEPT.equals(categorizer_.categorize(span.replaceAll(SANITIZE_SNIPPET, " "))))
         .collect(Collectors.toSet());
 
     if (!ok.isEmpty()) {

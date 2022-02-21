@@ -1,11 +1,10 @@
 package com.computablefacts.morta.textcat;
 
-import static com.computablefacts.morta.snorkel.Helpers.ngrams;
+import static com.computablefacts.morta.Helpers.ngrams;
 
 import java.util.*;
 
 import com.google.common.base.Preconditions;
-import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.CheckReturnValue;
 import com.google.errorprone.annotations.Var;
 
@@ -16,8 +15,17 @@ public class FingerPrint extends Hashtable<String, Integer> {
       new TreeSet<>(new NGramEntryComparator());
   private final Map<String, Integer> categoryDistances_ = new HashMap<>();
   private String category_ = "unknown";
+  private double avgLength_ = 0.0d;
 
   public FingerPrint() {}
+
+  public FingerPrint(FingerPrint fp) {
+    this.putAll(fp);
+    this.entries_.addAll(fp.entries_);
+    this.categoryDistances_.putAll(fp.categoryDistances_);
+    this.category_ = fp.category_;
+    this.avgLength_ = fp.avgLength_;
+  }
 
   @Override
   public String toString() {
@@ -40,6 +48,14 @@ public class FingerPrint extends Hashtable<String, Integer> {
 
   public void category(String category) {
     category_ = category;
+  }
+
+  public double avgLength() {
+    return avgLength_;
+  }
+
+  public void avgLength(double avgLength) {
+    avgLength_ = avgLength;
   }
 
   public Map<String, Integer> categoryDistances() {
@@ -81,29 +97,7 @@ public class FingerPrint extends Hashtable<String, Integer> {
    * @return the distance between the two fingerprints.
    */
   public int distance(FingerPrint fp) {
-
-    Preconditions.checkNotNull(fp, "fp should not be null");
-
-    @Var
-    int distance = 0;
-    @Var
-    int count = 0;
-
-    for (Map.Entry<String, Integer> entry : entries_) {
-
-      String ngram = entry.getKey();
-      ++count;
-
-      if (count > 400) {
-        break;
-      }
-      if (!fp.containsKey(ngram)) {
-        distance += fp.size();
-      } else {
-        distance += Math.abs(position(ngram) - fp.position(ngram));
-      }
-    }
-    return distance;
+    return distance(fp, -1);
   }
 
   /**
@@ -113,17 +107,18 @@ public class FingerPrint extends Hashtable<String, Integer> {
    * @param categories the list of possible categories.
    * @return the most likely categories.
    */
-  @CanIgnoreReturnValue
   public Map<String, Integer> categorize(Collection<FingerPrint> categories) {
 
     Preconditions.checkNotNull(categories, "categories should not be null");
 
     @Var
     int minDistance = Integer.MAX_VALUE;
+    int unknownNgramDistance =
+        (int) categories.stream().mapToInt(Hashtable::size).average().orElse(-1);
 
     for (FingerPrint fp : categories) {
 
-      int distance = distance(fp);
+      int distance = distance(fp, unknownNgramDistance);
       categoryDistances_.put(fp.category(), distance);
 
       if (distance < minDistance) {
@@ -160,6 +155,34 @@ public class FingerPrint extends Hashtable<String, Integer> {
     } while (!entry.getKey().equals(ngram));
 
     return pos;
+  }
+
+  private int distance(FingerPrint fp, @Var int unknownNgramDistance) {
+
+    Preconditions.checkNotNull(fp, "fp should not be null");
+
+    unknownNgramDistance = unknownNgramDistance < 0 ? fp.size() : unknownNgramDistance;
+
+    @Var
+    int distance = 0;
+    @Var
+    int count = 0;
+
+    for (Map.Entry<String, Integer> entry : entries_) {
+
+      String ngram = entry.getKey();
+      ++count;
+
+      if (count > 400) {
+        break;
+      }
+      if (!fp.containsKey(ngram)) {
+        distance += unknownNgramDistance;
+      } else {
+        distance += Math.abs(position(ngram) - fp.position(ngram));
+      }
+    }
+    return distance;
   }
 
   private final static class NGramEntryComparator
