@@ -4,7 +4,10 @@ import static com.computablefacts.morta.snorkel.ILabelingFunction.OK;
 
 import java.io.File;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
@@ -18,6 +21,8 @@ import com.computablefacts.asterix.console.ConsoleApp;
 import com.computablefacts.junon.Fact;
 import com.computablefacts.junon.Metadata;
 import com.computablefacts.junon.Provenance;
+import com.computablefacts.morta.snorkel.spacy.AnnotatedText;
+import com.computablefacts.morta.snorkel.spacy.Meta;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
@@ -80,7 +85,11 @@ final public class ExecuteModel extends ConsoleApp {
       List<Model> models = Lists.newArrayList(model);
 
       View.of(archive, true).index()
-          .filter(e -> !Strings.isNullOrEmpty(e.getValue()) /* skip empty rows */).map(e -> {
+          .filter(e -> !Strings.isNullOrEmpty(e.getValue()) /* skip empty rows */).peek(e -> {
+            if (e.getKey() % 100 == 0) {
+              System.out.println(String.format("%d documents processed...", e.getKey()));
+            }
+          }).map(e -> {
             try {
               return new Document(JsonCodec.asObject(e.getValue()));
             } catch (Exception ex) {
@@ -93,20 +102,11 @@ final public class ExecuteModel extends ConsoleApp {
               dataset, models, doc))
           .filter(facts -> !facts.isEmpty()).peek(facts -> nbExtractedFacts.addAndGet(facts.size()))
           .flatten(View::of).map(fact -> {
-
             if (!"spacy".equals(format)) {
               return fact;
             }
-
-            Map<String, Object> metadata = new HashMap<>();
-            metadata.put("source", fact.provenances_.get(0).sourceStore_);
-            metadata.put("expected", fact.type_);
-
-            Map<String, Object> map = new HashMap<>();
-            map.put("text", fact.provenances_.get(0).string_);
-            map.put("meta", metadata);
-
-            return map;
+            return new AnnotatedText(new Meta(fact.provenances_.get(0).sourceStore_),
+                fact.provenances_.get(0).span_);
           }).toFile(JsonCodec::asString, new File(output), false);
 
       observations.add(String.format("Number of extracted facts : %d", nbExtractedFacts.get()));
