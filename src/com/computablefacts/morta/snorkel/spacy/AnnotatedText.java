@@ -6,11 +6,14 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.errorprone.annotations.CheckReturnValue;
 
 @CheckReturnValue
 @JsonInclude(JsonInclude.Include.NON_NULL)
 final public class AnnotatedText {
+
+  private static final ObjectMapper mapper_ = new ObjectMapper();
 
   @JsonProperty(value = "meta", required = true)
   public final Meta meta_;
@@ -31,7 +34,6 @@ final public class AnnotatedText {
   @JsonProperty(value = "_timestamp")
   public final long timestamp_;
 
-  @JsonCreator
   public AnnotatedText(@JsonProperty(value = "meta") Meta meta,
       @JsonProperty(value = "text") String text) {
     this(meta, text, null, null, null, null, null, null, Instant.now().toEpochMilli());

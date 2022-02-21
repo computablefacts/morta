@@ -46,11 +46,16 @@ final public class GoldLabel implements IGoldLabel<String> {
 
   public GoldLabel(String id, String label, String data, boolean isTruePositive,
       boolean isFalsePositive, boolean isTrueNegative, boolean isFalseNegative) {
+    this(id, label, data, null, isTruePositive, isFalsePositive, isTrueNegative, isFalseNegative);
+  }
+
+  public GoldLabel(String id, String label, String data, String snippet, boolean isTruePositive,
+      boolean isFalsePositive, boolean isTrueNegative, boolean isFalseNegative) {
 
     id_ = Preconditions.checkNotNull(id, "id should not be null");
     label_ = Preconditions.checkNotNull(label, "label should not be null");
     data_ = Preconditions.checkNotNull(data, "data should not be null");
-    snippet_ = null; // optional
+    snippet_ = snippet; // optional
     isTruePositive_ = isTruePositive;
     isFalsePositive_ = isFalsePositive;
     isTrueNegative_ = isTrueNegative;

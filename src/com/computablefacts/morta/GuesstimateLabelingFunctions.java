@@ -59,7 +59,16 @@ final public class GuesstimateLabelingFunctions extends ConsoleApp {
         String.format("The number of labels to return (DocSetLabeler) is %d", nbLabelsToReturn));
 
     // Load gold labels for a given label
-    List<IGoldLabel<String>> gls = IGoldLabel.load(observations, goldLabels, label);
+    List<IGoldLabel<String>> gls;
+    File spacyVerifiedAnnotations =
+        new File(String.format("%s%sspacy_verified_annotations_for_%s.jsonl", outputDirectory,
+            File.separator, label));
+
+    if (spacyVerifiedAnnotations.exists()) {
+      gls = IGoldLabel.fromSpacyAnnotations(observations, spacyVerifiedAnnotations, null);
+    } else {
+      gls = IGoldLabel.load(observations, goldLabels, label);
+    }
 
     // Pages for which LF must return OK
     observations.add("Building dataset for label OK...");
@@ -160,6 +169,11 @@ final public class GuesstimateLabelingFunctions extends ConsoleApp {
       Helpers.serialize(Constants.guesstimatedLabelingFunctionsGz(outputDirectory, language, label),
           lfs);
     }
+
+    // At last, output spacy annotations
+    IGoldLabel.toSpacyAnnotations(goldLabels, new File(String
+        .format("%s%sspacy_annotations_for_%s.jsonl", outputDirectory, File.separator, label)),
+        label);
 
     observations.flush();
   }

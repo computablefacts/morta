@@ -11,9 +11,17 @@ final public class Meta {
 
   @JsonProperty(value = "source", required = true)
   public final String source_;
+  @JsonProperty(value = "expected_label", required = true)
+  public final String expectedLabel_;
+  @JsonProperty(value = "expected_answer", required = true)
+  public final String expectedAnswer_;
 
   @JsonCreator
-  public Meta(@JsonProperty(value = "source") String source) {
+  public Meta(@JsonProperty(value = "source") String source,
+      @JsonProperty(value = "expected_label") String expectedLabel,
+      @JsonProperty(value = "expected_answer") String expectedAnswer) {
     source_ = source;
+    expectedLabel_ = expectedLabel;
+    expectedAnswer_ = expectedAnswer;
   }
 }

@@ -105,8 +105,8 @@ final public class ExecuteModel extends ConsoleApp {
             if (!"spacy".equals(format)) {
               return fact;
             }
-            return new AnnotatedText(new Meta(fact.provenances_.get(0).sourceStore_),
-                fact.provenances_.get(0).span_);
+            Meta meta = new Meta(fact.provenances_.get(0).sourceStore_, fact.type_, "accept");
+            return new AnnotatedText(meta, fact.provenances_.get(0).span_);
           }).toFile(JsonCodec::asString, new File(output), false);
 
       observations.add(String.format("Number of extracted facts : %d", nbExtractedFacts.get()));
