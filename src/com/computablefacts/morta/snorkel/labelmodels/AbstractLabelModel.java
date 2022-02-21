@@ -20,6 +20,7 @@ public abstract class AbstractLabelModel<T> {
   private final Dictionary lfLabels_;
   private final List<? extends AbstractLabelingFunction<T>> lfs_;
   private double mcc_;
+  private double f1_;
 
   /**
    * Constructor.
@@ -57,6 +58,22 @@ public abstract class AbstractLabelModel<T> {
    */
   public double mcc() {
     return mcc_;
+  }
+
+  /**
+   * Set the F1 score associated with this label model.
+   *
+   * @param f1 F1 score.
+   */
+  public void f1(double f1) {
+    f1_ = f1;
+  }
+
+  /**
+   * Get the F1 score associated with this label model.
+   */
+  public double f1() {
+    return f1_;
   }
 
   /**

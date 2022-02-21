@@ -138,6 +138,7 @@ final public class TrainGenerativeModel extends ConsoleApp {
 
     ConfusionMatrix matrix = labelModel.confusionMatrix(gls);
     labelModel.mcc(matrix.matthewsCorrelationCoefficient());
+    labelModel.f1(matrix.f1Score());
 
     observations.add("Computing confusion matrix for the WHOLE dataset...");
     observations.add(matrix.toString());
