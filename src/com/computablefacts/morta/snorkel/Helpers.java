@@ -334,8 +334,15 @@ final public class Helpers {
 
       ngrams[index].entrySet().forEach(entry -> {
 
+        @Var
         String ngram = entry.getElement();
         int count = entry.getCount();
+
+        // Remove 'combining agrave accent' from the original string
+        ngram = ngram.replace("\u0300", "");
+
+        // Remove 'combining acute accent' from the original string
+        ngram = ngram.replace("\u0301", "");
 
         String lowercase = ngram.toLowerCase();
         String uppercase = ngram.toUpperCase();
@@ -343,6 +350,13 @@ final public class Helpers {
         String normalizedUppercase = StringCodec.removeDiacriticalMarks(uppercase);
         StringBuilder builder = new StringBuilder(ngram.length());
 
+        if (ngram.length() != lowercase.length() || ngram.length() != uppercase.length()
+            || ngram.length() != normalizedLowercase.length()
+            || ngram.length() != normalizedUppercase.length()) {
+
+          // For example the lowercase character 'ß' is mapped to 'SS' in uppercase...
+          return;
+        }
         for (int k = 0; k < ngram.length(); k++) {
           if (builder.length() == 0 && ngram.charAt(k) == '_') {
             continue; // from our POV, _word <=> word
