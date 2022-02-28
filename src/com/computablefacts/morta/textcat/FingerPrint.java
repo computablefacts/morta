@@ -16,6 +16,7 @@ public class FingerPrint extends Hashtable<String, Integer> {
       new TreeSet<>(new NGramEntryComparator());
   private final Map<String, Integer> categoryDistances_ = new HashMap<>();
   private String category_ = "unknown";
+  private double avgLength_ = 0.0d;
 
   public FingerPrint() {}
 
@@ -40,6 +41,14 @@ public class FingerPrint extends Hashtable<String, Integer> {
 
   public void category(String category) {
     category_ = category;
+  }
+
+  public double avgLength() {
+    return avgLength_;
+  }
+
+  public void avgLength(double avgLength) {
+    avgLength_ = avgLength;
   }
 
   public Map<String, Integer> categoryDistances() {

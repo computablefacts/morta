@@ -1,19 +1,17 @@
-package com.computablefacts.morta.snorkel.spacy;
+package com.computablefacts.morta.spacy;
 
-import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.MoreObjects;
 import com.google.errorprone.annotations.CheckReturnValue;
 
 @CheckReturnValue
 @JsonInclude(JsonInclude.Include.NON_NULL)
 final public class AnnotatedText {
-
-  private static final ObjectMapper mapper_ = new ObjectMapper();
 
   @JsonProperty(value = "meta", required = true)
   public final Meta meta_;
@@ -32,11 +30,17 @@ final public class AnnotatedText {
   @JsonProperty(value = "answer")
   public final String answer_;
   @JsonProperty(value = "_timestamp")
-  public final long timestamp_;
+  public final Long timestamp_;
 
   public AnnotatedText(@JsonProperty(value = "meta") Meta meta,
       @JsonProperty(value = "text") String text) {
-    this(meta, text, null, null, null, null, null, null, Instant.now().toEpochMilli());
+    this(meta, text, null, null, null, null, null, null, null);
+  }
+
+  public AnnotatedText(@JsonProperty(value = "meta") Meta meta,
+      @JsonProperty(value = "text") String text, @JsonProperty(value = "tokens") List<Token> tokens,
+      @JsonProperty(value = "spans") List<Span> spans) {
+    this(meta, text, null, null, tokens, null, spans, null, null);
   }
 
   @JsonCreator
@@ -48,7 +52,7 @@ final public class AnnotatedText {
       @JsonProperty(value = "_view_id") String viewId,
       @JsonProperty(value = "spans") List<Span> spans,
       @JsonProperty(value = "answer") String answer,
-      @JsonProperty(value = "_timestamp") long timestamp) {
+      @JsonProperty(value = "_timestamp") Long timestamp) {
     meta_ = meta;
     text_ = text;
     inputHash_ = inputHash;
@@ -58,5 +62,32 @@ final public class AnnotatedText {
     spans_ = spans;
     answer_ = answer;
     timestamp_ = timestamp;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == this) {
+      return true;
+    }
+    if (!(o instanceof AnnotatedText)) {
+      return false;
+    }
+    AnnotatedText annotatedText = (AnnotatedText) o;
+    return Objects.equals(meta_, annotatedText.meta_) && Objects.equals(text_, annotatedText.text_)
+        && Objects.equals(tokens_, annotatedText.tokens_)
+        && Objects.equals(spans_, annotatedText.spans_)
+        && Objects.equals(answer_, annotatedText.answer_);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(meta_, text_, tokens_, spans_, answer_);
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this).add("meta", meta_).add("text", text_)
+        .add("tokens", tokens_).add("spans", spans_).add("answer", answer_).omitNullValues()
+        .toString();
   }
 }

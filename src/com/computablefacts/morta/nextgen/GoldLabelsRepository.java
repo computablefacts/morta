@@ -1,0 +1,275 @@
+package com.computablefacts.morta.nextgen;
+
+import java.io.File;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.computablefacts.asterix.Document;
+import com.computablefacts.asterix.View;
+import com.computablefacts.asterix.codecs.JsonCodec;
+import com.computablefacts.asterix.console.AsciiProgressBar;
+import com.computablefacts.logfmt.LogFormatter;
+import com.computablefacts.morta.snorkel.IGoldLabel;
+import com.computablefacts.morta.textcat.FingerPrint;
+import com.computablefacts.morta.textcat.TextCategorizer;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
+import com.google.errorprone.annotations.CheckReturnValue;
+
+@CheckReturnValue
+final public class GoldLabelsRepository {
+
+  private static final Logger logger_ = LoggerFactory.getLogger(GoldLabelsRepository.class);
+
+  private final Map<String, List<GoldLabel>> goldLabels_ = new HashMap<>();
+  private final Map<String, TextCategorizer> categorizers_ = new HashMap<>();
+
+  public GoldLabelsRepository(File facts, File documents, String label) {
+
+    Set<GoldLabel> goldLabels = loadGoldLabels(facts, documents, label);
+    Set<String> labels = goldLabels.stream().map(IGoldLabel::label).collect(Collectors.toSet());
+
+    for (String lbl : labels) {
+      goldLabels_.put(lbl, goldLabels.stream().filter(goldLabel -> lbl.equals(goldLabel.label()))
+          .collect(Collectors.toList()));
+    }
+
+    labels().forEach(lbl -> categorizers_.put(lbl, textCategorizer(lbl)));
+  }
+
+  public GoldLabelsRepository(String outputDir) {
+    this(outputDir, null);
+  }
+
+  public GoldLabelsRepository(String outputDir, String label) {
+    this(new File(outputDir + File.separator
+        + (label == null ? "gold_labels.jsonl" : label + "_gold_labels.jsonl")), label);
+  }
+
+  private GoldLabelsRepository(File goldLabels, String label) {
+
+    Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
+    Preconditions.checkArgument(goldLabels.exists(), "goldLabels file does not exist : %s",
+        goldLabels);
+
+    View.of(goldLabels).map(JsonCodec::asObject)
+        .map(goldLabel -> new GoldLabel((Map<String, Object>) goldLabel.get("fact"),
+            (Map<String, Object>) goldLabel.get("document")))
+        .filter(goldLabel -> label == null || label.equals(goldLabel.label()))
+        .forEachRemaining(this::add);
+
+    labels().forEach(lbl -> categorizers_.put(lbl, textCategorizer(lbl)));
+  }
+
+  public Set<String> labels() {
+    return goldLabels_.keySet();
+  }
+
+  public void add(GoldLabel goldLabel) {
+
+    Preconditions.checkNotNull(goldLabel, "goldLabel should not be null");
+
+    if (!goldLabels_.containsKey(goldLabel.label())) {
+      goldLabels_.put(goldLabel.label(), new ArrayList<>());
+    }
+    goldLabels_.get(goldLabel.label()).add(goldLabel);
+  }
+
+  public void add(Collection<GoldLabel> goldLabels) {
+
+    Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
+    Preconditions.checkArgument(!goldLabels.isEmpty(), "goldLabels should not be empty");
+
+    goldLabels.forEach(this::add);
+  }
+
+  public Optional<List<GoldLabel>> goldLabels(String label) {
+    return Optional.ofNullable(label == null
+        ? goldLabels_.values().stream().flatMap(Collection::stream).collect(Collectors.toList())
+        : goldLabels_.get(label));
+  }
+
+  public Optional<List<GoldLabel>> goldLabelsAccepted(String label) {
+    return goldLabels(label).map(goldLabels -> goldLabels.stream()
+        .filter(goldLabel -> goldLabel.isTruePositive() || goldLabel.isFalseNegative())
+        .collect(Collectors.toList()));
+  }
+
+  public Optional<List<GoldLabel>> goldLabelsRejected(String label) {
+    return goldLabels(label).map(goldLabels -> goldLabels.stream()
+        .filter(goldLabel -> !goldLabel.isTruePositive() && !goldLabel.isFalseNegative())
+        .collect(Collectors.toList()));
+  }
+
+  public Optional<TextCategorizer> categorizer(String label) {
+
+    Preconditions.checkNotNull(label, "label should not be null");
+
+    return Optional.ofNullable(categorizers_.get(label));
+  }
+
+  public void save(String outputDir, String label) {
+
+    Preconditions.checkNotNull(outputDir, "outputDir should not be null");
+
+    if (label == null) {
+      File file = new File(outputDir + File.separator + "gold_labels.jsonl");
+      View.of(goldLabels_.values()).flatten(View::of).toFile(JsonCodec::asString, file, false);
+    } else {
+
+      Optional<List<GoldLabel>> goldLabels = goldLabels(label);
+
+      if (goldLabels.isPresent() && !goldLabels.get().isEmpty()) {
+
+        File file = new File(outputDir + File.separator + label + "_gold_labels.jsonl");
+
+        if (!file.exists()) {
+          View.of(goldLabels.get()).toFile(JsonCodec::asString, file, false);
+        }
+      }
+    }
+  }
+
+  public void export(String outputDir, String label) {
+
+    Preconditions.checkNotNull(outputDir, "outputDir should not be null");
+
+    if (label == null) {
+
+      File file = new File(outputDir + File.separator + "prodigy_annotations.jsonl");
+      View.of(goldLabels_.values()).flatten(View::of).map(GoldLabel::annotatedText)
+          .filter(Optional::isPresent).map(Optional::get).toFile(JsonCodec::asString, file, false);
+    } else {
+
+      Optional<List<GoldLabel>> goldLabels = goldLabels(label);
+
+      if (goldLabels.isPresent() && !goldLabels.get().isEmpty()) {
+
+        File file = new File(outputDir + File.separator + label + "_prodigy_annotations.jsonl");
+
+        if (!file.exists()) {
+          View.of(goldLabels.get()).map(GoldLabel::annotatedText).filter(Optional::isPresent)
+              .map(Optional::get).toFile(JsonCodec::asString, file, false);
+        }
+      }
+    }
+  }
+
+  private Set<GoldLabel> loadGoldLabels(File facts, File documents, String label) {
+
+    Preconditions.checkNotNull(facts, "facts should not be null");
+    Preconditions.checkArgument(facts.exists(), "facts file does not exist : %s", facts);
+    Preconditions.checkNotNull(documents, "documents should not be null");
+    Preconditions.checkArgument(documents.exists(), "documents file does not exist : %s",
+        documents);
+
+    // Load facts and transform them to gold labels
+    Set<GoldLabel> goldLabels = View.of(facts, true).filter(row -> !Strings.isNullOrEmpty(row))
+        .map(JsonCodec::asObject).map(fact -> new GoldLabel(fact, null))
+        .filter(goldLabel -> label == null || label.equals(goldLabel.label())).toSet();
+
+    Set<String> docsIds = goldLabels.stream().map(GoldLabel::id).collect(Collectors.toSet());
+
+    // Load documents and associate them with gold labels
+    AsciiProgressBar.ProgressBar progressBar = AsciiProgressBar.create();
+    AtomicInteger nbGoldLabelsTotal = new AtomicInteger(goldLabels.size());
+    AtomicInteger nbGoldLabelsProcessed = new AtomicInteger(0);
+
+    return View.of(documents, true)
+        .takeWhile(row -> !goldLabels
+            .isEmpty() /* exit as soon as all gold labels are associated with a document */)
+        .index().filter(row -> !Strings.isNullOrEmpty(row.getValue()) /* remove empty rows */)
+        .map(row -> {
+          try {
+            return new Document(JsonCodec.asObject(row.getValue()));
+          } catch (Exception ex) {
+            logger_.error(LogFormatter.create(true).message(ex).add("line_number", row.getKey())
+                .formatError());
+          }
+          return new Document("UNK");
+        }).peek(doc -> {
+
+          // Remove useless attributes
+          doc.unindexedContent("bbox", null);
+          doc.unindexedContent("tika", null);
+        }).filter(doc -> {
+
+          // Ignore empty documents
+          if (doc.isEmpty()) {
+            return false;
+          }
+
+          // Ignore non-pdf files
+          if (!"application/pdf".equals(doc.contentType())) {
+            return false;
+          }
+
+          // Ignore non-textual files
+          if (!(doc.text() instanceof String)) {
+            return false;
+          }
+
+          // Ignore documents that are not linked to at least one gold label
+          return docsIds.contains(doc.docId());
+        }).flatten(doc -> {
+
+          // Associate the current document with the relevant gold labels
+          Set<GoldLabel> gls =
+              goldLabels.stream().filter(goldLabel -> goldLabel.id().equals(doc.docId()))
+                  .peek(goldLabel -> goldLabel.document(doc)).collect(Collectors.toSet());
+
+          // Remove the processed gold labels from the list of gold labels to be processed
+          goldLabels.removeAll(gls);
+
+          // Display progress
+          if (progressBar != null) {
+            progressBar.update(nbGoldLabelsProcessed.addAndGet(gls.size()),
+                nbGoldLabelsTotal.get());
+          }
+          return View.of(gls);
+        }).toSet();
+  }
+
+  private TextCategorizer textCategorizer(String label) {
+
+    Preconditions.checkNotNull(label, "label should not be null");
+
+    StringBuilder snippetsAccepted = new StringBuilder();
+    List<GoldLabel> goldLabelsAccepted = goldLabelsAccepted(label).map(goldLabels -> goldLabels
+        .stream().filter(goldLabel -> !Strings.isNullOrEmpty(goldLabel.snippet()))
+        .collect(Collectors.toList())).orElse(new ArrayList<>());
+    double avgLengthAccepted = goldLabelsAccepted.stream()
+        .peek(goldLabel -> snippetsAccepted.append(goldLabel.snippet().replaceAll("\\p{Zs}+", " "))
+            .append("\n\n\n"))
+        .map(gl -> gl.snippet().length()).mapToInt(i -> i).average().orElse(0);
+
+    StringBuilder snippetsRejected = new StringBuilder();
+    List<GoldLabel> goldLabelsRejected = goldLabelsRejected(label).map(goldLabels -> goldLabels
+        .stream().filter(goldLabel -> !Strings.isNullOrEmpty(goldLabel.snippet()))
+        .collect(Collectors.toList())).orElse(new ArrayList<>());
+    double avgLengthRejected = goldLabelsRejected.stream()
+        .peek(goldLabel -> snippetsRejected.append(goldLabel.snippet().replaceAll("\\p{Zs}+", " "))
+            .append("\n\n\n"))
+        .map(gl -> gl.snippet().length()).mapToInt(i -> i).average().orElse(0);
+
+    FingerPrint fpAccepted = new FingerPrint();
+    fpAccepted.category("ACCEPT");
+    fpAccepted.avgLength(avgLengthAccepted);
+    fpAccepted.create(snippetsAccepted.toString());
+
+    FingerPrint fpRejected = new FingerPrint();
+    fpRejected.category("REJECT");
+    fpRejected.avgLength(avgLengthRejected);
+    fpRejected.create(snippetsRejected.toString());
+
+    TextCategorizer textCategorizer = new TextCategorizer(label);
+    textCategorizer.add(fpAccepted);
+    textCategorizer.add(fpRejected);
+
+    return textCategorizer;
+  }
+}

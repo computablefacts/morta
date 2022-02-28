@@ -143,7 +143,7 @@ final public class GuesstimateLabelingFunctions extends ConsoleApp {
 
     double weight = testFingerprints(observations, goldLabels, label, fpOk, fpKo);
 
-    TextCategorizer categorizer = new TextCategorizer();
+    TextCategorizer categorizer = new TextCategorizer(label);
     categorizer.add(fpOk);
     categorizer.add(fpKo);
 
@@ -187,7 +187,7 @@ final public class GuesstimateLabelingFunctions extends ConsoleApp {
     Preconditions.checkNotNull(ok, "ok should not be null");
     Preconditions.checkNotNull(ko, "ko should not be null");
 
-    TextCategorizer guesser = new TextCategorizer();
+    TextCategorizer guesser = new TextCategorizer(label);
     guesser.add(ok);
     guesser.add(ko);
 

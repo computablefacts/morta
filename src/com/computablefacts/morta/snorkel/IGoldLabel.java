@@ -12,8 +12,8 @@ import com.computablefacts.asterix.codecs.JsonCodec;
 import com.computablefacts.asterix.console.AsciiProgressBar;
 import com.computablefacts.morta.Observations;
 import com.computablefacts.morta.snorkel.labelmodels.TreeLabelModel;
-import com.computablefacts.morta.snorkel.spacy.AnnotatedText;
-import com.computablefacts.morta.snorkel.spacy.Meta;
+import com.computablefacts.morta.spacy.AnnotatedText;
+import com.computablefacts.morta.spacy.Meta;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -22,6 +22,7 @@ import com.google.common.collect.Lists;
 
 public interface IGoldLabel<D> {
 
+  @Deprecated
   static void toSpacyAnnotations(File input, File output, String label) {
 
     Preconditions.checkNotNull(input, "input should not be null");
@@ -39,6 +40,7 @@ public interface IGoldLabel<D> {
         }).toFile(JsonCodec::asString, output, false);
   }
 
+  @Deprecated
   static List<IGoldLabel<String>> fromSpacyAnnotations(Observations observations, File file,
       String label) {
 
@@ -96,6 +98,7 @@ public interface IGoldLabel<D> {
    * @param file gold labels as JSON objects stored inside a gzip file.
    * @return a list of {@link IGoldLabel}.
    */
+  @Deprecated
   static List<IGoldLabel<String>> load(Observations observations, File file, String label) {
 
     Preconditions.checkNotNull(observations, "observations should not be null");
