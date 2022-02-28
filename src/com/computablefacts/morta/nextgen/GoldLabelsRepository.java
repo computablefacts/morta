@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.computablefacts.asterix.ConfusionMatrix;
 import com.computablefacts.asterix.Document;
 import com.computablefacts.asterix.View;
 import com.computablefacts.asterix.codecs.JsonCodec;
@@ -28,9 +29,9 @@ final public class GoldLabelsRepository {
   private final Map<String, List<GoldLabel>> goldLabels_ = new HashMap<>();
   private final Map<String, TextCategorizer> categorizers_ = new HashMap<>();
 
-  public GoldLabelsRepository(File facts, File documents, String label) {
+  public GoldLabelsRepository(File facts, File documents, String label, boolean withProgressBar) {
 
-    Set<GoldLabel> goldLabels = loadGoldLabels(facts, documents, label);
+    Set<GoldLabel> goldLabels = loadGoldLabels(facts, documents, label, withProgressBar);
     Set<String> labels = goldLabels.stream().map(IGoldLabel::label).collect(Collectors.toSet());
 
     for (String lbl : labels) {
@@ -41,22 +42,33 @@ final public class GoldLabelsRepository {
     labels().forEach(lbl -> categorizers_.put(lbl, textCategorizer(lbl)));
   }
 
-  public GoldLabelsRepository(String outputDir) {
-    this(outputDir, null);
+  public GoldLabelsRepository(String outputDir, boolean withProgressBar) {
+    this(outputDir, null, withProgressBar);
   }
 
-  public GoldLabelsRepository(String outputDir, String label) {
-    this(new File(outputDir + File.separator
-        + (label == null ? "gold_labels.jsonl" : label + "_gold_labels.jsonl")), label);
+  public GoldLabelsRepository(String outputDir, String label, boolean withProgressBar) {
+    this(
+        new File(outputDir + File.separator
+            + (label == null ? "gold_labels.jsonl" : label + "_gold_labels.jsonl")),
+        label, withProgressBar);
   }
 
-  private GoldLabelsRepository(File goldLabels, String label) {
+  private GoldLabelsRepository(File goldLabels, String label, boolean withProgressBar) {
 
     Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
     Preconditions.checkArgument(goldLabels.exists(), "goldLabels file does not exist : %s",
         goldLabels);
 
-    View.of(goldLabels).map(JsonCodec::asObject)
+    AsciiProgressBar.ProgressBar progressBar = withProgressBar ? AsciiProgressBar.create() : null;
+    AtomicInteger nbGoldLabelsTotal = new AtomicInteger(
+        withProgressBar ? View.of(goldLabels).reduce(0, (carry, row) -> carry + 1) : 0);
+    AtomicInteger nbGoldLabelsProcessed = new AtomicInteger(0);
+
+    View.of(goldLabels).peek(entry -> {
+      if (progressBar != null) {
+        progressBar.update(nbGoldLabelsProcessed.incrementAndGet(), nbGoldLabelsTotal.get());
+      }
+    }).map(JsonCodec::asObject)
         .map(goldLabel -> new GoldLabel((Map<String, Object>) goldLabel.get("fact"),
             (Map<String, Object>) goldLabel.get("document")))
         .filter(goldLabel -> label == null || label.equals(goldLabel.label()))
@@ -112,6 +124,43 @@ final public class GoldLabelsRepository {
     return Optional.ofNullable(categorizers_.get(label));
   }
 
+  public Optional<ConfusionMatrix> categorizerConfusionMatrix(String label) {
+
+    Preconditions.checkNotNull(label, "label should not be null");
+
+    return categorizer(label).map(categorizer -> {
+
+      ConfusionMatrix matrix = new ConfusionMatrix();
+
+      goldLabelsAccepted(label).ifPresent(goldLabels -> goldLabels.forEach(goldLabel -> {
+
+        String category = categorizer.categorize(goldLabel.snippet().replaceAll("\\p{Zs}+", " "));
+
+        if (!"unknown".equals(category)) {
+          if ("ACCEPT".equals(category)) {
+            matrix.addTruePositives(1);
+          } else {
+            matrix.addFalseNegatives(1);
+          }
+        }
+      }));
+
+      goldLabelsRejected(label).ifPresent(goldLabels -> goldLabels.forEach(goldLabel -> {
+
+        String category = categorizer.categorize(goldLabel.snippet().replaceAll("\\p{Zs}+", " "));
+
+        if (!"unknown".equals(category)) {
+          if ("ACCEPT".equals(category)) {
+            matrix.addFalsePositives(1);
+          } else {
+            matrix.addTrueNegatives(1);
+          }
+        }
+      }));
+      return matrix;
+    });
+  }
+
   public void save(String outputDir, String label) {
 
     Preconditions.checkNotNull(outputDir, "outputDir should not be null");
@@ -159,7 +208,8 @@ final public class GoldLabelsRepository {
     }
   }
 
-  private Set<GoldLabel> loadGoldLabels(File facts, File documents, String label) {
+  private Set<GoldLabel> loadGoldLabels(File facts, File documents, String label,
+      boolean withProgressBar) {
 
     Preconditions.checkNotNull(facts, "facts should not be null");
     Preconditions.checkArgument(facts.exists(), "facts file does not exist : %s", facts);
@@ -175,7 +225,7 @@ final public class GoldLabelsRepository {
     Set<String> docsIds = goldLabels.stream().map(GoldLabel::id).collect(Collectors.toSet());
 
     // Load documents and associate them with gold labels
-    AsciiProgressBar.ProgressBar progressBar = AsciiProgressBar.create();
+    AsciiProgressBar.ProgressBar progressBar = withProgressBar ? AsciiProgressBar.create() : null;
     AtomicInteger nbGoldLabelsTotal = new AtomicInteger(goldLabels.size());
     AtomicInteger nbGoldLabelsProcessed = new AtomicInteger(0);
 

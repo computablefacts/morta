@@ -22,33 +22,47 @@ final public class SaturatedDive extends ConsoleApp {
     File documents = getFileCommand(args, "documents", null);
     String outputDir = getStringCommand(args, "output_directory", null);
     String label = getStringCommand(args, "label", null);
-    boolean dryRun = getBooleanCommand(args, "dry_run", true);
+    boolean verbose = getBooleanCommand(args, "verbose", true);
 
+    // Load gold labels...
     @Var
     GoldLabelsRepository goldLabelsRepository;
 
     try {
-      goldLabelsRepository = new GoldLabelsRepository(outputDir, label);
+
+      // ...either from an existing repository...
+      goldLabelsRepository = new GoldLabelsRepository(outputDir, label, verbose);
     } catch (Exception e) {
-      goldLabelsRepository = new GoldLabelsRepository(facts, documents, label);
+
+      // ...or from a set of facts and documents
+      goldLabelsRepository = new GoldLabelsRepository(facts, documents, label, verbose);
       goldLabelsRepository.save(outputDir, label);
       goldLabelsRepository.export(outputDir, label);
     }
 
+    // Process labels:
+    // - Create labeling functions
+    // - Train generative model
+    // - Train discriminative model
+    // - Save final model
     for (String lbl : goldLabelsRepository.labels()) {
+
+      if (verbose) {
+        goldLabelsRepository.categorizerConfusionMatrix(lbl).ifPresent(System.out::println);
+      }
 
       Optional<TextCategorizer> textCategorizer = goldLabelsRepository.categorizer(lbl);
 
       if (textCategorizer.isPresent()) {
+
         System.out.println();
+
+        // Create labeling functions
+        // Train generative model
+        // Train discriminative model
+        // Save model
       }
     }
-
-    // 2. Train TextCat on selected snippets
-    // 3. Create labeling functions
-    // 4. Train generative model
-    // 5. Train discriminative model
-    // 6. Save model
   }
 
   private static void trainTextCat() {
