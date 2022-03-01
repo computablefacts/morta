@@ -17,6 +17,7 @@ import com.computablefacts.logfmt.LogFormatter;
 import com.computablefacts.morta.snorkel.IGoldLabel;
 import com.computablefacts.morta.textcat.FingerPrint;
 import com.computablefacts.morta.textcat.TextCategorizer;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.errorprone.annotations.CheckReturnValue;
@@ -89,8 +90,124 @@ final public class GoldLabelsRepository {
     return repository;
   }
 
+  public static GoldLabelsRepository fromProdigyAnnotations(String outputDir, String label,
+      boolean withProgressBar) {
+
+    Preconditions.checkNotNull(outputDir, "outputDir should not be null");
+
+    GoldLabelsRepository repository = new GoldLabelsRepository();
+    File annotations = new File(outputDir + File.separator
+        + (label == null ? "prodigy_annotations.jsonl" : label + "_prodigy_annotations.jsonl"));
+
+    Preconditions.checkState(annotations.exists(), "annotations file does not exist : %s",
+        annotations);
+
+    AsciiProgressBar.ProgressBar progressBar = withProgressBar ? AsciiProgressBar.create() : null;
+    AtomicInteger nbAnnotationsTotal = new AtomicInteger(
+        withProgressBar ? View.of(annotations).reduce(0, (carry, row) -> carry + 1) : 0);
+    AtomicInteger nbAnnotationsProcessed = new AtomicInteger(0);
+
+    View.of(annotations).peek(entry -> {
+      if (progressBar != null) {
+        progressBar.update(nbAnnotationsProcessed.incrementAndGet(), nbAnnotationsTotal.get());
+      }
+    }).map(JsonCodec::asObject).map(annotatedText -> new IGoldLabel<String>() {
+
+      @Override
+      public boolean equals(Object o) {
+        if (o == this) {
+          return true;
+        }
+        if (!(o instanceof IGoldLabel)) {
+          return false;
+        }
+        IGoldLabel<String> gl = (IGoldLabel<String>) o;
+        return Objects.equals(id(), gl.id()) && Objects.equals(label(), gl.label())
+            && Objects.equals(data(), gl.data()) && Objects.equals(snippet(), gl.snippet())
+            && Objects.equals(isTrueNegative(), gl.isTrueNegative())
+            && Objects.equals(isTruePositive(), gl.isTruePositive())
+            && Objects.equals(isFalseNegative(), gl.isFalseNegative())
+            && Objects.equals(isFalsePositive(), gl.isFalsePositive());
+      }
+
+      @Override
+      public int hashCode() {
+        return Objects.hash(id(), label(), data(), snippet(), isTrueNegative(), isTruePositive(),
+            isFalseNegative(), isFalsePositive());
+      }
+
+      @Override
+      public String toString() {
+        return MoreObjects.toStringHelper(this).add("id", id()).add("label", label())
+            .add("data", data()).add("snippet", snippet()).add("is_true_negative", isTrueNegative())
+            .add("is_true_positive", isTruePositive()).add("is_false_negative", isFalseNegative())
+            .add("is_false_positive", isFalsePositive()).omitNullValues().toString();
+      }
+
+      @Override
+      public String id() {
+        Map<String, Object> meta =
+            (Map<String, Object>) annotatedText.getOrDefault("meta", new HashMap<>());
+        return (String) meta.getOrDefault("source", "000|0000-00-00T00:00:00.000Z");
+      }
+
+      @Override
+      public String label() {
+        List<Map<String, Object>> spans =
+            (List<Map<String, Object>>) annotatedText.getOrDefault("spans", new ArrayList<>());
+        Map<String, Object> span = spans.isEmpty() ? null : spans.get(0);
+        return span == null || !span.containsKey("label") ? "" : (String) span.get("label");
+      }
+
+      @Override
+      public String data() {
+        return (String) annotatedText.getOrDefault("text", "");
+      }
+
+      @Override
+      public boolean isTruePositive() {
+        return "accept".equals(annotatedText.getOrDefault("answer", "unknown"));
+      }
+
+      @Override
+      public boolean isFalsePositive() {
+        return false;
+      }
+
+      @Override
+      public boolean isTrueNegative() {
+        return "reject".equals(annotatedText.getOrDefault("answer", "unknown"));
+      }
+
+      @Override
+      public boolean isFalseNegative() {
+        return false;
+      }
+
+      @Override
+      public String snippet() {
+        List<Map<String, Object>> spans =
+            (List<Map<String, Object>>) annotatedText.getOrDefault("spans", new ArrayList<>());
+        Map<String, Object> span = spans.isEmpty() ? null : spans.get(0);
+        return span == null ? "" : data().substring((int) span.get("start"), (int) span.get("end"));
+      }
+    }).filter(goldLabel -> goldLabel.isTruePositive() || goldLabel.isTrueNegative())
+        .filter(goldLabel -> !Strings.isNullOrEmpty(goldLabel.snippet()))
+        .filter(goldLabel -> label == null || label.equals(goldLabel.label()))
+        .forEachRemaining(repository::add);
+
+    repository.labels()
+        .forEach(lbl -> repository.categorizers_.put(lbl, repository.textCategorizer(lbl)));
+
+    return repository;
+  }
+
   public Set<String> labels() {
     return goldLabels_.keySet();
+  }
+
+  public boolean isEmpty() {
+    return goldLabels_.isEmpty();
   }
 
   public void add(IGoldLabel<String> goldLabel) {

@@ -38,10 +38,10 @@ public final class GoldLabel implements IGoldLabel<String> {
     if (o == this) {
       return true;
     }
-    if (!(o instanceof GoldLabel)) {
+    if (!(o instanceof IGoldLabel)) {
       return false;
     }
-    GoldLabel gl = (GoldLabel) o;
+    IGoldLabel<String> gl = (IGoldLabel<String>) o;
     return Objects.equals(id(), gl.id()) && Objects.equals(label(), gl.label())
         && Objects.equals(data(), gl.data()) && Objects.equals(snippet(), gl.snippet())
         && Objects.equals(isTrueNegative(), gl.isTrueNegative())

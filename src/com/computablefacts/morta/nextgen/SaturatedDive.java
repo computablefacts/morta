@@ -30,14 +30,20 @@ final public class SaturatedDive extends ConsoleApp {
 
     try {
 
-      // ...either from an existing repository...
-      goldLabelsRepository = GoldLabelsRepository.fromGoldLabels(outputDir, label, verbose);
-    } catch (Exception e) {
+      // ...from existing annotations...
+      goldLabelsRepository = GoldLabelsRepository.fromProdigyAnnotations(outputDir, label, verbose);
+    } catch (Exception e1) {
+      try {
 
-      // ...or from a set of facts and documents
-      goldLabelsRepository =
-          GoldLabelsRepository.fromFactsAndDocuments(facts, documents, label, verbose);
-      goldLabelsRepository.save(outputDir, label);
+        // ...or from existing gold labels...
+        goldLabelsRepository = GoldLabelsRepository.fromGoldLabels(outputDir, label, verbose);
+      } catch (Exception e2) {
+
+        // ...or from a set of facts and documents
+        goldLabelsRepository =
+            GoldLabelsRepository.fromFactsAndDocuments(facts, documents, label, verbose);
+        goldLabelsRepository.save(outputDir, label);
+      }
     }
 
     // Export gold labels as Prodigy annotations
