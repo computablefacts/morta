@@ -31,11 +31,12 @@ final public class SaturatedDive extends ConsoleApp {
     try {
 
       // ...either from an existing repository...
-      goldLabelsRepository = new GoldLabelsRepository(outputDir, label, verbose);
+      goldLabelsRepository = GoldLabelsRepository.fromGoldLabels(outputDir, label, verbose);
     } catch (Exception e) {
 
       // ...or from a set of facts and documents
-      goldLabelsRepository = new GoldLabelsRepository(facts, documents, label, verbose);
+      goldLabelsRepository =
+          GoldLabelsRepository.fromFactsAndDocuments(facts, documents, label, verbose);
       goldLabelsRepository.save(outputDir, label);
     }
 

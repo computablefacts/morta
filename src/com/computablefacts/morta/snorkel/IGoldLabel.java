@@ -14,11 +14,16 @@ import com.computablefacts.morta.Observations;
 import com.computablefacts.morta.snorkel.labelmodels.TreeLabelModel;
 import com.computablefacts.morta.spacy.AnnotatedText;
 import com.computablefacts.morta.spacy.Meta;
+import com.computablefacts.morta.spacy.Span;
+import com.computablefacts.morta.spacy.Token;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
+import com.google.errorprone.annotations.Var;
+import com.google.re2j.Matcher;
+import com.google.re2j.Pattern;
 
 public interface IGoldLabel<D> {
 
@@ -312,5 +317,63 @@ public interface IGoldLabel<D> {
    */
   default String snippet() {
     return "";
+  }
+
+  /**
+   * Output the Gold Label in <a href="https://prodi.gy/">Prodigy</a> data format for
+   * <a href="https://prodi.gy/docs/text-classification">text classification</a> or
+   * <a href="https://prodi.gy/docs/span-categorization">span categorization</a>.
+   *
+   * @return an {@link AnnotatedText}.
+   */
+  default Optional<AnnotatedText> annotatedText() {
+
+    if (!isTruePositive() && !isTrueNegative() && !isFalsePositive() && !isFalseNegative()) {
+      return Optional.empty();
+    }
+    if (!(data() instanceof String)) {
+      return Optional.empty();
+    }
+
+    boolean accept = isTruePositive() || isFalseNegative();
+    String data = (String) data();
+
+    if (Strings.isNullOrEmpty(snippet()) || !data.contains(snippet())) {
+      Meta meta = new Meta(id(), label(), accept ? "accept" : "reject");
+      return Optional.of(new AnnotatedText(meta, data));
+    }
+
+    int beginSpan = data.indexOf(snippet());
+    int endSpan = beginSpan + snippet().length();
+
+    @Var
+    int firstSpanId = -1;
+    @Var
+    int lastSpanId = -1;
+
+    List<Token> tokens = new ArrayList<>();
+    Matcher tokenizer =
+        Pattern.compile("[^\\p{Zs}\\n]+", Pattern.DOTALL | Pattern.MULTILINE).matcher(data);
+
+    while (tokenizer.find()) {
+
+      String text = tokenizer.group();
+      int beginToken = tokenizer.start();
+      int endToken = tokenizer.end();
+
+      if (beginToken <= beginSpan) {
+        firstSpanId = tokens.size();
+      }
+      if (endToken <= endSpan) {
+        lastSpanId = tokens.size();
+      }
+
+      tokens.add(new Token(text, beginToken, endToken, tokens.size(), true));
+    }
+
+    Span span = new Span(beginSpan, endSpan, firstSpanId, lastSpanId, label());
+    Meta meta = new Meta(id(), label(), accept ? "accept" : "reject", snippet());
+
+    return Optional.of(new AnnotatedText(meta, data, tokens, Lists.newArrayList(span)));
   }
 }
