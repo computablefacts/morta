@@ -90,29 +90,7 @@ public class FingerPrint extends Hashtable<String, Integer> {
    * @return the distance between the two fingerprints.
    */
   public int distance(FingerPrint fp) {
-
-    Preconditions.checkNotNull(fp, "fp should not be null");
-
-    @Var
-    int distance = 0;
-    @Var
-    int count = 0;
-
-    for (Map.Entry<String, Integer> entry : entries_) {
-
-      String ngram = entry.getKey();
-      ++count;
-
-      if (count > 400) {
-        break;
-      }
-      if (!fp.containsKey(ngram)) {
-        distance += fp.size();
-      } else {
-        distance += Math.abs(position(ngram) - fp.position(ngram));
-      }
-    }
-    return distance;
+    return distance(fp, -1);
   }
 
   /**
@@ -129,10 +107,12 @@ public class FingerPrint extends Hashtable<String, Integer> {
 
     @Var
     int minDistance = Integer.MAX_VALUE;
+    int unknownNgramDistance =
+        (int) categories.stream().mapToInt(Hashtable::size).average().orElse(-1);
 
     for (FingerPrint fp : categories) {
 
-      int distance = distance(fp);
+      int distance = distance(fp, unknownNgramDistance);
       categoryDistances_.put(fp.category(), distance);
 
       if (distance < minDistance) {
@@ -169,6 +149,34 @@ public class FingerPrint extends Hashtable<String, Integer> {
     } while (!entry.getKey().equals(ngram));
 
     return pos;
+  }
+
+  private int distance(FingerPrint fp, @Var int unknownNgramDistance) {
+
+    Preconditions.checkNotNull(fp, "fp should not be null");
+
+    unknownNgramDistance = unknownNgramDistance < 0 ? fp.size() : unknownNgramDistance;
+
+    @Var
+    int distance = 0;
+    @Var
+    int count = 0;
+
+    for (Map.Entry<String, Integer> entry : entries_) {
+
+      String ngram = entry.getKey();
+      ++count;
+
+      if (count > 400) {
+        break;
+      }
+      if (!fp.containsKey(ngram)) {
+        distance += unknownNgramDistance;
+      } else {
+        distance += Math.abs(position(ngram) - fp.position(ngram));
+      }
+    }
+    return distance;
   }
 
   private final static class NGramEntryComparator

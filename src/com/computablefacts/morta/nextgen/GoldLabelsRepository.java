@@ -263,7 +263,8 @@ final public class GoldLabelsRepository {
 
       goldLabelsAccepted(label).ifPresent(goldLabels -> goldLabels.forEach(goldLabel -> {
 
-        String category = categorizer.categorize(goldLabel.snippet().replaceAll("\\p{Zs}+", " "));
+        String category =
+            categorizer.categorize(goldLabel.snippet().replaceAll("(?s)[\\p{Zs}\\n\\r\\t]+", " "));
 
         if (!"unknown".equals(category)) {
           if ("ACCEPT".equals(category)) {
@@ -276,7 +277,8 @@ final public class GoldLabelsRepository {
 
       goldLabelsRejected(label).ifPresent(goldLabels -> goldLabels.forEach(goldLabel -> {
 
-        String category = categorizer.categorize(goldLabel.snippet().replaceAll("\\p{Zs}+", " "));
+        String category =
+            categorizer.categorize(goldLabel.snippet().replaceAll("(?s)[\\p{Zs}\\n\\r\\t]+", " "));
 
         if (!"unknown".equals(category)) {
           if ("ACCEPT".equals(category)) {
@@ -423,7 +425,8 @@ final public class GoldLabelsRepository {
             .filter(goldLabel -> !Strings.isNullOrEmpty(goldLabel.snippet()))
             .collect(Collectors.toList())).orElse(new ArrayList<>());
     double avgLengthAccepted = goldLabelsAccepted.stream()
-        .peek(goldLabel -> snippetsAccepted.append(goldLabel.snippet().replaceAll("\\p{Zs}+", " "))
+        .peek(goldLabel -> snippetsAccepted
+            .append(goldLabel.snippet().replaceAll("(?s)[\\p{Zs}\\n\\r\\t]+", " "))
             .append("\n\n\n"))
         .map(gl -> gl.snippet().length()).mapToInt(i -> i).average().orElse(0);
 
@@ -433,7 +436,8 @@ final public class GoldLabelsRepository {
             .filter(goldLabel -> !Strings.isNullOrEmpty(goldLabel.snippet()))
             .collect(Collectors.toList())).orElse(new ArrayList<>());
     double avgLengthRejected = goldLabelsRejected.stream()
-        .peek(goldLabel -> snippetsRejected.append(goldLabel.snippet().replaceAll("\\p{Zs}+", " "))
+        .peek(goldLabel -> snippetsRejected
+            .append(goldLabel.snippet().replaceAll("(?s)[\\p{Zs}\\n\\r\\t]+", " "))
             .append("\n\n\n"))
         .map(gl -> gl.snippet().length()).mapToInt(i -> i).average().orElse(0);
 
