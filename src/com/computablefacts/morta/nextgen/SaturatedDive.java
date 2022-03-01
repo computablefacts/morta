@@ -37,8 +37,10 @@ final public class SaturatedDive extends ConsoleApp {
       // ...or from a set of facts and documents
       goldLabelsRepository = new GoldLabelsRepository(facts, documents, label, verbose);
       goldLabelsRepository.save(outputDir, label);
-      goldLabelsRepository.export(outputDir, label);
     }
+
+    // Export gold labels as Prodigy annotations
+    goldLabelsRepository.export(outputDir, label);
 
     // Process labels:
     // - Create labeling functions

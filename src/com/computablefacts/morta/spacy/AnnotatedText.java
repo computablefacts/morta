@@ -38,6 +38,12 @@ final public class AnnotatedText {
   }
 
   public AnnotatedText(@JsonProperty(value = "meta") Meta meta,
+      @JsonProperty(value = "text") String text,
+      @JsonProperty(value = "tokens") List<Token> tokens) {
+    this(meta, text, null, null, tokens, null, null, null, null);
+  }
+
+  public AnnotatedText(@JsonProperty(value = "meta") Meta meta,
       @JsonProperty(value = "text") String text, @JsonProperty(value = "tokens") List<Token> tokens,
       @JsonProperty(value = "spans") List<Span> spans) {
     this(meta, text, null, null, tokens, null, spans, null, null);

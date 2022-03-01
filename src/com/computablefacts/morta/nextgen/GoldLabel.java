@@ -1,14 +1,13 @@
 package com.computablefacts.morta.nextgen;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 import com.computablefacts.asterix.Document;
 import com.computablefacts.morta.snorkel.IGoldLabel;
 import com.computablefacts.morta.spacy.AnnotatedText;
 import com.computablefacts.morta.spacy.Meta;
+import com.computablefacts.morta.spacy.Span;
+import com.computablefacts.morta.spacy.Token;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -16,7 +15,11 @@ import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
 import com.google.errorprone.annotations.CheckReturnValue;
+import com.google.errorprone.annotations.Var;
+import com.google.re2j.Matcher;
+import com.google.re2j.Pattern;
 
 @CheckReturnValue
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -139,11 +142,44 @@ public final class GoldLabel implements IGoldLabel<String> {
     }
 
     boolean accept = isTruePositive() || isFalseNegative();
-    Meta meta = new Meta(id(), label(), accept ? "accept" : "reject",
-        !Strings.isNullOrEmpty(snippet()) && data().contains(snippet()) ? snippet() : null);
-    AnnotatedText annotatedText = new AnnotatedText(meta, data());
 
-    return Optional.of(annotatedText);
+    if (Strings.isNullOrEmpty(snippet()) || !data().contains(snippet())) {
+      Meta meta = new Meta(id(), label(), accept ? "accept" : "reject");
+      return Optional.of(new AnnotatedText(meta, data()));
+    }
+
+    int beginSpan = data().indexOf(snippet());
+    int endSpan = beginSpan + snippet().length();
+
+    @Var
+    int firstSpanId = -1;
+    @Var
+    int lastSpanId = -1;
+
+    List<Token> tokens = new ArrayList<>();
+    Matcher tokenizer =
+        Pattern.compile("[^\\p{Zs}\\n]+", Pattern.DOTALL | Pattern.MULTILINE).matcher(data());
+
+    while (tokenizer.find()) {
+
+      String text = tokenizer.group();
+      int beginToken = tokenizer.start();
+      int endToken = tokenizer.end();
+
+      if (beginToken <= beginSpan) {
+        firstSpanId = tokens.size();
+      }
+      if (endToken <= endSpan) {
+        lastSpanId = tokens.size();
+      }
+
+      tokens.add(new Token(text, beginToken, endToken, tokens.size(), true));
+    }
+
+    Span span = new Span(beginSpan, endSpan, firstSpanId, lastSpanId, label());
+    Meta meta = new Meta(id(), label(), accept ? "accept" : "reject", snippet());
+
+    return Optional.of(new AnnotatedText(meta, data(), tokens, Lists.newArrayList(span)));
   }
 
   private Optional<List<String>> pages() {
