@@ -5,7 +5,6 @@ import static com.computablefacts.morta.snorkel.Helpers.ngrams;
 import java.util.*;
 
 import com.google.common.base.Preconditions;
-import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.CheckReturnValue;
 import com.google.errorprone.annotations.Var;
 
@@ -100,7 +99,6 @@ public class FingerPrint extends Hashtable<String, Integer> {
    * @param categories the list of possible categories.
    * @return the most likely categories.
    */
-  @CanIgnoreReturnValue
   public Map<String, Integer> categorize(Collection<FingerPrint> categories) {
 
     Preconditions.checkNotNull(categories, "categories should not be null");

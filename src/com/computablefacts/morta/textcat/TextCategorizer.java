@@ -25,8 +25,14 @@ final public class TextCategorizer {
   }
 
   public String categorize(String text) {
+    return categorize(text, 1.03, 5);
+  }
+
+  public String categorize(String text, double threshold, int maxCandidates) {
 
     Preconditions.checkNotNull(text, "text should not be null");
+    Preconditions.checkArgument(threshold >= 1.0, "threshold should be >= 1.0");
+    Preconditions.checkArgument(maxCandidates >= 1, "maxCandidates should be >= 1");
 
     if (text.length() < 10) {
       return "unknown";
@@ -34,25 +40,12 @@ final public class TextCategorizer {
 
     FingerPrint fp = new FingerPrint();
     fp.create(text);
-    fp.categorize(categories_);
-    return fp.category();
-  }
+    Map<String, Integer> categories = fp.categorize(categories_);
+    int minDistance = categories.values().stream().mapToInt(i -> i).min().orElse(0);
+    double newThreshold = minDistance * threshold;
+    int nbCandidates = categories.entrySet().stream().filter(e -> e.getValue() <= newThreshold)
+        .mapToInt(e -> 1).sum();
 
-  public String categorize(String text, int limit) {
-
-    Preconditions.checkNotNull(text, "text should not be null");
-    Preconditions.checkArgument(limit > 0, "limit should be > 0");
-
-    return limit > text.length() - 1 ? categorize(text) : categorize(text.substring(0, limit));
-  }
-
-  public Map<String, Integer> categoryDistances(String text) {
-
-    Preconditions.checkNotNull(text, "text should not be null");
-    Preconditions.checkState(!categories_.isEmpty());
-
-    FingerPrint fp = new FingerPrint();
-    fp.create(text);
-    return fp.categorize(categories_);
+    return nbCandidates > maxCandidates ? "unknown" : fp.category();
   }
 }
