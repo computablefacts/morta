@@ -172,80 +172,88 @@ final public class SaturatedDive extends ConsoleApp {
             Joiner.on("\n  ").join(guesstimatedLabelingFunctions.stream()
                 .map(AbstractLabelingFunction::name).collect(Collectors.toList()))));
 
-        // Split gold labels into train and test
-        observations.add("Splitting gold labels into train/test...");
-
-        List<IGoldLabel<String>> goldLabels =
-            goldLabelsRepository.goldLabels(lbl).map(gls -> (List) gls).orElse(new ArrayList<>());
-        List<Set<IGoldLabel<String>>> trainTest = IGoldLabel.split(goldLabels, true, 0.0, 0.75);
-        List<IGoldLabel<String>> train = new ArrayList<>(trainTest.get(1));
-        List<IGoldLabel<String>> test = new ArrayList<>(trainTest.get(2));
-
-        Preconditions.checkState(train.size() + test.size() == goldLabels.size(),
-            "Inconsistency found in the number of gold labels : %s expected vs %s found",
-            goldLabels.size(), train.size() + test.size());
-
-        observations.add(String.format("Dataset size for training is %d", train.size()));
-        observations.add(String.format("Dataset size for testing is %d", test.size()));
-
-        // Load user-defined labeling functions
-        List<AbstractLabelingFunction<String>> labelingFunctions =
-            new ArrayList<>(guesstimatedLabelingFunctions);
-
-        if (!Strings.isNullOrEmpty(userDefinedLabelingFunctions)) {
-
-          File file = new File(userDefinedLabelingFunctions);
-
-          if (file.exists()) {
-
-            Pattern[] patterns = Patterns.load(file, true);
-
-            if (patterns != null) {
-
-              observations.add("Loading user-defined labeling functions...");
-
-              List<AbstractLabelingFunction<String>> udlfs = Patterns.toLabelingFunctions(patterns);
-              labelingFunctions.addAll(udlfs);
-
-              observations
-                  .add(String.format("%d user-defined labeling functions loaded", udlfs.size()));
-            }
-          }
-        }
-
-        // Build label model
-        observations.add("Building label model...");
-
-        TreeLabelModel<String> labelModel = new TreeLabelModel<>(labelingFunctions);
-        labelModel.fit(train);
-
-        observations.add(String.format("Tree for label model is : %s", labelModel));
-
-        labelModel.summarize(train).stream()
-            // Sort summaries by decreasing number of correct labels
-            .sorted((o1, o2) -> Ints.compare(o2.correct(), o1.correct()))
-            .forEach(summary -> observations.add(String.format("  %s", summary)));
-
-        // Compute model accuracy
-        observations.add("Computing confusion matrix for the TRAIN dataset...");
-        observations.add(labelModel.confusionMatrix(train).toString());
-
-        observations.add("Computing confusion matrix for the TEST dataset...");
-        observations.add(labelModel.confusionMatrix(test).toString());
-
-        ConfusionMatrix matrix = labelModel.confusionMatrix(goldLabels);
-        labelModel.mcc(matrix.matthewsCorrelationCoefficient());
-        labelModel.f1(matrix.f1Score());
-
-        observations.add("Computing confusion matrix for the WHOLE dataset...");
-        observations.add(matrix.toString());
-
-        observations.add("Saving label model...");
-
+        // Load or build label model
+        TreeLabelModel<String> labelModel;
         File lm = new File(outputDir + File.separator + lbl + "_label_model.xml.gz");
 
-        if (!lm.exists()) {
+        if (lm.exists()) {
+          labelModel = Helpers.deserialize(lm.getAbsolutePath());
+        } else {
+
+          // Split gold labels into train and test
+          observations.add("Splitting gold labels into train/test...");
+
+          List<IGoldLabel<String>> goldLabels =
+              goldLabelsRepository.goldLabels(lbl).map(gls -> (List) gls).orElse(new ArrayList<>());
+          List<Set<IGoldLabel<String>>> trainTest = IGoldLabel.split(goldLabels, true, 0.0, 0.75);
+          List<IGoldLabel<String>> train = new ArrayList<>(trainTest.get(1));
+          List<IGoldLabel<String>> test = new ArrayList<>(trainTest.get(2));
+
+          Preconditions.checkState(train.size() + test.size() == goldLabels.size(),
+              "Inconsistency found in the number of gold labels : %s expected vs %s found",
+              goldLabels.size(), train.size() + test.size());
+
+          observations.add(String.format("Dataset size for training is %d", train.size()));
+          observations.add(String.format("Dataset size for testing is %d", test.size()));
+
+          // Load user-defined labeling functions
+          List<AbstractLabelingFunction<String>> labelingFunctions =
+              new ArrayList<>(guesstimatedLabelingFunctions);
+
+          if (!Strings.isNullOrEmpty(userDefinedLabelingFunctions)) {
+
+            File file = new File(userDefinedLabelingFunctions);
+
+            if (file.exists()) {
+
+              Pattern[] patterns = Patterns.load(file, true);
+
+              if (patterns != null) {
+
+                observations.add("Loading user-defined labeling functions...");
+
+                List<AbstractLabelingFunction<String>> udlfs =
+                    Patterns.toLabelingFunctions(patterns);
+                labelingFunctions.addAll(udlfs);
+
+                observations
+                    .add(String.format("%d user-defined labeling functions loaded", udlfs.size()));
+              }
+            }
+          }
+
+          // Build label model
+          observations.add("Building label model...");
+
+          labelModel = new TreeLabelModel<>(labelingFunctions);
+          labelModel.fit(train);
+
+          observations.add(String.format("Tree for label model is : %s", labelModel));
+
+          labelModel.summarize(train).stream()
+              // Sort summaries by decreasing number of correct labels
+              .sorted((o1, o2) -> Ints.compare(o2.correct(), o1.correct()))
+              .forEach(summary -> observations.add(String.format("  %s", summary)));
+
+          // Compute model accuracy
+          observations.add("Computing confusion matrix for the TRAIN dataset...");
+          observations.add(labelModel.confusionMatrix(train).toString());
+
+          observations.add("Computing confusion matrix for the TEST dataset...");
+          observations.add(labelModel.confusionMatrix(test).toString());
+
+          ConfusionMatrix matrix = labelModel.confusionMatrix(goldLabels);
+          labelModel.mcc(matrix.matthewsCorrelationCoefficient());
+          labelModel.f1(matrix.f1Score());
+
+          observations.add("Computing confusion matrix for the WHOLE dataset...");
+          observations.add(matrix.toString());
+
+          observations.add("Saving label model...");
+
           Helpers.serialize(lm.getAbsolutePath(), labelModel);
+
+          observations.add("Label model saved.");
         }
 
         // TODO : Train discriminative model
