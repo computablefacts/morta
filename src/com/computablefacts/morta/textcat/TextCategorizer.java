@@ -9,16 +9,9 @@ import com.google.errorprone.annotations.CheckReturnValue;
 @CheckReturnValue
 final public class TextCategorizer {
 
-  private final String name_;
   private final ArrayList<FingerPrint> categories_ = new ArrayList<>();
 
-  public TextCategorizer(String name) {
-    name_ = Preconditions.checkNotNull(name, "name should not be null");
-  }
-
-  public String name() {
-    return name_;
-  }
+  public TextCategorizer() {}
 
   public void add(FingerPrint fingerPrint) {
     categories_.add(fingerPrint);

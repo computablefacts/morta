@@ -451,7 +451,7 @@ final public class GoldLabelsRepository {
     fpRejected.avgLength(avgLengthRejected);
     fpRejected.create(snippetsRejected.toString());
 
-    TextCategorizer textCategorizer = new TextCategorizer(label);
+    TextCategorizer textCategorizer = new TextCategorizer();
     textCategorizer.add(fpAccepted);
     textCategorizer.add(fpRejected);
 
