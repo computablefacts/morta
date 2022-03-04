@@ -225,7 +225,7 @@ final public class SaturatedDive extends ConsoleApp {
           // Build label model
           observations.add("Building label model...");
 
-          labelModel = new TreeLabelModel<>(labelingFunctions);
+          labelModel = new TreeLabelModel<>(labelingFunctions, TreeLabelModel.eMetric.MCC);
           labelModel.fit(train);
 
           observations.add(String.format("Tree for label model is : %s", labelModel));

@@ -110,7 +110,7 @@ public class TreeLabelModelTest {
   }
 
   private TreeLabelModel<String> labelModel() {
-    return new TreeLabelModel<>(lfs());
+    return new TreeLabelModel<>(lfs(), TreeLabelModel.eMetric.F1);
   }
 
   private List<AbstractLabelingFunction<String>> lfs() {

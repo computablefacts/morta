@@ -103,7 +103,7 @@ final public class TrainGenerativeModel extends ConsoleApp {
     // Build label model
     observations.add("Building label model...");
 
-    TreeLabelModel<String> labelModel = new TreeLabelModel<>(lfs);
+    TreeLabelModel<String> labelModel = new TreeLabelModel<>(lfs, TreeLabelModel.eMetric.F1);
     labelModel.fit(train);
 
     System.out.println(); // Cosmetic

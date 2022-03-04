@@ -34,23 +34,32 @@ import smile.stat.hypothesis.CorTest;
 @CheckReturnValue
 final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
 
+  private final eMetric metric_;
   private Aggregate<T> tree_;
 
   public TreeLabelModel(TreeLabelModel<T> labelModel) {
-    this(labelModel.lfs(), labelModel.tree_);
+    this(labelModel.lfs(), labelModel.metric_, labelModel.tree_);
   }
 
-  public TreeLabelModel(List<? extends AbstractLabelingFunction<T>> lfs) {
+  public TreeLabelModel(List<? extends AbstractLabelingFunction<T>> lfs, eMetric metric) {
+
     super(lfsNames(lfs), lfsLabels(), lfs);
+
+    Preconditions.checkNotNull(metric, "metric should not be null");
+
+    metric_ = metric;
   }
 
-  private TreeLabelModel(List<? extends AbstractLabelingFunction<T>> lfs, Aggregate<T> tree) {
+  private TreeLabelModel(List<? extends AbstractLabelingFunction<T>> lfs, eMetric metric,
+      Aggregate<T> tree) {
 
     super(lfsNames(lfs), lfsLabels(), lfs);
 
     Preconditions.checkNotNull(tree, "tree should not be null");
+    Preconditions.checkNotNull(metric, "metric should not be null");
 
     tree_ = tree;
+    metric_ = metric;
   }
 
   /**
@@ -158,8 +167,9 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
     aggregates.addAll(aggregates2);
     aggregates.addAll(aggregates3);
     aggregates.addAll(aggregates4);
-    aggregates.sort(
-        Comparator.comparingDouble((Aggregate<T> a) -> a.confusionMatrix().f1Score()).reversed());
+    aggregates.sort(Comparator.comparingDouble((Aggregate<T> a) -> eMetric.MCC.equals(metric_)
+        ? a.confusionMatrix().matthewsCorrelationCoefficient()
+        : a.confusionMatrix().f1Score()).reversed());
 
     if (!aggregates.isEmpty()) {
       tree_ = aggregates.get(0);
@@ -183,6 +193,10 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
 
     return goldLabels.stream().map(IGoldLabel::data).map(this::predict)
         .collect(Collectors.toList());
+  }
+
+  public eMetric metric() {
+    return metric_;
   }
 
   public List<Map.Entry<T, FeatureVector<Integer>>> vectors(
@@ -243,46 +257,64 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
     for (int i = 0; i < aggregates1.size(); i++) {
       for (int j = 0; j < aggregates2.size(); j++) {
 
-        double firstF1 = aggregates1.get(i).confusionMatrix().f1Score();
-        double secondF1 = aggregates2.get(j).confusionMatrix().f1Score();
+        double firstMetric = eMetric.MCC.equals(metric_)
+            ? aggregates1.get(i).confusionMatrix().matthewsCorrelationCoefficient()
+            : aggregates1.get(i).confusionMatrix().f1Score();
+        double secondMetric = eMetric.MCC.equals(metric_)
+            ? aggregates2.get(j).confusionMatrix().matthewsCorrelationCoefficient()
+            : aggregates2.get(j).confusionMatrix().f1Score();
 
         @Var
         Aggregate<T> aggregate = new AndAggregate<>(aggregates1.get(i), aggregates2.get(j));
         @Var
-        double f1 = aggregate.confusionMatrix().f1Score();
+        double metric = eMetric.MCC.equals(metric_)
+            ? aggregate.confusionMatrix().matthewsCorrelationCoefficient()
+            : aggregate.confusionMatrix().f1Score();
 
-        if (f1 >= firstF1 || f1 >= secondF1) {
+        if (metric >= firstMetric || metric >= secondMetric) {
           aggregates.add(aggregate);
         }
 
         aggregate = new OrAggregate<>(aggregates1.get(i), aggregates2.get(j));
-        f1 = aggregate.confusionMatrix().f1Score();
+        metric = eMetric.MCC.equals(metric_)
+            ? aggregate.confusionMatrix().matthewsCorrelationCoefficient()
+            : aggregate.confusionMatrix().f1Score();
 
-        if (f1 >= firstF1 || f1 >= secondF1) {
+        if (metric >= firstMetric || metric >= secondMetric) {
           aggregates.add(aggregate);
         }
 
         aggregate = new AndNotAggregate<>(aggregates1.get(i), aggregates2.get(j));
-        f1 = aggregate.confusionMatrix().f1Score();
+        metric = eMetric.MCC.equals(metric_)
+            ? aggregate.confusionMatrix().matthewsCorrelationCoefficient()
+            : aggregate.confusionMatrix().f1Score();
 
-        if (f1 >= firstF1 || f1 >= secondF1) {
+        if (metric >= firstMetric || metric >= secondMetric) {
           aggregates.add(aggregate);
         }
 
         aggregate = new AndNotAggregate<>(aggregates2.get(j), aggregates1.get(i));
-        f1 = aggregate.confusionMatrix().f1Score();
+        metric = eMetric.MCC.equals(metric_)
+            ? aggregate.confusionMatrix().matthewsCorrelationCoefficient()
+            : aggregate.confusionMatrix().f1Score();
 
-        if (f1 >= firstF1 || f1 >= secondF1) {
+        if (metric >= firstMetric || metric >= secondMetric) {
           aggregates.add(aggregate);
         }
       }
     }
     return aggregates.parallelStream()
-        .filter(aggregate -> Double.isFinite(aggregate.confusionMatrix().f1Score()))
-        .sorted(Comparator
-            .comparingDouble((Aggregate<T> aggregate) -> aggregate.confusionMatrix().f1Score())
-            .reversed())
+        .filter(aggregate -> Double.isFinite(eMetric.MCC.equals(metric_)
+            ? aggregate.confusionMatrix().matthewsCorrelationCoefficient()
+            : aggregate.confusionMatrix().f1Score()))
+        .sorted(Comparator.comparingDouble((Aggregate<T> aggregate) -> eMetric.MCC.equals(metric_)
+            ? aggregate.confusionMatrix().matthewsCorrelationCoefficient()
+            : aggregate.confusionMatrix().f1Score()).reversed())
         .limit(100).collect(Collectors.toList());
+  }
+
+  public enum eMetric {
+    F1, MCC
   }
 
   private interface Aggregate<T> extends Function<T, Integer> {
