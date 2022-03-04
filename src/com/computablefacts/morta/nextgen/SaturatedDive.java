@@ -23,6 +23,7 @@ import com.computablefacts.morta.textcat.TextCategorizer;
 import com.computablefacts.morta.yaml.patterns.Pattern;
 import com.computablefacts.morta.yaml.patterns.Patterns;
 import com.google.common.base.Joiner;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.HashMultiset;
@@ -183,11 +184,166 @@ final public class SaturatedDive extends ConsoleApp {
           // Split gold labels into train and test
           observations.add("Splitting gold labels into train/test...");
 
-          List<IGoldLabel<String>> goldLabels =
-              goldLabelsRepository.goldLabels(lbl).map(gls -> (List) gls).orElse(new ArrayList<>());
-          List<Set<IGoldLabel<String>>> trainTest = IGoldLabel.split(goldLabels, true, 0.0, 0.75);
-          List<IGoldLabel<String>> train = new ArrayList<>(trainTest.get(1));
-          List<IGoldLabel<String>> test = new ArrayList<>(trainTest.get(2));
+          Set<IGoldLabel<String>> goldLabels =
+              goldLabelsRepository.goldLabels(lbl).map(gls -> gls.stream().flatMap(gl -> {
+
+                List<IGoldLabel<String>> newGoldLabels = new ArrayList<>();
+                newGoldLabels.add(new IGoldLabel<String>() {
+
+                  @Override
+                  public boolean equals(Object o) {
+                    if (o == this) {
+                      return true;
+                    }
+                    if (!(o instanceof IGoldLabel)) {
+                      return false;
+                    }
+                    IGoldLabel<String> gl = (IGoldLabel<String>) o;
+                    return Objects.equals(id(), gl.id()) && Objects.equals(label(), gl.label())
+                        && Objects.equals(data(), gl.data())
+                        && Objects.equals(snippet(), gl.snippet())
+                        && Objects.equals(isTrueNegative(), gl.isTrueNegative())
+                        && Objects.equals(isTruePositive(), gl.isTruePositive())
+                        && Objects.equals(isFalseNegative(), gl.isFalseNegative())
+                        && Objects.equals(isFalsePositive(), gl.isFalsePositive());
+                  }
+
+                  @Override
+                  public int hashCode() {
+                    return Objects.hash(id(), label(), data(), snippet(), isTrueNegative(),
+                        isTruePositive(), isFalseNegative(), isFalsePositive());
+                  }
+
+                  @Override
+                  public String toString() {
+                    return MoreObjects.toStringHelper(this).add("id", id()).add("label", label())
+                        .add("data", data()).add("snippet", snippet())
+                        .add("is_true_negative", isTrueNegative())
+                        .add("is_true_positive", isTruePositive())
+                        .add("is_false_negative", isFalseNegative())
+                        .add("is_false_positive", isFalsePositive()).omitNullValues().toString();
+                  }
+
+                  @Override
+                  public String id() {
+                    return gl.id();
+                  }
+
+                  @Override
+                  public String label() {
+                    return gl.label();
+                  }
+
+                  @Override
+                  public String data() {
+                    return gl.data();
+                  }
+
+                  @Override
+                  public boolean isTruePositive() {
+                    return gl.isTruePositive();
+                  }
+
+                  @Override
+                  public boolean isFalsePositive() {
+                    return gl.isFalsePositive();
+                  }
+
+                  @Override
+                  public boolean isTrueNegative() {
+                    return gl.isTrueNegative();
+                  }
+
+                  @Override
+                  public boolean isFalseNegative() {
+                    return gl.isFalseNegative();
+                  }
+
+                  @Override
+                  public String snippet() {
+                    return gl.snippet();
+                  }
+                });
+                newGoldLabels.addAll(gl.unmatchedPages()
+                    .map(pages -> pages.stream().map(page -> new IGoldLabel<String>() {
+
+                      @Override
+                      public boolean equals(Object o) {
+                        if (o == this) {
+                          return true;
+                        }
+                        if (!(o instanceof IGoldLabel)) {
+                          return false;
+                        }
+                        IGoldLabel<String> gl = (IGoldLabel<String>) o;
+                        return Objects.equals(id(), gl.id()) && Objects.equals(label(), gl.label())
+                            && Objects.equals(data(), gl.data())
+                            && Objects.equals(snippet(), gl.snippet())
+                            && Objects.equals(isTrueNegative(), gl.isTrueNegative())
+                            && Objects.equals(isTruePositive(), gl.isTruePositive())
+                            && Objects.equals(isFalseNegative(), gl.isFalseNegative())
+                            && Objects.equals(isFalsePositive(), gl.isFalsePositive());
+                      }
+
+                      @Override
+                      public int hashCode() {
+                        return Objects.hash(id(), label(), data(), snippet(), isTrueNegative(),
+                            isTruePositive(), isFalseNegative(), isFalsePositive());
+                      }
+
+                      @Override
+                      public String toString() {
+                        return MoreObjects.toStringHelper(this).add("id", id())
+                            .add("label", label()).add("data", data()).add("snippet", snippet())
+                            .add("is_true_negative", isTrueNegative())
+                            .add("is_true_positive", isTruePositive())
+                            .add("is_false_negative", isFalseNegative())
+                            .add("is_false_positive", isFalsePositive()).omitNullValues()
+                            .toString();
+                      }
+
+                      @Override
+                      public String id() {
+                        return gl.id();
+                      }
+
+                      @Override
+                      public String label() {
+                        return gl.label();
+                      }
+
+                      @Override
+                      public String data() {
+                        return page;
+                      }
+
+                      @Override
+                      public boolean isTruePositive() {
+                        return false;
+                      }
+
+                      @Override
+                      public boolean isFalsePositive() {
+                        return false;
+                      }
+
+                      @Override
+                      public boolean isTrueNegative() {
+                        return true;
+                      }
+
+                      @Override
+                      public boolean isFalseNegative() {
+                        return false;
+                      }
+                    }).collect(Collectors.toList())).orElse(new ArrayList<>()));
+
+                return newGoldLabels.stream();
+              }).collect(Collectors.toSet())).orElse(new HashSet<>());
+          List<Set<IGoldLabel<String>>> devTrainTest =
+              IGoldLabel.split(goldLabels, true, 0.0, 0.75);
+          List<IGoldLabel<String>> train = new ArrayList<>(devTrainTest.get(1));
+          List<IGoldLabel<String>> test = new ArrayList<>(devTrainTest.get(2));
 
           Preconditions.checkState(train.size() + test.size() == goldLabels.size(),
               "Inconsistency found in the number of gold labels : %s expected vs %s found",
@@ -242,7 +398,7 @@ final public class SaturatedDive extends ConsoleApp {
           observations.add("Computing confusion matrix for the TEST dataset...");
           observations.add(labelModel.confusionMatrix(test).toString());
 
-          ConfusionMatrix matrix = labelModel.confusionMatrix(goldLabels);
+          ConfusionMatrix matrix = labelModel.confusionMatrix(Lists.newArrayList(goldLabels));
           labelModel.mcc(matrix.matthewsCorrelationCoefficient());
           labelModel.f1(matrix.f1Score());
 

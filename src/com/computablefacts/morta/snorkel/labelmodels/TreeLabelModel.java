@@ -161,12 +161,18 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
         .collect(Collectors.toList());
     List<Aggregate<T>> aggregates2 = newAggregate(aggregates1, aggregates1);
     List<Aggregate<T>> aggregates3 = newAggregate(aggregates2, aggregates1);
-    List<Aggregate<T>> aggregates4 = newAggregate(aggregates3, aggregates1);
+    List<Aggregate<T>> aggregates4 = newAggregate(aggregates2, aggregates2);
+    List<Aggregate<T>> aggregates5 = newAggregate(aggregates3, aggregates1);
+    List<Aggregate<T>> aggregates6 = newAggregate(aggregates3, aggregates2);
+    List<Aggregate<T>> aggregates7 = newAggregate(aggregates3, aggregates3);
 
     List<Aggregate<T>> aggregates = new ArrayList<>(aggregates1);
     aggregates.addAll(aggregates2);
     aggregates.addAll(aggregates3);
     aggregates.addAll(aggregates4);
+    aggregates.addAll(aggregates5);
+    aggregates.addAll(aggregates6);
+    aggregates.addAll(aggregates7);
     aggregates.sort(Comparator.comparingDouble((Aggregate<T> a) -> eMetric.MCC.equals(metric_)
         ? a.confusionMatrix().matthewsCorrelationCoefficient()
         : a.confusionMatrix().f1Score()).reversed());
