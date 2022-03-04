@@ -21,7 +21,6 @@ import com.computablefacts.morta.snorkel.labelingfunctions.MatchRegexLabelingFun
 import com.computablefacts.morta.snorkel.labelmodels.TreeLabelModel;
 import com.computablefacts.morta.textcat.FingerPrint;
 import com.computablefacts.morta.textcat.TextCategorizer;
-import com.computablefacts.nona.helpers.Languages;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -89,9 +88,7 @@ final public class GuesstimateLabelingFunctions extends ConsoleApp {
     // Extract patterns found in snippets
     Multiset<String> boosters = HashMultiset.create();
 
-    snippets
-        .stream().flatMap(s -> Helpers
-            .features(Languages.eLanguage.valueOf(language), maxGroupSize, s).keySet().stream())
+    snippets.stream().flatMap(s -> Helpers.features(maxGroupSize, s).keySet().stream())
         .forEach(boosters::add);
 
     observations.add(String.format("%d boosters extracted for label OK (%d uniques)",
@@ -148,8 +145,8 @@ final public class GuesstimateLabelingFunctions extends ConsoleApp {
     categorizer.add(fpKo);
 
     // Guesstimate LF
-    DocSetLabelerImpl docSetLabeler = new DocSetLabelerImpl(Languages.eLanguage.valueOf(language),
-        maxGroupSize, boosters, categorizer, (int) avgLength);
+    DocSetLabelerImpl docSetLabeler =
+        new DocSetLabelerImpl(maxGroupSize, boosters, categorizer, (int) avgLength);
 
     observations.add("Starting DocSetLabeler...");
 

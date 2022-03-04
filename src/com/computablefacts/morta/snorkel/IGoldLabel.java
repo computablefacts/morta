@@ -27,6 +27,8 @@ import com.google.re2j.Pattern;
 
 public interface IGoldLabel<D> {
 
+  String SANITIZE_SNIPPET = "(?s)[\\p{Zs}\\n\\r\\t]+";
+
   @Deprecated
   static void toSpacyAnnotations(File input, File output, String label) {
 
@@ -320,12 +322,12 @@ public interface IGoldLabel<D> {
   }
 
   /**
-   * A sanitized version of the string returned by the {@link snippet()} method.
+   * A sanitized version of the string returned by the {@link #snippet()} method.
    *
    * @return a sanitized text snippet.
    */
   default String snippetSanitized() {
-    return snippet().replaceAll("(?s)[\\p{Zs}\\n\\r\\t]+", " ");
+    return snippet().replaceAll(SANITIZE_SNIPPET, " ");
   }
 
   /**

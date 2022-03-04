@@ -1,9 +1,6 @@
 package com.computablefacts.morta.nextgen;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 import com.computablefacts.asterix.Document;
 import com.computablefacts.morta.snorkel.IGoldLabel;
@@ -15,6 +12,10 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.errorprone.annotations.CheckReturnValue;
 
+/**
+ * Link a {@link com.computablefacts.junon.Fact}, i.e. a span of text associated with a label, to
+ * the full {@link com.computablefacts.asterix.Document} from which the fact has been extracted.
+ */
 @CheckReturnValue
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public final class GoldLabel implements IGoldLabel<String> {
@@ -77,8 +78,7 @@ public final class GoldLabel implements IGoldLabel<String> {
 
   @Override
   public String data() {
-    return pages().map(pages -> page().filter(page -> page > 0 && page <= pages.size())
-        .map(page -> pages.get(page - 1)).orElse("")).orElse("");
+    return matchedPage();
   }
 
   @Override
@@ -111,6 +111,11 @@ public final class GoldLabel implements IGoldLabel<String> {
         .orElse("");
   }
 
+  /**
+   * Set the fact's underlying document.
+   *
+   * @param document a well-formed document.
+   */
   public void document(Document document) {
 
     Preconditions.checkNotNull(document, "document should not be null");
@@ -118,8 +123,39 @@ public final class GoldLabel implements IGoldLabel<String> {
     document_ = document.json();
   }
 
+  /**
+   * Returns the fact's underlying document (if any).
+   *
+   * @return a well-formed document.
+   */
   public Optional<Document> document() {
     return document_ == null ? Optional.empty() : Optional.of(new Document(document_));
+  }
+
+  /**
+   * Returns the page that contained the extracted fact.
+   *
+   * @return a single page.
+   */
+  public String matchedPage() {
+    return pages().map(pages -> page().filter(page -> page > 0 && page <= pages.size())
+        .map(page -> pages.get(page - 1 /* page is 1-based */)).orElse("")).orElse("");
+  }
+
+  /**
+   * Returns the list of pages that do not contain the extracted fact.
+   *
+   * @return a list of pages.
+   */
+  public Optional<List<String>> unmatchedPages() {
+    return pages().map(pages -> {
+
+      List<String> newPages = new ArrayList<>(pages);
+      page().filter(page -> page > 0 && page <= newPages.size())
+          .ifPresent(page -> newPages.remove(page - 1 /* page is 1-based */));
+
+      return newPages;
+    });
   }
 
   private Optional<List<String>> pages() {

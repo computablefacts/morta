@@ -13,7 +13,6 @@ import com.computablefacts.morta.snorkel.Helpers;
 import com.computablefacts.morta.snorkel.ITransformationFunction;
 import com.computablefacts.morta.snorkel.classifiers.AbstractClassifier;
 import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunction;
-import com.computablefacts.nona.helpers.Languages;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.errorprone.annotations.CheckReturnValue;
@@ -82,8 +81,7 @@ final public class Model {
   }
 
   public ITransformationFunction<String, FeatureVector<Double>> countVectorizer() {
-    return Helpers.countVectorizer(Languages.eLanguage.valueOf(language_), alphabet_,
-        maxGroupSize_);
+    return Helpers.countVectorizer(alphabet_, maxGroupSize_);
   }
 
   public boolean isValid() {

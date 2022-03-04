@@ -17,7 +17,6 @@ import com.computablefacts.morta.snorkel.Helpers;
 import com.computablefacts.morta.snorkel.IGoldLabel;
 import com.computablefacts.morta.snorkel.classifiers.*;
 import com.computablefacts.morta.snorkel.labelmodels.TreeLabelModel;
-import com.computablefacts.nona.helpers.Languages;
 import com.google.common.base.Preconditions;
 import com.google.errorprone.annotations.CheckReturnValue;
 
@@ -71,14 +70,13 @@ final public class TrainDiscriminativeModel extends ConsoleApp {
 
     gls.stream().filter(gl -> gl.isTruePositive() || gl.isFalseNegative())
         .peek(gl -> bar.update(count.incrementAndGet(), gls.size())).map(IGoldLabel::data)
-        .forEach(text -> Helpers.features(Languages.eLanguage.valueOf(language), maxGroupSize, text)
-            .forEach((f, w) -> {
-              if (!features.containsKey(f)) {
-                features.put(f, w);
-              } else {
-                features.put(f, Math.max(features.get(f), w));
-              }
-            }));
+        .forEach(text -> Helpers.features(maxGroupSize, text).forEach((f, w) -> {
+          if (!features.containsKey(f)) {
+            features.put(f, w);
+          } else {
+            features.put(f, Math.max(features.get(f), w));
+          }
+        }));
 
     System.out.println(); // Cosmetic
 
@@ -108,10 +106,9 @@ final public class TrainDiscriminativeModel extends ConsoleApp {
     count.set(0);
     bar.update(0, train.size());
 
-    List<FeatureVector<Double>> insts = View.of(train)
-        .peek(gl -> bar.update(count.incrementAndGet(), train.size())).map(IGoldLabel::data)
-        .map(Helpers.countVectorizer(Languages.eLanguage.valueOf(language), alphabet, maxGroupSize))
-        .toList();
+    List<FeatureVector<Double>> insts =
+        View.of(train).peek(gl -> bar.update(count.incrementAndGet(), train.size()))
+            .map(IGoldLabel::data).map(Helpers.countVectorizer(alphabet, maxGroupSize)).toList();
 
     System.out.println(); // Cosmetic
 
@@ -143,14 +140,12 @@ final public class TrainDiscriminativeModel extends ConsoleApp {
 
     // Compute model accuracy
     observations.add("Computing confusion matrix for the TRAIN dataset...");
-    observations
-        .add(confusionMatrix(language, alphabet, maxGroupSize, train, classifier).toString());
+    observations.add(confusionMatrix(alphabet, maxGroupSize, train, classifier).toString());
 
     observations.add("Computing confusion matrix for the TEST dataset...");
-    observations
-        .add(confusionMatrix(language, alphabet, maxGroupSize, test, classifier).toString());
+    observations.add(confusionMatrix(alphabet, maxGroupSize, test, classifier).toString());
 
-    ConfusionMatrix matrix = confusionMatrix(language, alphabet, maxGroupSize, gls, classifier);
+    ConfusionMatrix matrix = confusionMatrix(alphabet, maxGroupSize, gls, classifier);
     classifier.mcc(matrix.matthewsCorrelationCoefficient());
     classifier.f1(matrix.f1Score());
 
@@ -171,19 +166,16 @@ final public class TrainDiscriminativeModel extends ConsoleApp {
     observations.flush();
   }
 
-  private static ConfusionMatrix confusionMatrix(String language, Dictionary alphabet,
-      int maxGroupSize, List<? extends IGoldLabel<String>> goldLabels,
-      AbstractClassifier classifier) {
+  private static ConfusionMatrix confusionMatrix(Dictionary alphabet, int maxGroupSize,
+      List<? extends IGoldLabel<String>> goldLabels, AbstractClassifier classifier) {
 
-    Preconditions.checkNotNull(language, "language should not be null");
     Preconditions.checkNotNull(alphabet, "alphabet should not be null");
     Preconditions.checkArgument(maxGroupSize > 0, "maxGroupSize must be > 0");
     Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
     Preconditions.checkNotNull(classifier, "classifier should not be null");
 
     List<FeatureVector<Double>> testInsts = View.of(goldLabels).map(IGoldLabel::data)
-        .map(Helpers.countVectorizer(Languages.eLanguage.valueOf(language), alphabet, maxGroupSize))
-        .toList();
+        .map(Helpers.countVectorizer(alphabet, maxGroupSize)).toList();
 
     ConfusionMatrix matrix = new ConfusionMatrix();
 

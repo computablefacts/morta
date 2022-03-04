@@ -24,20 +24,21 @@ import com.google.common.base.Strings;
 import com.google.errorprone.annotations.CheckReturnValue;
 
 @CheckReturnValue
-final public class GoldLabelsRepository {
+final public class GoldLabelsRepository<T extends IGoldLabel<String>> {
+
+  public static final String UNKNOWN = "unknown";
+  public static final String ACCEPT = "ACCEPT";
+  public static final String REJECT = "REJECT";
 
   private static final Logger logger_ = LoggerFactory.getLogger(GoldLabelsRepository.class);
-  private static final String UNKNOWN = "unknown";
-  private static final String ACCEPT = "ACCEPT";
-  private static final String REJECT = "REJECT";
 
-  private final Map<String, List<IGoldLabel<String>>> goldLabels_ = new HashMap<>();
+  private final Map<String, List<T>> goldLabels_ = new HashMap<>();
   private final Map<String, TextCategorizer> categorizers_ = new HashMap<>();
 
   private GoldLabelsRepository() {}
 
-  public static GoldLabelsRepository fromFactsAndDocuments(File facts, File documents, String label,
-      boolean withProgressBar) {
+  public static GoldLabelsRepository<GoldLabel> fromFactsAndDocuments(File facts, File documents,
+      String label, boolean withProgressBar) {
 
     Preconditions.checkNotNull(facts, "facts should not be null");
     Preconditions.checkArgument(facts.exists(), "facts file does not exist : %s", facts);
@@ -45,9 +46,8 @@ final public class GoldLabelsRepository {
     Preconditions.checkArgument(documents.exists(), "documents file does not exist : %s",
         documents);
 
-    GoldLabelsRepository repository = new GoldLabelsRepository();
-    Set<IGoldLabel<String>> goldLabels =
-        repository.loadGoldLabels(facts, documents, label, withProgressBar);
+    GoldLabelsRepository<GoldLabel> repository = new GoldLabelsRepository<>();
+    Set<GoldLabel> goldLabels = repository.loadGoldLabels(facts, documents, label, withProgressBar);
     Set<String> labels = goldLabels.stream().map(IGoldLabel::label).collect(Collectors.toSet());
 
     for (String lbl : labels) {
@@ -61,12 +61,12 @@ final public class GoldLabelsRepository {
     return repository;
   }
 
-  public static GoldLabelsRepository fromGoldLabels(String outputDir, String label,
+  public static GoldLabelsRepository<GoldLabel> fromGoldLabels(String outputDir, String label,
       boolean withProgressBar) {
 
     Preconditions.checkNotNull(outputDir, "outputDir should not be null");
 
-    GoldLabelsRepository repository = new GoldLabelsRepository();
+    GoldLabelsRepository<GoldLabel> repository = new GoldLabelsRepository<>();
     File goldLabels = new File(outputDir + File.separator
         + (label == null ? "gold_labels.jsonl" : label + "_gold_labels.jsonl"));
 
@@ -94,12 +94,12 @@ final public class GoldLabelsRepository {
     return repository;
   }
 
-  public static GoldLabelsRepository fromProdigyAnnotations(String outputDir, String label,
-      boolean withProgressBar) {
+  public static GoldLabelsRepository<IGoldLabel<String>> fromProdigyAnnotations(String outputDir,
+      String label, boolean withProgressBar) {
 
     Preconditions.checkNotNull(outputDir, "outputDir should not be null");
 
-    GoldLabelsRepository repository = new GoldLabelsRepository();
+    GoldLabelsRepository<IGoldLabel<String>> repository = new GoldLabelsRepository<>();
     File annotations = new File(outputDir + File.separator
         + (label == null ? "prodigy_annotations.jsonl" : label + "_prodigy_annotations.jsonl"));
 
@@ -214,7 +214,7 @@ final public class GoldLabelsRepository {
     return goldLabels_.isEmpty();
   }
 
-  public void add(IGoldLabel<String> goldLabel) {
+  public void add(T goldLabel) {
 
     Preconditions.checkNotNull(goldLabel, "goldLabel should not be null");
 
@@ -224,7 +224,7 @@ final public class GoldLabelsRepository {
     goldLabels_.get(goldLabel.label()).add(goldLabel);
   }
 
-  public void add(Collection<IGoldLabel<String>> goldLabels) {
+  public void add(Collection<T> goldLabels) {
 
     Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
     Preconditions.checkArgument(!goldLabels.isEmpty(), "goldLabels should not be empty");
@@ -232,19 +232,19 @@ final public class GoldLabelsRepository {
     goldLabels.forEach(this::add);
   }
 
-  public Optional<List<IGoldLabel<String>>> goldLabels(String label) {
+  public Optional<List<T>> goldLabels(String label) {
     return Optional.ofNullable(label == null
         ? goldLabels_.values().stream().flatMap(Collection::stream).collect(Collectors.toList())
         : goldLabels_.get(label));
   }
 
-  public Optional<List<IGoldLabel<String>>> goldLabelsAccepted(String label) {
+  public Optional<List<T>> goldLabelsAccepted(String label) {
     return goldLabels(label).map(goldLabels -> goldLabels.stream()
         .filter(goldLabel -> goldLabel.isTruePositive() || goldLabel.isFalseNegative())
         .collect(Collectors.toList()));
   }
 
-  public Optional<List<IGoldLabel<String>>> goldLabelsRejected(String label) {
+  public Optional<List<T>> goldLabelsRejected(String label) {
     return goldLabels(label).map(goldLabels -> goldLabels.stream()
         .filter(goldLabel -> !goldLabel.isTruePositive() && !goldLabel.isFalseNegative())
         .collect(Collectors.toList()));
@@ -325,7 +325,7 @@ final public class GoldLabelsRepository {
       }
     } else {
 
-      Optional<List<IGoldLabel<String>>> goldLabels = goldLabels(label);
+      Optional<List<T>> goldLabels = goldLabels(label);
 
       if (goldLabels.isPresent() && !goldLabels.get().isEmpty()) {
 
@@ -353,7 +353,7 @@ final public class GoldLabelsRepository {
       }
     } else {
 
-      Optional<List<IGoldLabel<String>>> goldLabels = goldLabels(label);
+      Optional<List<T>> goldLabels = goldLabels(label);
 
       if (goldLabels.isPresent() && !goldLabels.get().isEmpty()) {
 
@@ -380,7 +380,7 @@ final public class GoldLabelsRepository {
       }
     } else {
 
-      Optional<List<IGoldLabel<String>>> goldLabels = goldLabels(label);
+      Optional<List<T>> goldLabels = goldLabels(label);
 
       if (goldLabels.isPresent() && !goldLabels.get().isEmpty()) {
 
@@ -393,7 +393,7 @@ final public class GoldLabelsRepository {
     }
   }
 
-  private Set<IGoldLabel<String>> loadGoldLabels(File facts, File documents, String label,
+  private Set<GoldLabel> loadGoldLabels(File facts, File documents, String label,
       boolean withProgressBar) {
 
     Preconditions.checkNotNull(facts, "facts should not be null");
@@ -453,7 +453,7 @@ final public class GoldLabelsRepository {
         }).flatten(doc -> {
 
           // Associate the current document with the relevant gold labels
-          Set<IGoldLabel<String>> gls =
+          Set<GoldLabel> gls =
               goldLabels.stream().filter(goldLabel -> goldLabel.id().equals(doc.docId()))
                   .peek(goldLabel -> goldLabel.document(doc)).collect(Collectors.toSet());
 
@@ -474,19 +474,17 @@ final public class GoldLabelsRepository {
     Preconditions.checkNotNull(label, "label should not be null");
 
     StringBuilder snippetsAccepted = new StringBuilder();
-    List<IGoldLabel<String>> goldLabelsAccepted =
-        goldLabelsAccepted(label).map(goldLabels -> goldLabels.stream()
-            .filter(goldLabel -> !Strings.isNullOrEmpty(goldLabel.snippet()))
-            .collect(Collectors.toList())).orElse(new ArrayList<>());
+    List<T> goldLabelsAccepted = goldLabelsAccepted(label).map(goldLabels -> goldLabels.stream()
+        .filter(goldLabel -> !Strings.isNullOrEmpty(goldLabel.snippet()))
+        .collect(Collectors.toList())).orElse(new ArrayList<>());
     double avgLengthAccepted = goldLabelsAccepted.stream()
         .peek(goldLabel -> snippetsAccepted.append(goldLabel.snippetSanitized()).append("\n\n\n"))
         .map(gl -> gl.snippet().length()).mapToInt(i -> i).average().orElse(0);
 
     StringBuilder snippetsRejected = new StringBuilder();
-    List<IGoldLabel<String>> goldLabelsRejected =
-        goldLabelsRejected(label).map(goldLabels -> goldLabels.stream()
-            .filter(goldLabel -> !Strings.isNullOrEmpty(goldLabel.snippet()))
-            .collect(Collectors.toList())).orElse(new ArrayList<>());
+    List<T> goldLabelsRejected = goldLabelsRejected(label).map(goldLabels -> goldLabels.stream()
+        .filter(goldLabel -> !Strings.isNullOrEmpty(goldLabel.snippet()))
+        .collect(Collectors.toList())).orElse(new ArrayList<>());
     double avgLengthRejected = goldLabelsRejected.stream()
         .peek(goldLabel -> snippetsRejected.append(goldLabel.snippetSanitized()).append("\n\n\n"))
         .map(gl -> gl.snippet().length()).mapToInt(i -> i).average().orElse(0);

@@ -17,7 +17,6 @@ import com.computablefacts.asterix.View;
 import com.computablefacts.asterix.codecs.StringCodec;
 import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunction;
 import com.computablefacts.morta.snorkel.labelmodels.TreeLabelModel;
-import com.computablefacts.nona.helpers.Languages;
 import com.computablefacts.nona.helpers.Strings;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.*;
@@ -92,16 +91,15 @@ final public class Helpers {
   }
 
   public static ITransformationFunction<String, FeatureVector<Double>> countVectorizer(
-      Languages.eLanguage language, Dictionary alphabet, int maxGroupSize) {
+      Dictionary alphabet, int maxGroupSize) {
 
-    Preconditions.checkNotNull(language, "language should not be null");
     Preconditions.checkNotNull(alphabet, "alphabet should not be null");
     Preconditions.checkArgument(maxGroupSize > 0, "maxGroupSize must be > 0");
 
     return text -> {
 
       FeatureVector<Double> vector = new FeatureVector<>(alphabet.size(), 0.0);
-      Map<String, Double> features = features(language, maxGroupSize, text);
+      Map<String, Double> features = features(maxGroupSize, text);
 
       features.forEach((f, w) -> {
         if (alphabet.containsKey(f)) {
@@ -289,10 +287,8 @@ final public class Helpers {
     return ngrams;
   }
 
-  public static Map<String, Double> features(Languages.eLanguage language, int maxGroupSize,
-      String text) {
+  public static Map<String, Double> features(int maxGroupSize, String text) {
 
-    Preconditions.checkNotNull(language, "language should not be null");
     Preconditions.checkArgument(maxGroupSize > 0, "maxGroupSize must be > 0");
     Preconditions.checkNotNull(text, "text should not be null");
 
