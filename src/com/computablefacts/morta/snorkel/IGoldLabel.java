@@ -320,6 +320,15 @@ public interface IGoldLabel<D> {
   }
 
   /**
+   * A sanitized version of the string returned by the {@link snippet()} method.
+   *
+   * @return a sanitized text snippet.
+   */
+  default String snippetSanitized() {
+    return snippet().replaceAll("(?s)[\\p{Zs}\\n\\r\\t]+", " ");
+  }
+
+  /**
    * Output the Gold Label in <a href="https://prodi.gy/">Prodigy</a> data format for
    * <a href="https://prodi.gy/docs/text-classification">text classification</a> or
    * <a href="https://prodi.gy/docs/span-categorization">span categorization</a>.

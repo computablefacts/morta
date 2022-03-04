@@ -421,7 +421,7 @@ final public class Helpers {
     xStream.allowTypeHierarchy(Collection.class);
     xStream.allowTypesByWildcard(new String[] {"com.computablefacts.**",
         "com.google.common.collect.**", "java.lang.**", "java.util.**", "java.io.File",
-        "smile.classification.**", "org.knallgrau.utils.textcat.**"});
+        "smile.classification.**", "com.computablefacts.morta.textcat.**"});
 
     return xStream;
   }

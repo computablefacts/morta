@@ -14,6 +14,7 @@ import com.computablefacts.asterix.View;
 import com.computablefacts.asterix.codecs.JsonCodec;
 import com.computablefacts.asterix.console.AsciiProgressBar;
 import com.computablefacts.logfmt.LogFormatter;
+import com.computablefacts.morta.snorkel.Helpers;
 import com.computablefacts.morta.snorkel.IGoldLabel;
 import com.computablefacts.morta.textcat.FingerPrint;
 import com.computablefacts.morta.textcat.TextCategorizer;
@@ -26,6 +27,9 @@ import com.google.errorprone.annotations.CheckReturnValue;
 final public class GoldLabelsRepository {
 
   private static final Logger logger_ = LoggerFactory.getLogger(GoldLabelsRepository.class);
+  private static final String UNKNOWN = "unknown";
+  private static final String ACCEPT = "ACCEPT";
+  private static final String REJECT = "REJECT";
 
   private final Map<String, List<IGoldLabel<String>>> goldLabels_ = new HashMap<>();
   private final Map<String, TextCategorizer> categorizers_ = new HashMap<>();
@@ -166,7 +170,7 @@ final public class GoldLabelsRepository {
 
       @Override
       public boolean isTruePositive() {
-        return "accept".equals(annotatedText.getOrDefault("answer", "unknown"));
+        return "accept".equals(annotatedText.getOrDefault("answer", UNKNOWN));
       }
 
       @Override
@@ -176,7 +180,7 @@ final public class GoldLabelsRepository {
 
       @Override
       public boolean isTrueNegative() {
-        return "reject".equals(annotatedText.getOrDefault("answer", "unknown"));
+        return "reject".equals(annotatedText.getOrDefault("answer", UNKNOWN));
       }
 
       @Override
@@ -246,6 +250,24 @@ final public class GoldLabelsRepository {
         .collect(Collectors.toList()));
   }
 
+  public Optional<TextCategorizer> categorizer() {
+
+    TextCategorizer categorizer = new TextCategorizer();
+    categorizers_.forEach((label, textCategorizer) -> {
+
+      FingerPrint fpAccept = textCategorizer.categories().stream()
+          .filter(cat -> ACCEPT.equals(cat.category())).findFirst().orElse(null);
+
+      Preconditions.checkState(fpAccept != null, "missing ACCEPT fingerprint for label %s", label);
+
+      FingerPrint fp = new FingerPrint(fpAccept);
+      fp.category(label);
+
+      categorizer.add(fp);
+    });
+    return Optional.of(categorizer);
+  }
+
   public Optional<TextCategorizer> categorizer(String label) {
 
     Preconditions.checkNotNull(label, "label should not be null");
@@ -263,11 +285,10 @@ final public class GoldLabelsRepository {
 
       goldLabelsAccepted(label).ifPresent(goldLabels -> goldLabels.forEach(goldLabel -> {
 
-        String category =
-            categorizer.categorize(goldLabel.snippet().replaceAll("(?s)[\\p{Zs}\\n\\r\\t]+", " "));
+        String category = categorizer.categorize(goldLabel.snippetSanitized());
 
-        if (!"unknown".equals(category)) {
-          if ("ACCEPT".equals(category)) {
+        if (!UNKNOWN.equals(category)) {
+          if (ACCEPT.equals(category)) {
             matrix.addTruePositives(1);
           } else {
             matrix.addFalseNegatives(1);
@@ -277,11 +298,10 @@ final public class GoldLabelsRepository {
 
       goldLabelsRejected(label).ifPresent(goldLabels -> goldLabels.forEach(goldLabel -> {
 
-        String category =
-            categorizer.categorize(goldLabel.snippet().replaceAll("(?s)[\\p{Zs}\\n\\r\\t]+", " "));
+        String category = categorizer.categorize(goldLabel.snippetSanitized());
 
-        if (!"unknown".equals(category)) {
-          if ("ACCEPT".equals(category)) {
+        if (!UNKNOWN.equals(category)) {
+          if (ACCEPT.equals(category)) {
             matrix.addFalsePositives(1);
           } else {
             matrix.addTrueNegatives(1);
@@ -297,8 +317,12 @@ final public class GoldLabelsRepository {
     Preconditions.checkNotNull(outputDir, "outputDir should not be null");
 
     if (label == null) {
+
       File file = new File(outputDir + File.separator + "gold_labels.jsonl");
-      View.of(goldLabels_.values()).flatten(View::of).toFile(JsonCodec::asString, file, false);
+
+      if (!file.exists()) {
+        View.of(goldLabels_.values()).flatten(View::of).toFile(JsonCodec::asString, file, false);
+      }
     } else {
 
       Optional<List<IGoldLabel<String>>> goldLabels = goldLabels(label);
@@ -314,15 +338,19 @@ final public class GoldLabelsRepository {
     }
   }
 
-  public void export(String outputDir, String label) {
+  public void exportProdigyAnnotations(String outputDir, String label) {
 
     Preconditions.checkNotNull(outputDir, "outputDir should not be null");
 
     if (label == null) {
 
       File file = new File(outputDir + File.separator + "prodigy_annotations.jsonl");
-      View.of(goldLabels_.values()).flatten(View::of).map(IGoldLabel::annotatedText)
-          .filter(Optional::isPresent).map(Optional::get).toFile(JsonCodec::asString, file, false);
+
+      if (!file.exists()) {
+        View.of(goldLabels_.values()).flatten(View::of).map(IGoldLabel::annotatedText)
+            .filter(Optional::isPresent).map(Optional::get)
+            .toFile(JsonCodec::asString, file, false);
+      }
     } else {
 
       Optional<List<IGoldLabel<String>>> goldLabels = goldLabels(label);
@@ -334,6 +362,32 @@ final public class GoldLabelsRepository {
         if (!file.exists()) {
           View.of(goldLabels.get()).map(IGoldLabel::annotatedText).filter(Optional::isPresent)
               .map(Optional::get).toFile(JsonCodec::asString, file, false);
+        }
+      }
+    }
+  }
+
+  public void exportTextCategories(String outputDir, String label) {
+
+    Preconditions.checkNotNull(outputDir, "outputDir should not be null");
+
+    if (label == null) {
+
+      File file = new File(outputDir + File.separator + "textcat.xml.gz");
+
+      if (!file.exists()) {
+        Helpers.serialize(file.getAbsolutePath(), categorizer());
+      }
+    } else {
+
+      Optional<List<IGoldLabel<String>>> goldLabels = goldLabels(label);
+
+      if (goldLabels.isPresent() && !goldLabels.get().isEmpty()) {
+
+        File file = new File(outputDir + File.separator + label + "_textcat.xml.gz");
+
+        if (!file.exists()) {
+          Helpers.serialize(file.getAbsolutePath(), categorizer(label));
         }
       }
     }
@@ -425,9 +479,7 @@ final public class GoldLabelsRepository {
             .filter(goldLabel -> !Strings.isNullOrEmpty(goldLabel.snippet()))
             .collect(Collectors.toList())).orElse(new ArrayList<>());
     double avgLengthAccepted = goldLabelsAccepted.stream()
-        .peek(goldLabel -> snippetsAccepted
-            .append(goldLabel.snippet().replaceAll("(?s)[\\p{Zs}\\n\\r\\t]+", " "))
-            .append("\n\n\n"))
+        .peek(goldLabel -> snippetsAccepted.append(goldLabel.snippetSanitized()).append("\n\n\n"))
         .map(gl -> gl.snippet().length()).mapToInt(i -> i).average().orElse(0);
 
     StringBuilder snippetsRejected = new StringBuilder();
@@ -436,18 +488,16 @@ final public class GoldLabelsRepository {
             .filter(goldLabel -> !Strings.isNullOrEmpty(goldLabel.snippet()))
             .collect(Collectors.toList())).orElse(new ArrayList<>());
     double avgLengthRejected = goldLabelsRejected.stream()
-        .peek(goldLabel -> snippetsRejected
-            .append(goldLabel.snippet().replaceAll("(?s)[\\p{Zs}\\n\\r\\t]+", " "))
-            .append("\n\n\n"))
+        .peek(goldLabel -> snippetsRejected.append(goldLabel.snippetSanitized()).append("\n\n\n"))
         .map(gl -> gl.snippet().length()).mapToInt(i -> i).average().orElse(0);
 
     FingerPrint fpAccepted = new FingerPrint();
-    fpAccepted.category("ACCEPT");
+    fpAccepted.category(ACCEPT);
     fpAccepted.avgLength(avgLengthAccepted);
     fpAccepted.create(snippetsAccepted.toString());
 
     FingerPrint fpRejected = new FingerPrint();
-    fpRejected.category("REJECT");
+    fpRejected.category(REJECT);
     fpRejected.avgLength(avgLengthRejected);
     fpRejected.create(snippetsRejected.toString());
 

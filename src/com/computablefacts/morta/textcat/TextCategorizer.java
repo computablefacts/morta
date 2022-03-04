@@ -1,17 +1,23 @@
 package com.computablefacts.morta.textcat;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.errorprone.annotations.CheckReturnValue;
 
 @CheckReturnValue
 final public class TextCategorizer {
 
-  private final ArrayList<FingerPrint> categories_ = new ArrayList<>();
+  private final List<FingerPrint> categories_ = new ArrayList<>();
 
   public TextCategorizer() {}
+
+  public List<FingerPrint> categories() {
+    return ImmutableList.copyOf(categories_);
+  }
 
   public void add(FingerPrint fingerPrint) {
     categories_.add(fingerPrint);

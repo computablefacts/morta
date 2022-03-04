@@ -19,6 +19,14 @@ public class FingerPrint extends Hashtable<String, Integer> {
 
   public FingerPrint() {}
 
+  public FingerPrint(FingerPrint fp) {
+    this.putAll(fp);
+    this.entries_.addAll(fp.entries_);
+    this.categoryDistances_.putAll(fp.categoryDistances_);
+    this.category_ = fp.category_;
+    this.avgLength_ = fp.avgLength_;
+  }
+
   @Override
   public String toString() {
 

@@ -45,8 +45,11 @@ final public class SaturatedDive extends ConsoleApp {
         goldLabelsRepository.save(outputDir, label);
       }
 
-      // Export gold labels as Prodigy annotations
-      goldLabelsRepository.export(outputDir, label);
+      // Export Prodigy annotations
+      goldLabelsRepository.exportProdigyAnnotations(outputDir, label);
+
+      // Export TextCat configuration
+      goldLabelsRepository.exportTextCategories(outputDir, label);
     }
 
     // Process labels:
@@ -72,10 +75,6 @@ final public class SaturatedDive extends ConsoleApp {
         // Save model
       }
     }
-  }
-
-  private static void trainTextCat() {
-    // TODO
   }
 
   private static void craftLabelingFunctions() {
