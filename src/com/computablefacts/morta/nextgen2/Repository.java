@@ -17,6 +17,7 @@ import com.computablefacts.morta.snorkel.Helpers;
 import com.computablefacts.morta.snorkel.IGoldLabel;
 import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunction;
 import com.computablefacts.morta.snorkel.labelingfunctions.MatchRegexLabelingFunction;
+import com.computablefacts.morta.snorkel.labelmodels.AbstractLabelModel;
 import com.computablefacts.morta.snorkel.labelmodels.TreeLabelModel;
 import com.computablefacts.morta.textcat.FingerPrint;
 import com.computablefacts.morta.textcat.TextCategorizer;
@@ -47,7 +48,7 @@ public final class Repository {
    */
   public Set<String> init(File facts, File documents, boolean withProgressBar) {
 
-    Preconditions.checkState(!isInitialized_, "init should be called only once");
+    Preconditions.checkState(!isInitialized_, "init() should be called only once");
 
     isInitialized_ = true;
 
@@ -63,7 +64,7 @@ public final class Repository {
    */
   public Set<String> labels() {
 
-    Preconditions.checkState(isInitialized_, "init should be called first");
+    Preconditions.checkState(isInitialized_, "init() should be called first");
 
     return View.of(pagesAsGoldLabels(null, null, false))
         .concat(View.of(factsAsGoldLabels(null, null, false))).map(IGoldLabel::label).toSet();
@@ -77,7 +78,7 @@ public final class Repository {
    */
   public Set<FactAndDocument> factsAndDocuments(String label) {
 
-    Preconditions.checkState(isInitialized_, "init should be called first");
+    Preconditions.checkState(isInitialized_, "init() should be called first");
 
     return FactAndDocument.load(fileFactsAndDocuments(), null, false).stream()
         .filter(goldLabel -> label == null || label.equals(goldLabel.label()))
@@ -93,7 +94,7 @@ public final class Repository {
    */
   public Set<IGoldLabel<String>> pagesAsGoldLabels(String label) {
 
-    Preconditions.checkState(isInitialized_, "init should be called first");
+    Preconditions.checkState(isInitialized_, "init() should be called first");
 
     return GoldLabelOfString.load(filePagesAsGoldLabels(), null, false).stream()
         .filter(goldLabel -> label == null || label.equals(goldLabel.label()))
@@ -110,7 +111,7 @@ public final class Repository {
    */
   public Set<IGoldLabel<String>> factsAsGoldLabels(String label) {
 
-    Preconditions.checkState(isInitialized_, "init should be called first");
+    Preconditions.checkState(isInitialized_, "init() should be called first");
 
     return GoldLabelOfString.load(fileFactsAsGoldLabels(), null, false).stream()
         .filter(goldLabel -> label == null || label.equals(goldLabel.label()))
@@ -126,7 +127,7 @@ public final class Repository {
    */
   public TextCategorizer textCategorizer() {
 
-    Preconditions.checkState(isInitialized_, "init should be called first");
+    Preconditions.checkState(isInitialized_, "init() should be called first");
 
     File file = fileTextCategorizer();
 
@@ -168,7 +169,7 @@ public final class Repository {
    */
   public TextCategorizer textCategorizer(String label) {
 
-    Preconditions.checkState(isInitialized_, "init should be called first");
+    Preconditions.checkState(isInitialized_, "init() should be called first");
     Preconditions.checkNotNull(label, "label should not be null");
 
     File file = fileTextCategorizer(label);
@@ -230,7 +231,7 @@ public final class Repository {
   public List<AbstractLabelingFunction<String>> labelingFunctions(String label, int maxGroupSize,
       int nbCandidatesToConsider, int nbLabelsToReturn) {
 
-    Preconditions.checkState(isInitialized_, "init should be called first");
+    Preconditions.checkState(isInitialized_, "init() should be called first");
     Preconditions.checkNotNull(label, "label should not be null");
     Preconditions.checkArgument(maxGroupSize > 0, "maxGroupSize must be > 0");
     Preconditions.checkArgument(nbCandidatesToConsider > 0, "nbCandidatesToConsider must be > 0");
@@ -282,9 +283,15 @@ public final class Repository {
     return guesstimatedLabelingFunctions;
   }
 
-  public TreeLabelModel<String> labelModel(String label) {
+  /**
+   * Load or train a label model.
+   *
+   * @param label the label for which a label model must be trained.
+   * @return a label model.
+   */
+  public AbstractLabelModel<String> labelModel(String label) {
 
-    Preconditions.checkState(isInitialized_, "init should be called first");
+    Preconditions.checkState(isInitialized_, "init() should be called first");
     Preconditions.checkNotNull(label, "label should not be null");
 
     File file = fileTrainedLabelModel(label);
@@ -295,7 +302,6 @@ public final class Repository {
 
     Set<IGoldLabel<String>> goldLabels = pagesAsGoldLabels(label);
     List<Set<IGoldLabel<String>>> devTrainTest = IGoldLabel.split(goldLabels, true, 0.0, 0.75);
-    List<IGoldLabel<String>> dev = new ArrayList<>(devTrainTest.get(0));
     List<IGoldLabel<String>> train = new ArrayList<>(devTrainTest.get(1));
     List<IGoldLabel<String>> test = new ArrayList<>(devTrainTest.get(2));
 
@@ -304,7 +310,7 @@ public final class Repository {
         goldLabels.size(), train.size() + test.size());
 
     Preconditions.checkState(fileGuesstimatedLabelingFunctions(label).exists(),
-        "labelingFunctions must be called first");
+        "labelingFunctions() should be called first");
 
     List<AbstractLabelingFunction<String>> labelingFunctions =
         Helpers.deserialize(fileGuesstimatedLabelingFunctions(label).getAbsolutePath());
