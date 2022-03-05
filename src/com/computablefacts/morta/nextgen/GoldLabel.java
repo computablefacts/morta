@@ -16,6 +16,7 @@ import com.google.errorprone.annotations.CheckReturnValue;
  * Link a {@link com.computablefacts.junon.Fact}, i.e. a span of text associated with a label, to
  * the full {@link com.computablefacts.asterix.Document} from which the fact has been extracted.
  */
+@Deprecated
 @CheckReturnValue
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public final class GoldLabel implements IGoldLabel<String> {

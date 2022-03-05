@@ -17,6 +17,7 @@ import com.google.re2j.Pattern;
 
 public interface IGoldLabel<D> {
 
+  @Deprecated
   String SANITIZE_SNIPPET = "(?s)[\\p{Zs}\\n\\r\\t]+";
 
   /**
@@ -200,6 +201,26 @@ public interface IGoldLabel<D> {
   boolean isFalseNegative();
 
   /**
+   * Returns the current gold label as a {@link Map}.
+   *
+   * @return a {@link Map}.
+   */
+  default Map<String, Object> asMap() {
+
+    Map<String, Object> map = new HashMap<>();
+    map.put("id", id());
+    map.put("label", label());
+    map.put("data", data());
+    map.put("snippet", snippet());
+    map.put("is_true_positive", isTruePositive());
+    map.put("is_false_positive", isFalsePositive());
+    map.put("is_true_negative", isTrueNegative());
+    map.put("is_false_negative", isFalseNegative());
+
+    return map;
+  }
+
+  /**
    * If {@code D} is an instance of {@link String}, an optional text snippet which must be a
    * substring of {@link data()}. This text snippet is used by
    * {@link com.computablefacts.morta.docsetlabeler.DocSetLabelerImpl} to boost terms included in
@@ -207,6 +228,7 @@ public interface IGoldLabel<D> {
    *
    * @return a text snippet.
    */
+  @Deprecated
   default String snippet() {
     return "";
   }
@@ -216,6 +238,7 @@ public interface IGoldLabel<D> {
    *
    * @return a sanitized text snippet.
    */
+  @Deprecated
   default String snippetSanitized() {
     return snippet().replaceAll(SANITIZE_SNIPPET, " ");
   }
@@ -227,6 +250,7 @@ public interface IGoldLabel<D> {
    *
    * @return an {@link AnnotatedText}.
    */
+  @Deprecated
   default Optional<AnnotatedText> annotatedText() {
 
     if (!isTruePositive() && !isTrueNegative() && !isFalsePositive() && !isFalseNegative()) {
@@ -254,7 +278,7 @@ public interface IGoldLabel<D> {
 
     List<Token> tokens = new ArrayList<>();
     Matcher tokenizer =
-        Pattern.compile("[^\\p{Zs}\\n]+", Pattern.DOTALL | Pattern.MULTILINE).matcher(data);
+        Pattern.compile("[^\\p{Zs}\\n\\r\\t]+", Pattern.DOTALL | Pattern.MULTILINE).matcher(data);
 
     while (tokenizer.find()) {
 

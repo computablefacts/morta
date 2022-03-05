@@ -23,6 +23,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.errorprone.annotations.CheckReturnValue;
 
+@Deprecated
 @CheckReturnValue
 final public class GoldLabelsRepository<T extends IGoldLabel<String>> {
 

@@ -34,6 +34,7 @@ import com.google.common.primitives.Ints;
 import com.google.errorprone.annotations.CheckReturnValue;
 import com.google.errorprone.annotations.Var;
 
+@Deprecated
 @CheckReturnValue
 final public class SaturatedDive extends ConsoleApp {
 
