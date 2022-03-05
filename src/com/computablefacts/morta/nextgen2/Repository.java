@@ -5,6 +5,7 @@ import static com.computablefacts.morta.nextgen.GoldLabelsRepository.REJECT;
 import static com.computablefacts.morta.snorkel.IGoldLabel.SANITIZE_SNIPPET;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -16,6 +17,7 @@ import com.computablefacts.morta.snorkel.Helpers;
 import com.computablefacts.morta.snorkel.IGoldLabel;
 import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunction;
 import com.computablefacts.morta.snorkel.labelingfunctions.MatchRegexLabelingFunction;
+import com.computablefacts.morta.snorkel.labelmodels.TreeLabelModel;
 import com.computablefacts.morta.textcat.FingerPrint;
 import com.computablefacts.morta.textcat.TextCategorizer;
 import com.google.common.base.Preconditions;
@@ -212,7 +214,7 @@ public final class Repository {
   }
 
   /**
-   * Guesstimate labeling functions using the
+   * Load or guesstimate labeling functions using the
    * {@link com.computablefacts.morta.docsetlabeler.DocSetLabeler} algorithm.
    *
    * @param label the label for which the labeling functions must be guesstimated.
@@ -225,8 +227,8 @@ public final class Repository {
    *        the end.
    * @return a list of labeling functions.
    */
-  public List<AbstractLabelingFunction<String>> guesstimateLabelingFunctions(String label,
-      int maxGroupSize, int nbCandidatesToConsider, int nbLabelsToReturn) {
+  public List<AbstractLabelingFunction<String>> labelingFunctions(String label, int maxGroupSize,
+      int nbCandidatesToConsider, int nbLabelsToReturn) {
 
     Preconditions.checkState(isInitialized_, "init should be called first");
     Preconditions.checkNotNull(label, "label should not be null");
@@ -278,6 +280,41 @@ public final class Repository {
 
     Helpers.serialize(file.getAbsolutePath(), guesstimatedLabelingFunctions);
     return guesstimatedLabelingFunctions;
+  }
+
+  public TreeLabelModel<String> labelModel(String label) {
+
+    Preconditions.checkState(isInitialized_, "init should be called first");
+    Preconditions.checkNotNull(label, "label should not be null");
+
+    File file = fileTrainedLabelModel(label);
+
+    if (file.exists()) {
+      return Helpers.deserialize(file.getAbsolutePath());
+    }
+
+    Set<IGoldLabel<String>> goldLabels = pagesAsGoldLabels(label);
+    List<Set<IGoldLabel<String>>> devTrainTest = IGoldLabel.split(goldLabels, true, 0.0, 0.75);
+    List<IGoldLabel<String>> dev = new ArrayList<>(devTrainTest.get(0));
+    List<IGoldLabel<String>> train = new ArrayList<>(devTrainTest.get(1));
+    List<IGoldLabel<String>> test = new ArrayList<>(devTrainTest.get(2));
+
+    Preconditions.checkState(train.size() + test.size() == goldLabels.size(),
+        "inconsistency found in the number of gold labels in train/test datasets : %s expected vs %s found",
+        goldLabels.size(), train.size() + test.size());
+
+    Preconditions.checkState(fileGuesstimatedLabelingFunctions(label).exists(),
+        "labelingFunctions must be called first");
+
+    List<AbstractLabelingFunction<String>> labelingFunctions =
+        Helpers.deserialize(fileGuesstimatedLabelingFunctions(label).getAbsolutePath());
+
+    TreeLabelModel<String> labelModel =
+        new TreeLabelModel<>(labelingFunctions, TreeLabelModel.eMetric.MCC);
+    labelModel.fit(train);
+
+    Helpers.serialize(file.getAbsolutePath(), labelModel);
+    return labelModel;
   }
 
   private Set<FactAndDocument> factsAndDocuments(File facts, File documents,
@@ -362,6 +399,13 @@ public final class Repository {
     Preconditions.checkNotNull(label, "label should not be null");
 
     return new File(outputDir_ + File.separator + label + "_labeling_functions.xml.gz");
+  }
+
+  private File fileTrainedLabelModel(String label) {
+
+    Preconditions.checkNotNull(label, "label should not be null");
+
+    return new File(outputDir_ + File.separator + label + "_trained_label_model.xml.gz");
   }
 
   private String sanitize(String str) {
