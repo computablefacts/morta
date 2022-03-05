@@ -1,25 +1,15 @@
 package com.computablefacts.morta.snorkel;
 
-import static com.computablefacts.morta.snorkel.ILabelingFunction.OK;
-
-import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import com.computablefacts.asterix.ConfusionMatrix;
-import com.computablefacts.asterix.View;
-import com.computablefacts.asterix.codecs.JsonCodec;
-import com.computablefacts.asterix.console.AsciiProgressBar;
-import com.computablefacts.morta.Observations;
-import com.computablefacts.morta.snorkel.labelmodels.TreeLabelModel;
 import com.computablefacts.morta.spacy.AnnotatedText;
 import com.computablefacts.morta.spacy.Meta;
 import com.computablefacts.morta.spacy.Span;
 import com.computablefacts.morta.spacy.Token;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.errorprone.annotations.Var;
 import com.google.re2j.Matcher;
@@ -28,106 +18,6 @@ import com.google.re2j.Pattern;
 public interface IGoldLabel<D> {
 
   String SANITIZE_SNIPPET = "(?s)[\\p{Zs}\\n\\r\\t]+";
-
-  @Deprecated
-  static void toSpacyAnnotations(File input, File output, String label) {
-
-    Preconditions.checkNotNull(input, "input should not be null");
-    Preconditions.checkArgument(input.exists(), "input should exist : %s", input);
-    Preconditions.checkNotNull(output, "output should not be null");
-    Preconditions.checkArgument(!output.exists(), "output should not exist : %s", output);
-
-    View.of(input, true).filter(str -> !Strings.isNullOrEmpty(str))
-        .map(str -> (IGoldLabel<String>) new GoldLabel(JsonCodec.asObject(str)))
-        .filter(gl -> !Strings.isNullOrEmpty(gl.snippet()))
-        .filter(gl -> label == null || label.equals(gl.label())).map(gl -> {
-          Meta meta =
-              new Meta(gl.id(), gl.label(), TreeLabelModel.label(gl) == OK ? "accept" : "reject");
-          return new AnnotatedText(meta, gl.snippet());
-        }).toFile(JsonCodec::asString, output, false);
-  }
-
-  @Deprecated
-  static List<IGoldLabel<String>> fromSpacyAnnotations(Observations observations, File file,
-      String label) {
-
-    Preconditions.checkNotNull(observations, "observations should not be null");
-    Preconditions.checkNotNull(file, "file should not be null");
-    Preconditions.checkArgument(file.exists(), "file should exist : %s", file);
-
-    observations.add("Loading spacy annotations...");
-
-    ObjectMapper mapper = new ObjectMapper();
-    AsciiProgressBar.IndeterminateProgressBar bar = AsciiProgressBar.createIndeterminate();
-
-    List<IGoldLabel<String>> gls = View.of(file).index()
-        .filter(e -> !Strings.isNullOrEmpty(e.getValue())).peek(e -> bar.update()).map(e -> {
-
-          String json = e.getValue();
-          AnnotatedText annotatedText;
-
-          try {
-            annotatedText = mapper.readValue(json, AnnotatedText.class);
-          } catch (Exception ex) {
-            System.out.println(Throwables.getStackTraceAsString(Throwables.getRootCause(ex)));
-            return Lists.<IGoldLabel<String>>newArrayList();
-          }
-          if ("ignore".equals(annotatedText.answer_)) {
-            return Lists.<IGoldLabel<String>>newArrayList();
-          }
-
-          String id = annotatedText.meta_.source_
-              .substring(annotatedText.meta_.source_.lastIndexOf('/') + 1);
-
-          if (annotatedText.spans_ == null || annotatedText.spans_.isEmpty()) {
-            return Lists.newArrayList((IGoldLabel<String>) new GoldLabel(id,
-                annotatedText.meta_.expectedLabel_, annotatedText.text_, annotatedText.text_,
-                "accept".equals(annotatedText.answer_), false,
-                "reject".equals(annotatedText.answer_), false));
-          }
-          return annotatedText.spans_.stream()
-              .map(span -> (IGoldLabel<String>) new GoldLabel(id, span.label_, annotatedText.text_,
-                  annotatedText.text_.substring(span.start_, span.end_), true, false, false, false))
-              .collect(Collectors.toList());
-        }).flatten(View::of).filter(gl -> label == null || label.equals(gl.label())).toList();
-
-    bar.complete();
-
-    System.out.println(); // Cosmetic
-    observations.add(String.format("%d gold labels loaded.", gls.size()));
-
-    return gls;
-  }
-
-  /**
-   * Load gold labels from a gzip file.
-   *
-   * @param file gold labels as JSON objects stored inside a gzip file.
-   * @return a list of {@link IGoldLabel}.
-   */
-  @Deprecated
-  static List<IGoldLabel<String>> load(Observations observations, File file, String label) {
-
-    Preconditions.checkNotNull(observations, "observations should not be null");
-    Preconditions.checkNotNull(file, "file should not be null");
-    Preconditions.checkArgument(file.exists(), "file should exist : %s", file);
-
-    observations.add("Loading gold labels...");
-
-    AsciiProgressBar.IndeterminateProgressBar bar = AsciiProgressBar.createIndeterminate();
-
-    List<IGoldLabel<String>> gls = View.of(file, true).index()
-        .filter(e -> !Strings.isNullOrEmpty(e.getValue())).peek(e -> bar.update())
-        .map(e -> (IGoldLabel<String>) new GoldLabel(JsonCodec.asObject(e.getValue())))
-        .filter(gl -> label == null || label.equals(gl.label())).toList();
-
-    bar.complete();
-
-    System.out.println(); // Cosmetic
-    observations.add(String.format("%d gold labels loaded.", gls.size()));
-
-    return gls;
-  }
 
   /**
    * Split a set of gold labels i.e. reference labels into 3 subsets : dev, train and test. The dev

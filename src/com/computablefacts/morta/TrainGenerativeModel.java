@@ -52,7 +52,7 @@ final public class TrainGenerativeModel extends ConsoleApp {
     observations.add(String.format("The language is %s", language));
 
     // Load gold labels
-    List<IGoldLabel<String>> gls = IGoldLabel.load(observations, goldLabels, label);
+    List<IGoldLabel<String>> gls = Helpers.load(observations, goldLabels, label);
 
     // Split gold labels into train and test
     observations.add("Splitting gold labels into train/test...");
@@ -171,7 +171,7 @@ final public class TrainGenerativeModel extends ConsoleApp {
       }).toFile(JsonCodec::asString,
           new File(Constants.newGoldLabelsGz(outputDirectory, language, label)), false, true);
 
-      IGoldLabel.toSpacyAnnotations(
+      Helpers.toSpacyAnnotations(
           new File(Constants.newGoldLabelsGz(outputDirectory, language, label)),
           new File(Constants.spacyGoldLabelsJson(outputDirectory, language, label)), label);
     }

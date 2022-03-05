@@ -64,9 +64,9 @@ final public class GuesstimateLabelingFunctions extends ConsoleApp {
             File.separator, label));
 
     if (spacyVerifiedAnnotations.exists()) {
-      gls = IGoldLabel.fromSpacyAnnotations(observations, spacyVerifiedAnnotations, null);
+      gls = Helpers.fromSpacyAnnotations(observations, spacyVerifiedAnnotations, null);
     } else {
-      gls = IGoldLabel.load(observations, goldLabels, label);
+      gls = Helpers.load(observations, goldLabels, label);
     }
 
     // Pages for which LF must return OK
@@ -168,7 +168,7 @@ final public class GuesstimateLabelingFunctions extends ConsoleApp {
     }
 
     // At last, output spacy annotations
-    IGoldLabel.toSpacyAnnotations(goldLabels, new File(String
+    Helpers.toSpacyAnnotations(goldLabels, new File(String
         .format("%s%sspacy_annotations_for_%s.jsonl", outputDirectory, File.separator, label)),
         label);
 

@@ -45,7 +45,7 @@ final public class TrainDiscriminativeModel extends ConsoleApp {
     observations.add(String.format("The classifier is %s", clazzifier));
 
     // Load gold labels
-    List<IGoldLabel<String>> gls = IGoldLabel.load(observations, goldLabels, label);
+    List<IGoldLabel<String>> gls = Helpers.load(observations, goldLabels, label);
 
     // Split gold labels into train and test
     observations.add("Splitting gold labels into train/test...");
