@@ -10,6 +10,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.computablefacts.asterix.ConfusionMatrix;
+import com.computablefacts.asterix.Generated;
 import com.computablefacts.asterix.SnippetExtractor;
 import com.computablefacts.asterix.View;
 import com.computablefacts.morta.classifiers.*;
@@ -51,6 +52,16 @@ public final class Repository {
 
     outputDir_ = outputDir;
     maxGroupSize_ = maxGroupSize;
+  }
+
+  @Generated
+  public String outputDirectory() {
+    return outputDir_;
+  }
+
+  @Generated
+  public int maxGroupSize() {
+    return maxGroupSize_;
   }
 
   /**
