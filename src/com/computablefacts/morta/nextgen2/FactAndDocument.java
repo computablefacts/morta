@@ -206,8 +206,8 @@ public final class FactAndDocument {
     Preconditions.checkNotNull(elements, "elements should not be null");
 
     return elements.stream().filter(element -> element.isAccepted() || element.isRejected())
-        .map(FactAndDocument::pageAsGoldLabel)
-        .filter(goldLabel -> !Strings.isNullOrEmpty(goldLabel.data())).collect(Collectors.toSet());
+        .filter(element -> !Strings.isNullOrEmpty(element.matchedPage()))
+        .map(FactAndDocument::pageAsGoldLabel).collect(Collectors.toSet());
   }
 
   /**
@@ -221,8 +221,8 @@ public final class FactAndDocument {
     Preconditions.checkNotNull(elements, "elements should not be null");
 
     return elements.stream().filter(element -> element.isAccepted() || element.isRejected())
-        .map(FactAndDocument::factAsGoldLabel)
-        .filter(goldLabel -> !Strings.isNullOrEmpty(goldLabel.data())).collect(Collectors.toSet());
+        .filter(element -> !Strings.isNullOrEmpty(element.fact()))
+        .map(FactAndDocument::factAsGoldLabel).collect(Collectors.toSet());
   }
 
   /**
@@ -236,8 +236,7 @@ public final class FactAndDocument {
     Preconditions.checkNotNull(elements, "elements should not be null");
 
     return elements.stream().filter(FactAndDocument::isAccepted)
-        .flatMap(element -> element.syntheticGoldLabels().stream())
-        .filter(goldLabel -> !Strings.isNullOrEmpty(goldLabel.data())).collect(Collectors.toSet());
+        .flatMap(element -> element.syntheticGoldLabels().stream()).collect(Collectors.toSet());
   }
 
   @Override
@@ -403,7 +402,7 @@ public final class FactAndDocument {
     Preconditions.checkState(isAccepted(),
         "unverified or rejected facts cannot be used to create synthetic gold labels");
 
-    return unmatchedPages().stream()
+    return unmatchedPages().stream().filter(page -> !Strings.isNullOrEmpty(page))
         .map(page -> new GoldLabelOfString(id(), label(), page, true, false, false, false))
         .collect(Collectors.toSet());
   }
