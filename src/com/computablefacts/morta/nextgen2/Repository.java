@@ -3,11 +3,13 @@ package com.computablefacts.morta.nextgen2;
 import static com.computablefacts.morta.nextgen.GoldLabelsRepository.ACCEPT;
 import static com.computablefacts.morta.nextgen.GoldLabelsRepository.REJECT;
 import static com.computablefacts.morta.snorkel.IGoldLabel.SANITIZE_SNIPPET;
+import static com.computablefacts.morta.snorkel.ILabelingFunction.OK;
 
 import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.computablefacts.asterix.SnippetExtractor;
 import com.computablefacts.asterix.View;
 import com.computablefacts.morta.docsetlabeler.DocSetLabelerImpl;
 import com.computablefacts.morta.snorkel.Dictionary;
@@ -437,6 +439,55 @@ public final class Repository {
     return alphabet;
   }
 
+  /**
+   * Classify a given text.
+   * 
+   * @param alphabet the alphabet to use.
+   * @param classifier the classifier to use.
+   * @param text the text to classify.
+   * @return a label in {OK, KO}.
+   */
+  public int classify(Dictionary alphabet, AbstractClassifier classifier, String text) {
+
+    Preconditions.checkNotNull(alphabet, "alphabet should not be null");
+    Preconditions.checkNotNull(classifier, "classifier should not be null");
+    Preconditions.checkNotNull(text, "text should not be null");
+
+    return classifier.predict(Helpers.countVectorizer(alphabet, maxGroupSize_).apply(text));
+  }
+
+  /**
+   * On positive classification, returns a snippet of text centered around its most 'interesting'
+   * part.
+   *
+   * @param alphabet the alphabet to use.
+   * @param classifier the classifier to use.
+   * @param labelingFunctions the labeling functions to use.
+   * @param text the text to classify.
+   * @return a snippet centered around its most 'interesting' part (if any).
+   */
+  public Optional<String> snippet(Dictionary alphabet, AbstractClassifier classifier,
+      List<? extends AbstractLabelingFunction<String>> labelingFunctions, String text) {
+
+    Preconditions.checkNotNull(alphabet, "alphabet should not be null");
+    Preconditions.checkNotNull(classifier, "classifier should not be null");
+    Preconditions.checkNotNull(labelingFunctions, "labelingFunctions should not be null");
+    Preconditions.checkNotNull(text, "text should not be null");
+
+    int prediction = classify(alphabet, classifier, text);
+
+    if (prediction != OK) {
+      return Optional.empty();
+    }
+
+    List<String> keywords = Helpers.keywords(labelingFunctions, text);
+
+    if (keywords.isEmpty()) {
+      return Optional.empty();
+    }
+    return Optional.ofNullable(SnippetExtractor.extract(keywords, text, 300, 50, ""));
+  }
+
   private Set<FactAndDocument> factsAndDocuments(File facts, File documents,
       boolean withProgressBar) {
 
@@ -546,7 +597,7 @@ public final class Repository {
     return Strings.nullToEmpty(str).replaceAll(SANITIZE_SNIPPET, " ");
   }
 
-  enum eClassifier {
+  public enum eClassifier {
     KNN, LDA, FLD, QDA, RDA, LOGIT
   }
 }
