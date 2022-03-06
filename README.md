@@ -23,7 +23,6 @@ The format of a single Gold Label is :
     "id": "<uuid>",
     "label": "<model_name>",
     "data": "<text>",
-    "snippet": "<focus_in_text>",
     "is_true_positive": <true|false>,
     "is_true_negative": <true|false>,
     "is_false_positive": <true|false>,
@@ -42,53 +41,20 @@ The Gold Labels must be grouped together as a [ND-JSON](http://ndjson.org/) file
 
 The ND-JSON file must be gzipped.
 
-### Creating Labeling Functions (automatically)
+### Training a span categorizer
 
-To automatically create new labeling functions from a set of Gold Labels, run the 
-following command-line:
-
-```
-java -Xms4g -Xmx8g com.computablefacts.morta.GuesstimateLabelingFunctions \
-    -dry_run false \
-    -language "<language>" \
-    -label "<model_name>" \
-    -gold_labels "/home/jdoe/my_gold_labels.json.gz" \
-    -nb_candidates_to_consider 50 \
-    -nb_labels_to_return 15 \
-    -output_directory "/home/jdoe"
-```
-
-### Training a Generative Model
-
-To train a Generative Model from a set of Labeling Functions, run the following 
-command-line:
+To automatically train a new span categorizer from a set of Gold Labels, 
+run the following command-line:
 
 ```
-java -Xms4g -Xmx8g com.computablefacts.morta.TrainGenerativeModel \
-    -dry_run false \
-    -language "<language>" \
-    -label "<model_name>" \
-    -gold_labels "/home/jdoe/gold_labels_for_<model_name>.json.gz" \
-    -labeling_functions "/home/jdoe/guesstimated_labeling_functions_for_<model_name>"_"<language>.xml.gz" \
-    -output_directory "/home/jdoe"
+java -Xms4g -Xmx8g com.computablefacts.morta.SaturatedDive \
+    -verbose true \
+    -facts "/home/user/2022-02-20_19-57-17/facts.prod.smacl.dab.json.gz" \
+    -documents "/home/user/2022-02-20_19-57-17/documents.prod.smacl.dab.json.gz" \
+    -output_directory "/home/user/2022-02-20_19-57-17"
 ```
 
-### Training a Discriminative Model
-
-To train a Discriminative Model from a Generative Model, run the following
-command-line:
-
-```
-java -Xms4g -Xmx8g com.computablefacts.morta.TrainDiscriminativeModel \
-    -dry_run false \
-    -language "<language>" \
-    -label "<model_name>" \
-    -gold_labels "/home/jdoe/gold_labels_for_<model_name>.json.gz" \
-    -label_model "/home/jdoe/label_model_for_<model_name>"_"<language>.xml.gz" \
-    -alphabet "/home/jdoe/alphabet_for_<model_name>"_"<language>.xml.gz" \
-    -output_directory "/home/jdoe" \
-    -classifier "logit"
-```
+Add `-label my_label` to train the span categorizer on `my_label` only.
 
 ## Adding Morta to your build
 
