@@ -65,7 +65,7 @@ final public class SaturatedDive extends ConsoleApp {
         List<AbstractLabelingFunction<String>> labelingFunctions =
             repository.labelingFunctions(lbl, nbCandidatesToConsider, nbLabelsToReturn);
 
-        observations.add("\nThe extracted patterns are : [\n  "
+        observations.add("\nThe returned patterns are : [\n  "
             + Joiner.on(",\n  ").join(labelingFunctions.stream().map(AbstractLabelingFunction::name)
                 .collect(Collectors.toList()))
             + "\n]");
@@ -76,17 +76,7 @@ final public class SaturatedDive extends ConsoleApp {
             repository.labelModel(lbl, labelingFunctions, TreeLabelModel.eMetric.MCC);
 
         observations.add("\nThe label model is " + labelModel.toString());
-        observations.add("\nTraining classifier...");
-        observations.add("\nThe classifier type is LOGIT");
-
-        AbstractClassifier classifier =
-            repository.classifier(lbl, alphabet, labelModel, Repository.eClassifier.LOGIT);
-        // TODO : save prodigy annotations
-
-        observations.add("\nSummarizing label model...");
-
-        labelModel.summarize(Lists.newArrayList(repository.pagesAsGoldLabels(lbl)))
-            .forEach(System.out::println);
+        observations.add("\nComputing label model confusion matrix...");
 
         List<IGoldLabel<String>> labelModelPredictions = repository.pagesAsGoldLabels(lbl).stream()
             .map(goldLabel -> newGoldLabel(goldLabel,
@@ -96,8 +86,18 @@ final public class SaturatedDive extends ConsoleApp {
         ConfusionMatrix labelModelConfusionMatrix =
             IGoldLabel.confusionMatrix(labelModelPredictions);
 
-        observations.add("\nComputing the label model confusion matrix...");
         observations.add(labelModelConfusionMatrix.toString());
+        observations.add("Summarizing labeling functions...");
+
+        labelModel.summarize(Lists.newArrayList(repository.pagesAsGoldLabels(lbl)))
+            .forEach(summary -> observations.add(String.format("\n%s", summary.toString())));
+
+        observations.add("\nTraining classifier...");
+        observations.add("\nThe classifier type is LOGIT");
+
+        AbstractClassifier classifier =
+            repository.classifier(lbl, alphabet, labelModel, Repository.eClassifier.LOGIT);
+        // TODO : save prodigy annotations
 
         List<IGoldLabel<String>> classifierPredictions = repository.pagesAsGoldLabels(lbl).stream()
             .map(goldLabel -> newGoldLabel(goldLabel,
@@ -107,7 +107,7 @@ final public class SaturatedDive extends ConsoleApp {
         ConfusionMatrix classifierConfusionMatrix =
             IGoldLabel.confusionMatrix(classifierPredictions);
 
-        observations.add("\nComputing the classifier confusion matrix...");
+        observations.add("\nComputing classifier confusion matrix...");
         observations.add(classifierConfusionMatrix.toString());
 
       } catch (Exception e) {
