@@ -76,18 +76,7 @@ final public class SaturatedDive extends ConsoleApp {
             repository.labelModel(lbl, labelingFunctions, TreeLabelModel.eMetric.MCC);
 
         observations.add("\nThe label model is " + labelModel.toString());
-        observations.add("\nComputing label model confusion matrix...");
-
-        List<IGoldLabel<String>> labelModelPredictions = repository.pagesAsGoldLabels(lbl).stream()
-            .map(goldLabel -> newGoldLabel(goldLabel,
-                labelModel.predict(Lists.newArrayList(goldLabel)).get(0)))
-            .collect(Collectors.toList());
-
-        ConfusionMatrix labelModelConfusionMatrix =
-            IGoldLabel.confusionMatrix(labelModelPredictions);
-
-        observations.add(labelModelConfusionMatrix.toString());
-        observations.add("Summarizing labeling functions...");
+        observations.add("\nSummarizing labeling functions...");
 
         labelModel.summarize(Lists.newArrayList(repository.pagesAsGoldLabels(lbl)))
             .forEach(summary -> observations.add(String.format("\n%s", summary.toString())));
@@ -99,6 +88,19 @@ final public class SaturatedDive extends ConsoleApp {
             repository.classifier(lbl, alphabet, labelModel, Repository.eClassifier.LOGIT);
         // TODO : save prodigy annotations
 
+        observations.add("\nComputing label model confusion matrix...");
+
+        List<IGoldLabel<String>> labelModelPredictions = repository.pagesAsGoldLabels(lbl).stream()
+            .map(goldLabel -> newGoldLabel(goldLabel,
+                labelModel.predict(Lists.newArrayList(goldLabel)).get(0)))
+            .collect(Collectors.toList());
+
+        ConfusionMatrix labelModelConfusionMatrix =
+            IGoldLabel.confusionMatrix(labelModelPredictions);
+
+        observations.add(labelModelConfusionMatrix.toString());
+        observations.add("Computing classifier confusion matrix...");
+
         List<IGoldLabel<String>> classifierPredictions = repository.pagesAsGoldLabels(lbl).stream()
             .map(goldLabel -> newGoldLabel(goldLabel,
                 repository.classify(alphabet, classifier, goldLabel.data())))
@@ -107,7 +109,6 @@ final public class SaturatedDive extends ConsoleApp {
         ConfusionMatrix classifierConfusionMatrix =
             IGoldLabel.confusionMatrix(classifierPredictions);
 
-        observations.add("\nComputing classifier confusion matrix...");
         observations.add(classifierConfusionMatrix.toString());
 
       } catch (Exception e) {
