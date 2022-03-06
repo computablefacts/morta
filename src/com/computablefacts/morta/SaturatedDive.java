@@ -76,10 +76,10 @@ final public class SaturatedDive extends ConsoleApp {
             repository.labelModel(lbl, labelingFunctions, TreeLabelModel.eMetric.MCC);
 
         observations.add("\nThe label model is " + labelModel.toString());
-        observations.add("\nSummarizing labeling functions...");
+        // observations.add("\nSummarizing labeling functions...");
 
-        labelModel.summarize(Lists.newArrayList(repository.pagesAsGoldLabels(lbl)))
-            .forEach(summary -> observations.add(String.format("\n%s", summary.toString())));
+        // labelModel.summarize(Lists.newArrayList(repository.pagesAsGoldLabels(lbl)))
+        // .forEach(summary -> observations.add(String.format("\n%s", summary.toString())));
 
         observations.add("\nTraining classifier...");
         observations.add("\nThe classifier type is LOGIT");
