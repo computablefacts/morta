@@ -1,4 +1,4 @@
-package com.computablefacts.morta.yaml.patterns;
+package com.computablefacts.morta.patterns;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.errorprone.annotations.CheckReturnValue;

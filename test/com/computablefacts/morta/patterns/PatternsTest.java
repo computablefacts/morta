@@ -1,4 +1,4 @@
-package com.computablefacts.morta.yaml.patterns;
+package com.computablefacts.morta.patterns;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

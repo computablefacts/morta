@@ -1,4 +1,4 @@
-package com.computablefacts.morta.yaml.patterns;
+package com.computablefacts.morta.patterns;
 
 import java.io.File;
 import java.io.IOException;
@@ -74,7 +74,7 @@ final public class Patterns {
 
   // Map a single character to an array of characters
   @JsonProperty("fix_common_ocr_mistakes")
-  public com.computablefacts.morta.yaml.patterns.KeyValue[] fixCommonOcrMistakes_;
+  public KeyValue[] fixCommonOcrMistakes_;
 
   @JsonProperty("patterns")
   public Pattern[] patterns_;
@@ -194,7 +194,7 @@ final public class Patterns {
 
     Map<String, String> map = new HashMap<>(fixCommonOcrMistakes_.length);
 
-    for (com.computablefacts.morta.yaml.patterns.KeyValue yaml : fixCommonOcrMistakes_) {
+    for (KeyValue yaml : fixCommonOcrMistakes_) {
       map.put(yaml.key_, yaml.value_);
     }
 
