@@ -101,7 +101,7 @@ final public class SaturatedDive extends ConsoleApp {
 
         List<IGoldLabel<String>> classifierPredictions = repository.pagesAsGoldLabels(lbl).stream()
             .map(goldLabel -> repository.newGoldLabel(goldLabel,
-                repository.classify(alphabet, classifier, goldLabel.data())))
+                repository.predict(alphabet, classifier, goldLabel.data())))
             .collect(Collectors.toList());
 
         ConfusionMatrix classifierConfusionMatrix =

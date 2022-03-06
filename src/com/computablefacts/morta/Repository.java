@@ -64,6 +64,54 @@ public final class Repository {
     return maxGroupSize_;
   }
 
+  public Optional<TextCategorizer> loadTextCategorizer() {
+    File file = fileTextCategorizer();
+    if (file.exists()) {
+      return Optional.ofNullable(Helpers.deserialize(file.getAbsolutePath()));
+    }
+    return Optional.empty();
+  }
+
+  public Optional<TextCategorizer> loadTextCategorizer(String label) {
+    File file = fileTextCategorizer(label);
+    if (file.exists()) {
+      return Optional.ofNullable(Helpers.deserialize(file.getAbsolutePath()));
+    }
+    return Optional.empty();
+  }
+
+  public Optional<Dictionary> loadAlphabet(String label) {
+    File file = fileAlphabet(label);
+    if (file.exists()) {
+      return Optional.ofNullable(Helpers.deserialize(file.getAbsolutePath()));
+    }
+    return Optional.empty();
+  }
+
+  public Optional<List<AbstractLabelingFunction<String>>> loadLabelingFunctions(String label) {
+    File file = fileLabelingFunctions(label);
+    if (file.exists()) {
+      return Optional.ofNullable(Helpers.deserialize(file.getAbsolutePath()));
+    }
+    return Optional.empty();
+  }
+
+  public Optional<AbstractLabelModel<String>> loadLabelModel(String label) {
+    File file = fileLabelModel(label);
+    if (file.exists()) {
+      return Optional.ofNullable(Helpers.deserialize(file.getAbsolutePath()));
+    }
+    return Optional.empty();
+  }
+
+  public Optional<AbstractClassifier> loadClassifier(String label) {
+    File file = fileClassifier(label);
+    if (file.exists()) {
+      return Optional.ofNullable(Helpers.deserialize(file.getAbsolutePath()));
+    }
+    return Optional.empty();
+  }
+
   /**
    * Initialize the current repository.
    *
@@ -413,7 +461,7 @@ public final class Repository {
     classifier.train(actuals, predictions);
 
     List<IGoldLabel<String>> newPredictions = test.stream()
-        .map(goldLabel -> newGoldLabel(goldLabel, classify(alphabet, classifier, goldLabel.data())))
+        .map(goldLabel -> newGoldLabel(goldLabel, predict(alphabet, classifier, goldLabel.data())))
         .collect(Collectors.toList());
 
     ConfusionMatrix confusionMatrix = IGoldLabel.confusionMatrix(newPredictions);
@@ -479,7 +527,7 @@ public final class Repository {
    * @param text the text to classify.
    * @return a label in {OK, KO}.
    */
-  public int classify(Dictionary alphabet, AbstractClassifier classifier, String text) {
+  public int predict(Dictionary alphabet, AbstractClassifier classifier, String text) {
 
     Preconditions.checkNotNull(alphabet, "alphabet should not be null");
     Preconditions.checkNotNull(classifier, "classifier should not be null");
@@ -498,15 +546,16 @@ public final class Repository {
    * @param text the text to classify.
    * @return a snippet centered around its most 'interesting' part (if any).
    */
-  public Optional<String> snippet(Dictionary alphabet, AbstractClassifier classifier,
-      List<AbstractLabelingFunction<String>> labelingFunctions, String text) {
+  public Optional<String> predictAndGetFocusPoint(Dictionary alphabet,
+      AbstractClassifier classifier, List<AbstractLabelingFunction<String>> labelingFunctions,
+      String text) {
 
     Preconditions.checkNotNull(alphabet, "alphabet should not be null");
     Preconditions.checkNotNull(classifier, "classifier should not be null");
     Preconditions.checkNotNull(labelingFunctions, "labelingFunctions should not be null");
     Preconditions.checkNotNull(text, "text should not be null");
 
-    int prediction = classify(alphabet, classifier, text);
+    int prediction = predict(alphabet, classifier, text);
 
     if (prediction != OK) {
       return Optional.empty();
