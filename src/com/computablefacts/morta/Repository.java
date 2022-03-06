@@ -331,7 +331,7 @@ public final class Repository {
     labelModel.fit(train);
 
     List<IGoldLabel<String>> predictions =
-        train.stream()
+        test.stream()
             .map(goldLabel -> newGoldLabel(goldLabel,
                 labelModel.predict(Lists.newArrayList(goldLabel)).get(0)))
             .collect(Collectors.toList());
@@ -401,7 +401,7 @@ public final class Repository {
 
     classifier.train(actuals, predictions);
 
-    List<IGoldLabel<String>> newPredictions = train.stream()
+    List<IGoldLabel<String>> newPredictions = test.stream()
         .map(goldLabel -> newGoldLabel(goldLabel, classify(alphabet, classifier, goldLabel.data())))
         .collect(Collectors.toList());
 
