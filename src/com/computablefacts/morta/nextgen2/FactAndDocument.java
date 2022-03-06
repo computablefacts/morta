@@ -206,7 +206,8 @@ public final class FactAndDocument {
     Preconditions.checkNotNull(elements, "elements should not be null");
 
     return elements.stream().filter(element -> element.isAccepted() || element.isRejected())
-        .map(FactAndDocument::pageAsGoldLabel).collect(Collectors.toSet());
+        .map(FactAndDocument::pageAsGoldLabel)
+        .filter(goldLabel -> !Strings.isNullOrEmpty(goldLabel.data())).collect(Collectors.toSet());
   }
 
   /**
@@ -220,7 +221,8 @@ public final class FactAndDocument {
     Preconditions.checkNotNull(elements, "elements should not be null");
 
     return elements.stream().filter(element -> element.isAccepted() || element.isRejected())
-        .map(FactAndDocument::factAsGoldLabel).collect(Collectors.toSet());
+        .map(FactAndDocument::factAsGoldLabel)
+        .filter(goldLabel -> !Strings.isNullOrEmpty(goldLabel.data())).collect(Collectors.toSet());
   }
 
   /**
@@ -234,7 +236,8 @@ public final class FactAndDocument {
     Preconditions.checkNotNull(elements, "elements should not be null");
 
     return elements.stream().filter(FactAndDocument::isAccepted)
-        .flatMap(element -> element.syntheticGoldLabels().stream()).collect(Collectors.toSet());
+        .flatMap(element -> element.syntheticGoldLabels().stream())
+        .filter(goldLabel -> !Strings.isNullOrEmpty(goldLabel.data())).collect(Collectors.toSet());
   }
 
   @Override
