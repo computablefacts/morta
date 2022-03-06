@@ -467,7 +467,7 @@ public final class Repository {
    * @return a snippet centered around its most 'interesting' part (if any).
    */
   public Optional<String> snippet(Dictionary alphabet, AbstractClassifier classifier,
-      List<? extends AbstractLabelingFunction<String>> labelingFunctions, String text) {
+      List<AbstractLabelingFunction<String>> labelingFunctions, String text) {
 
     Preconditions.checkNotNull(alphabet, "alphabet should not be null");
     Preconditions.checkNotNull(classifier, "classifier should not be null");

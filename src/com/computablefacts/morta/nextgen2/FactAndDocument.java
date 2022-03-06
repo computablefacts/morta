@@ -118,20 +118,17 @@ public final class FactAndDocument {
 
     // Load documents and associate them with facts
     AsciiProgressBar.ProgressBar progressBar = withProgressBar ? AsciiProgressBar.create() : null;
-    AtomicInteger nbElements = new AtomicInteger(elements.size());
+    AtomicInteger nbElementsTotal = new AtomicInteger(elements.size());
+    AtomicInteger nbElements = new AtomicInteger(0);
 
     return View.of(documents, true).takeWhile(
         row -> !elements.isEmpty() /* exit as soon as all facts are associated with a document */)
-        .index().filter(row -> !Strings.isNullOrEmpty(row.getValue()) /* remove empty rows */)
-        .map(row -> {
-          if (progressBar != null) {
-            progressBar.update(row.getKey(), nbElements.get());
-          }
+        .filter(row -> !Strings.isNullOrEmpty(row) /* remove empty rows */).map(row -> {
           try {
-            return new Document(JsonCodec.asObject(row.getValue()));
+            return new Document(JsonCodec.asObject(row));
           } catch (Exception ex) {
-            logger_.error(LogFormatter.create(true).message(ex).add("line_number", row.getKey())
-                .formatError());
+            logger_
+                .error(LogFormatter.create(true).message(ex).add("line_number", row).formatError());
           }
           return new Document("UNK");
         }).peek(doc -> {
@@ -168,6 +165,10 @@ public final class FactAndDocument {
           // Remove the processed facts from the list of facts to be processed
           elements.removeAll(els);
 
+          // Update progress bar
+          if (progressBar != null) {
+            progressBar.update(nbElements.addAndGet(els.size()), nbElementsTotal.get());
+          }
           return View.of(els);
         }).toSet();
   }
