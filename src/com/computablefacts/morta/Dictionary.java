@@ -1,4 +1,4 @@
-package com.computablefacts.morta.snorkel;
+package com.computablefacts.morta;
 
 import java.util.Collection;
 import java.util.Map;

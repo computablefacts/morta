@@ -1,4 +1,4 @@
-package com.computablefacts.morta.nextgen;
+package com.computablefacts.morta;
 
 import java.io.File;
 import java.util.Collection;
@@ -9,12 +9,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.validation.constraints.NotNull;
 
+import com.computablefacts.asterix.Generated;
 import com.computablefacts.asterix.View;
 import com.computablefacts.asterix.codecs.JsonCodec;
 import com.computablefacts.asterix.console.AsciiProgressBar;
 import com.computablefacts.morta.prodigy.AnnotatedText;
 import com.computablefacts.morta.prodigy.Meta;
-import com.computablefacts.morta.snorkel.IGoldLabel;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -145,7 +145,7 @@ public final class GoldLabelOfString implements IGoldLabel<String> {
     }
     IGoldLabel<?> gl = (IGoldLabel<?>) o;
     return Objects.equals(id(), gl.id()) && Objects.equals(label(), gl.label())
-        && Objects.equals(data(), gl.data()) && Objects.equals(snippet(), gl.snippet())
+        && Objects.equals(data(), gl.data())
         && Objects.equals(isTrueNegative(), gl.isTrueNegative())
         && Objects.equals(isTruePositive(), gl.isTruePositive())
         && Objects.equals(isFalseNegative(), gl.isFalseNegative())
@@ -154,14 +154,15 @@ public final class GoldLabelOfString implements IGoldLabel<String> {
 
   @Override
   public int hashCode() {
-    return Objects.hash(id(), label(), data(), snippet(), isTrueNegative(), isTruePositive(),
+    return Objects.hash(id(), label(), data(), isTrueNegative(), isTruePositive(),
         isFalseNegative(), isFalsePositive());
   }
 
+  @Generated
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this).add("id", id()).add("label", label())
-        .add("data", data()).add("snippet", snippet()).add("is_true_negative", isTrueNegative())
+        .add("data", data()).add("is_true_negative", isTrueNegative())
         .add("is_true_positive", isTruePositive()).add("is_false_negative", isFalseNegative())
         .add("is_false_positive", isFalsePositive()).omitNullValues().toString();
   }

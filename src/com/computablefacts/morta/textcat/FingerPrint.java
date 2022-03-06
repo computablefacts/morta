@@ -1,6 +1,6 @@
 package com.computablefacts.morta.textcat;
 
-import static com.computablefacts.morta.snorkel.Helpers.ngrams;
+import static com.computablefacts.morta.Helpers.ngrams;
 
 import java.util.*;
 

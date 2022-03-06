@@ -1,6 +1,6 @@
 package com.computablefacts.morta.labelmodels;
 
-import static com.computablefacts.morta.snorkel.ILabelingFunction.*;
+import static com.computablefacts.morta.labelingfunctions.AbstractLabelingFunction.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,8 +8,11 @@ import java.util.Map;
 import java.util.Random;
 
 import com.computablefacts.asterix.View;
+import com.computablefacts.morta.Dictionary;
+import com.computablefacts.morta.FeatureVector;
+import com.computablefacts.morta.Helpers;
+import com.computablefacts.morta.IGoldLabel;
 import com.computablefacts.morta.labelingfunctions.AbstractLabelingFunction;
-import com.computablefacts.morta.snorkel.*;
 import com.google.common.base.Preconditions;
 import com.google.errorprone.annotations.CheckReturnValue;
 import com.google.errorprone.annotations.Var;
@@ -208,7 +211,7 @@ final public class MajorityLabelModel<T> extends AbstractLabelModel<T> {
       }
 
       if (maxIndexes.isEmpty()) {
-        predictions.add(ILabelingFunction.ABSTAIN); // TODO : not sure about this
+        predictions.add(ABSTAIN); // TODO : not sure about this
       } else if (maxIndexes.size() == 1) {
         predictions.add(maxIndexes.get(0));
       } else if (tieBreakPolicy.equals(eTieBreakPolicy.RANDOM)) {

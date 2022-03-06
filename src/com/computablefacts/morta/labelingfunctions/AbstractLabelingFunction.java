@@ -2,13 +2,22 @@ package com.computablefacts.morta.labelingfunctions;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Function;
 
-import com.computablefacts.morta.snorkel.ILabelingFunction;
 import com.google.common.base.Preconditions;
 import com.google.errorprone.annotations.CheckReturnValue;
 
+/**
+ * Project a data point to an integer.
+ *
+ * @param <T> input type.
+ */
 @CheckReturnValue
-public abstract class AbstractLabelingFunction<T> implements ILabelingFunction<T> {
+public abstract class AbstractLabelingFunction<T> implements Function<T, Integer> {
+
+  public static final int ABSTAIN = -1;
+  public static final int KO = 0;
+  public static final int OK = 1;
 
   private final String name_;
 

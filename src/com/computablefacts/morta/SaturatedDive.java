@@ -1,6 +1,6 @@
-package com.computablefacts.morta.nextgen;
+package com.computablefacts.morta;
 
-import static com.computablefacts.morta.snorkel.ILabelingFunction.OK;
+import static com.computablefacts.morta.labelingfunctions.AbstractLabelingFunction.OK;
 
 import java.io.File;
 import java.util.List;
@@ -16,8 +16,6 @@ import com.computablefacts.morta.classifiers.AbstractClassifier;
 import com.computablefacts.morta.labelingfunctions.AbstractLabelingFunction;
 import com.computablefacts.morta.labelmodels.AbstractLabelModel;
 import com.computablefacts.morta.labelmodels.TreeLabelModel;
-import com.computablefacts.morta.snorkel.Dictionary;
-import com.computablefacts.morta.snorkel.IGoldLabel;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.errorprone.annotations.CheckReturnValue;

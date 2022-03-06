@@ -1,4 +1,7 @@
-package com.computablefacts.morta.snorkel;
+package com.computablefacts.morta;
+
+import static com.computablefacts.morta.labelingfunctions.AbstractLabelingFunction.KO;
+import static com.computablefacts.morta.labelingfunctions.AbstractLabelingFunction.OK;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,6 +11,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.computablefacts.asterix.View;
+import com.computablefacts.morta.labelingfunctions.AbstractLabelingFunction;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
@@ -31,13 +35,31 @@ public class SummaryTest {
     lfNames.put("isDivisibleBy6", 2);
 
     Dictionary lfLabels = new Dictionary();
-    lfLabels.put("OK", 1);
-    lfLabels.put("KO", 0);
+    lfLabels.put("OK", OK);
+    lfLabels.put("KO", KO);
 
-    List<ILabelingFunction<Integer>> lfs = new ArrayList<>();
-    lfs.add(x -> x % 2 == 0 ? 1 : 0);
-    lfs.add(x -> x % 3 == 0 ? 1 : 0);
-    lfs.add(x -> x % 6 == 0 ? 1 : 0);
+    List<AbstractLabelingFunction<Integer>> lfs = new ArrayList<>();
+    lfs.add(new AbstractLabelingFunction<Integer>("isDivisibleBy2") {
+
+      @Override
+      public Integer apply(Integer x) {
+        return x % 2 == 0 ? OK : KO;
+      }
+    });
+    lfs.add(new AbstractLabelingFunction<Integer>("isDivisibleBy3") {
+
+      @Override
+      public Integer apply(Integer x) {
+        return x % 3 == 0 ? OK : KO;
+      }
+    });
+    lfs.add(new AbstractLabelingFunction<Integer>("isDivisibleBy6") {
+
+      @Override
+      public Integer apply(Integer x) {
+        return x % 6 == 0 ? OK : KO;
+      }
+    });
 
     List<Integer> instances = Lists.newArrayList(1, 2, 3, 4, 5, 6);
 
@@ -66,13 +88,31 @@ public class SummaryTest {
     lfNames.put("isDivisibleBy6", 2);
 
     Dictionary lfLabels = new Dictionary();
-    lfLabels.put("OK", 1);
-    lfLabels.put("KO", 0);
+    lfLabels.put("OK", OK);
+    lfLabels.put("KO", KO);
 
-    List<ILabelingFunction<Integer>> lfs = new ArrayList<>();
-    lfs.add(x -> x % 2 == 0 ? 1 : 0);
-    lfs.add(x -> x % 3 == 0 ? 1 : 0);
-    lfs.add(x -> x % 6 == 0 ? 1 : 0);
+    List<AbstractLabelingFunction<Integer>> lfs = new ArrayList<>();
+    lfs.add(new AbstractLabelingFunction<Integer>("isDivisibleBy2") {
+
+      @Override
+      public Integer apply(Integer x) {
+        return x % 2 == 0 ? OK : KO;
+      }
+    });
+    lfs.add(new AbstractLabelingFunction<Integer>("isDivisibleBy3") {
+
+      @Override
+      public Integer apply(Integer x) {
+        return x % 3 == 0 ? OK : KO;
+      }
+    });
+    lfs.add(new AbstractLabelingFunction<Integer>("isDivisibleBy6") {
+
+      @Override
+      public Integer apply(Integer x) {
+        return x % 6 == 0 ? OK : KO;
+      }
+    });
 
     List<Integer> instances = Lists.newArrayList(1, 2, 3, 4, 5, 6);
 
@@ -101,13 +141,31 @@ public class SummaryTest {
     lfNames.put("isDivisibleBy6", 2);
 
     Dictionary lfLabels = new Dictionary();
-    lfLabels.put("OK", 1);
-    lfLabels.put("KO", 0);
+    lfLabels.put("OK", OK);
+    lfLabels.put("KO", KO);
 
-    List<ILabelingFunction<Integer>> lfs = new ArrayList<>();
-    lfs.add(x -> x % 2 == 0 ? 1 : 0);
-    lfs.add(x -> x % 3 == 0 ? 1 : 0);
-    lfs.add(x -> x % 6 == 0 ? 1 : 0);
+    List<AbstractLabelingFunction<Integer>> lfs = new ArrayList<>();
+    lfs.add(new AbstractLabelingFunction<Integer>("isDivisibleBy2") {
+
+      @Override
+      public Integer apply(Integer x) {
+        return x % 2 == 0 ? OK : KO;
+      }
+    });
+    lfs.add(new AbstractLabelingFunction<Integer>("isDivisibleBy3") {
+
+      @Override
+      public Integer apply(Integer x) {
+        return x % 3 == 0 ? OK : KO;
+      }
+    });
+    lfs.add(new AbstractLabelingFunction<Integer>("isDivisibleBy6") {
+
+      @Override
+      public Integer apply(Integer x) {
+        return x % 6 == 0 ? OK : KO;
+      }
+    });
 
     List<Integer> instances = Lists.newArrayList(1, 2, 3, 4, 5, 6);
 
@@ -136,13 +194,31 @@ public class SummaryTest {
     lfNames.put("isDivisibleBy6", 2);
 
     Dictionary lfLabels = new Dictionary();
-    lfLabels.put("OK", 1);
-    lfLabels.put("KO", 0);
+    lfLabels.put("OK", OK);
+    lfLabels.put("KO", KO);
 
-    List<ILabelingFunction<Integer>> lfs = new ArrayList<>();
-    lfs.add(x -> x % 2 == 0 ? 1 : 0);
-    lfs.add(x -> x % 3 == 0 ? 1 : 0);
-    lfs.add(x -> x % 6 == 0 ? 1 : 0);
+    List<AbstractLabelingFunction<Integer>> lfs = new ArrayList<>();
+    lfs.add(new AbstractLabelingFunction<Integer>("isDivisibleBy2") {
+
+      @Override
+      public Integer apply(Integer x) {
+        return x % 2 == 0 ? OK : KO;
+      }
+    });
+    lfs.add(new AbstractLabelingFunction<Integer>("isDivisibleBy3") {
+
+      @Override
+      public Integer apply(Integer x) {
+        return x % 3 == 0 ? OK : KO;
+      }
+    });
+    lfs.add(new AbstractLabelingFunction<Integer>("isDivisibleBy6") {
+
+      @Override
+      public Integer apply(Integer x) {
+        return x % 6 == 0 ? OK : KO;
+      }
+    });
 
     List<Integer> instances = Lists.newArrayList(1, 2, 3, 4, 5, 6);
 
@@ -192,12 +268,24 @@ public class SummaryTest {
     lfNames.put("isDivisibleBy3", 1);
 
     Dictionary lfLabels = new Dictionary();
-    lfLabels.put("OK", 1);
-    lfLabels.put("KO", 0);
+    lfLabels.put("OK", OK);
+    lfLabels.put("KO", KO);
 
-    List<ILabelingFunction<Integer>> lfs = new ArrayList<>();
-    lfs.add(x -> x % 2 == 0 ? 1 : 0);
-    lfs.add(x -> x % 3 == 0 ? 1 : 0);
+    List<AbstractLabelingFunction<Integer>> lfs = new ArrayList<>();
+    lfs.add(new AbstractLabelingFunction<Integer>("isDivisibleBy2") {
+
+      @Override
+      public Integer apply(Integer x) {
+        return x % 2 == 0 ? OK : KO;
+      }
+    });
+    lfs.add(new AbstractLabelingFunction<Integer>("isDivisibleBy3") {
+
+      @Override
+      public Integer apply(Integer x) {
+        return x % 3 == 0 ? OK : KO;
+      }
+    });
 
     List<Integer> instances = Lists.newArrayList(1, 2, 3, 4, 5, 6);
 
@@ -225,17 +313,35 @@ public class SummaryTest {
     // OK = isDivisibleBy2 AND isDivisibleBy3
     // KO = !isDivisibleBy2 OR !isDivisibleBy3
     Dictionary lfLabels = new Dictionary();
-    lfLabels.put("OK", 1);
-    lfLabels.put("KO", 0);
+    lfLabels.put("OK", OK);
+    lfLabels.put("KO", KO);
 
     // instances = [1, 2, 3, 4, 5, 6]
     // goldLabels = ["KO", "KO", "KO", "KO", "KO", "OK"]
     List<Integer> goldLabels = Lists.newArrayList(0, 0, 0, 0, 0, 1);
 
-    List<ILabelingFunction<Integer>> lfs = new ArrayList<>();
-    lfs.add(x -> x % 2 == 0 ? 1 : 0);
-    lfs.add(x -> x % 3 == 0 ? 1 : 0);
-    lfs.add(x -> x % 6 == 0 ? 1 : 0);
+    List<AbstractLabelingFunction<Integer>> lfs = new ArrayList<>();
+    lfs.add(new AbstractLabelingFunction<Integer>("isDivisibleBy2") {
+
+      @Override
+      public Integer apply(Integer x) {
+        return x % 2 == 0 ? OK : KO;
+      }
+    });
+    lfs.add(new AbstractLabelingFunction<Integer>("isDivisibleBy3") {
+
+      @Override
+      public Integer apply(Integer x) {
+        return x % 3 == 0 ? OK : KO;
+      }
+    });
+    lfs.add(new AbstractLabelingFunction<Integer>("isDivisibleBy6") {
+
+      @Override
+      public Integer apply(Integer x) {
+        return x % 6 == 0 ? OK : KO;
+      }
+    });
 
     List<Summary> summaries = Summary.summarize(lfNames, lfLabels,
         View.of(Lists.newArrayList(1, 2, 3, 4, 5, 6)).map(Helpers.label(lfs)).toList(), goldLabels);

@@ -1,4 +1,4 @@
-package com.computablefacts.morta.snorkel;
+package com.computablefacts.morta;
 
 import java.util.HashMap;
 import java.util.List;
@@ -14,11 +14,11 @@ import com.google.common.collect.Sets;
 
 import nl.jqno.equalsverifier.EqualsVerifier;
 
-public class GoldLabelTest {
+public class GoldLabelOfStringTest {
 
   @Test
   public void testEqualsAndHashcode() {
-    EqualsVerifier.forClass(GoldLabel.class).verify();
+    EqualsVerifier.forClass(GoldLabelOfString.class).verify();
   }
 
   @Test
@@ -33,7 +33,7 @@ public class GoldLabelTest {
     json.put("is_true_negative", false);
     json.put("is_false_negative", false);
 
-    GoldLabel goldLabel = new GoldLabel(json);
+    GoldLabelOfString goldLabel = new GoldLabelOfString(json);
 
     Assert.assertEquals("1", goldLabel.id());
     Assert.assertEquals("json", goldLabel.label());
@@ -47,7 +47,7 @@ public class GoldLabelTest {
   @Test
   public void testSplit_25_50_25() {
 
-    List<Set<GoldLabel>> goldLabels = IGoldLabel.split(goldLabels());
+    List<Set<GoldLabelOfString>> goldLabels = IGoldLabel.split(goldLabels());
 
     Assert.assertEquals(3, goldLabels.size());
     Assert.assertEquals(2, goldLabels.get(0).size());
@@ -58,7 +58,7 @@ public class GoldLabelTest {
   @Test
   public void testSplit_0_75_25() {
 
-    List<Set<GoldLabel>> goldLabels = IGoldLabel.split(goldLabels(), false, 0, 0.75);
+    List<Set<GoldLabelOfString>> goldLabels = IGoldLabel.split(goldLabels(), false, 0, 0.75);
 
     Assert.assertEquals(3, goldLabels.size());
     Assert.assertEquals(0, goldLabels.get(0).size());
@@ -69,7 +69,7 @@ public class GoldLabelTest {
   @Test
   public void testProportionalSplit_0_75_25() {
 
-    List<Set<GoldLabel>> goldLabels = IGoldLabel.split(goldLabels(), true, 0, 0.75);
+    List<Set<GoldLabelOfString>> goldLabels = IGoldLabel.split(goldLabels(), true, 0, 0.75);
 
     Assert.assertEquals(3, goldLabels.size());
     Assert.assertEquals(0, goldLabels.get(0).size());
@@ -89,15 +89,16 @@ public class GoldLabelTest {
     Assert.assertEquals(0, confusionMatrix.nbFalseNegatives());
   }
 
-  private Set<GoldLabel> goldLabels() {
+  private Set<GoldLabelOfString> goldLabels() {
     return Sets.newHashSet(
-        new GoldLabel(Integer.toString(1, 10), "test1", "test1", true, false, false, false),
-        new GoldLabel(Integer.toString(2, 10), "test1", "test2", true, false, false, false),
-        new GoldLabel(Integer.toString(3, 10), "test1", "test3", true, false, false, false),
-        new GoldLabel(Integer.toString(4, 10), "test1", "test4", true, false, false, false),
-        new GoldLabel(Integer.toString(5, 10), "test2", "test1", true, false, false, false),
-        new GoldLabel(Integer.toString(6, 10), "test2", "test2", true, false, false, false),
-        new GoldLabel(Integer.toString(7, 10), "test2", "test3", true, false, false, false),
-        new GoldLabel(Integer.toString(8, 10), "test2", "test4", true, false, false, false));
+        new GoldLabelOfString(Integer.toString(1, 10), "test1", "test1", false, true, false, false),
+        new GoldLabelOfString(Integer.toString(2, 10), "test1", "test2", false, true, false, false),
+        new GoldLabelOfString(Integer.toString(3, 10), "test1", "test3", false, true, false, false),
+        new GoldLabelOfString(Integer.toString(4, 10), "test1", "test4", false, true, false, false),
+        new GoldLabelOfString(Integer.toString(5, 10), "test2", "test1", false, true, false, false),
+        new GoldLabelOfString(Integer.toString(6, 10), "test2", "test2", false, true, false, false),
+        new GoldLabelOfString(Integer.toString(7, 10), "test2", "test3", false, true, false, false),
+        new GoldLabelOfString(Integer.toString(8, 10), "test2", "test4", false, true, false,
+            false));
   }
 }

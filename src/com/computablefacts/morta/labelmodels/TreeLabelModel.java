@@ -1,6 +1,6 @@
 package com.computablefacts.morta.labelmodels;
 
-import static com.computablefacts.morta.snorkel.ILabelingFunction.*;
+import static com.computablefacts.morta.labelingfunctions.AbstractLabelingFunction.*;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -14,8 +14,8 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import com.computablefacts.asterix.ConfusionMatrix;
 import com.computablefacts.asterix.View;
 import com.computablefacts.asterix.console.AsciiProgressBar;
+import com.computablefacts.morta.*;
 import com.computablefacts.morta.labelingfunctions.AbstractLabelingFunction;
-import com.computablefacts.morta.snorkel.*;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Table;

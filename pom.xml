@@ -145,7 +145,7 @@
                                     <reason>Morta must not inherit from Nona</reason>
                                     <bannedImport>com.computablefacts.nona.**</bannedImport>
                                     <exclusions>
-                                        <exclusion>com.computablefacts.morta.snorkel.Helpers</exclusion>
+                                        <exclusion>com.computablefacts.morta.Helpers</exclusion>
                                     </exclusions>
                                 </restrictImports>
                                 <restrictImports

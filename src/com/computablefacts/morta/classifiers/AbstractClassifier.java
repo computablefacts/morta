@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.computablefacts.asterix.View;
-import com.computablefacts.morta.snorkel.FeatureVector;
+import com.computablefacts.morta.FeatureVector;
 import com.google.common.base.Preconditions;
 import com.google.errorprone.annotations.CheckReturnValue;
 

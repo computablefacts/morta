@@ -1,4 +1,4 @@
-package com.computablefacts.morta.snorkel;
+package com.computablefacts.morta;
 
 import java.util.Vector;
 
@@ -21,7 +21,7 @@ final public class FeatureVector<N extends Number> extends Vector<N> {
     super(initialCapacity);
   }
 
-  public static FeatureVector<Double> from(double[] array) {
+  public static FeatureVector<Double> of(double[] array) {
 
     Preconditions.checkNotNull(array, "array should not be null");
 
@@ -33,7 +33,7 @@ final public class FeatureVector<N extends Number> extends Vector<N> {
     return vector;
   }
 
-  public static FeatureVector<Integer> from(int[] array) {
+  public static FeatureVector<Integer> of(int[] array) {
 
     Preconditions.checkNotNull(array, "array should not be null");
 

@@ -5,8 +5,8 @@ import java.util.List;
 import java.util.Map;
 
 import com.computablefacts.asterix.View;
+import com.computablefacts.morta.*;
 import com.computablefacts.morta.labelingfunctions.AbstractLabelingFunction;
-import com.computablefacts.morta.snorkel.*;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Table;
 import com.google.errorprone.annotations.CheckReturnValue;

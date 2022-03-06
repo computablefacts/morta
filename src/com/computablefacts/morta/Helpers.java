@@ -1,7 +1,6 @@
-package com.computablefacts.morta.snorkel;
+package com.computablefacts.morta;
 
-import static com.computablefacts.morta.snorkel.ILabelingFunction.ABSTAIN;
-import static com.computablefacts.morta.snorkel.ILabelingFunction.OK;
+import static com.computablefacts.morta.labelingfunctions.AbstractLabelingFunction.ABSTAIN;
 
 import java.io.File;
 import java.math.RoundingMode;
@@ -15,18 +14,11 @@ import com.computablefacts.asterix.IO;
 import com.computablefacts.asterix.SnippetExtractor;
 import com.computablefacts.asterix.StringIterator;
 import com.computablefacts.asterix.View;
-import com.computablefacts.asterix.codecs.JsonCodec;
 import com.computablefacts.asterix.codecs.StringCodec;
-import com.computablefacts.asterix.console.AsciiProgressBar;
-import com.computablefacts.morta.Observations;
 import com.computablefacts.morta.labelingfunctions.AbstractLabelingFunction;
 import com.computablefacts.morta.labelmodels.TreeLabelModel;
-import com.computablefacts.morta.prodigy.AnnotatedText;
-import com.computablefacts.morta.prodigy.Meta;
 import com.computablefacts.nona.helpers.Strings;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.collect.*;
 import com.google.errorprone.annotations.CheckReturnValue;
 import com.google.errorprone.annotations.Var;
@@ -42,108 +34,6 @@ final public class Helpers {
 
   private Helpers() {}
 
-  @Deprecated
-  public static void toSpacyAnnotations(File input, File output, String label) {
-
-    Preconditions.checkNotNull(input, "input should not be null");
-    Preconditions.checkArgument(input.exists(), "input should exist : %s", input);
-    Preconditions.checkNotNull(output, "output should not be null");
-    Preconditions.checkArgument(!output.exists(), "output should not exist : %s", output);
-
-    View.of(input, true).filter(str -> !com.google.common.base.Strings.isNullOrEmpty(str))
-        .map(str -> (IGoldLabel<String>) new GoldLabel(JsonCodec.asObject(str)))
-        .filter(gl -> !com.google.common.base.Strings.isNullOrEmpty(gl.snippet()))
-        .filter(gl -> label == null || label.equals(gl.label())).map(gl -> {
-          Meta meta =
-              new Meta(gl.id(), gl.label(), TreeLabelModel.label(gl) == OK ? "accept" : "reject");
-          return new AnnotatedText(meta, gl.snippet());
-        }).toFile(JsonCodec::asString, output, false);
-  }
-
-  @Deprecated
-  public static List<IGoldLabel<String>> fromSpacyAnnotations(Observations observations, File file,
-      String label) {
-
-    Preconditions.checkNotNull(observations, "observations should not be null");
-    Preconditions.checkNotNull(file, "file should not be null");
-    Preconditions.checkArgument(file.exists(), "file should exist : %s", file);
-
-    observations.add("Loading spacy annotations...");
-
-    ObjectMapper mapper = new ObjectMapper();
-    AsciiProgressBar.IndeterminateProgressBar bar = AsciiProgressBar.createIndeterminate();
-
-    List<IGoldLabel<String>> gls = View.of(file).index()
-        .filter(e -> !com.google.common.base.Strings.isNullOrEmpty(e.getValue()))
-        .peek(e -> bar.update()).map(e -> {
-
-          String json = e.getValue();
-          AnnotatedText annotatedText;
-
-          try {
-            annotatedText = mapper.readValue(json, AnnotatedText.class);
-          } catch (Exception ex) {
-            System.out.println(Throwables.getStackTraceAsString(Throwables.getRootCause(ex)));
-            return Lists.<IGoldLabel<String>>newArrayList();
-          }
-          if ("ignore".equals(annotatedText.answer_)) {
-            return Lists.<IGoldLabel<String>>newArrayList();
-          }
-
-          String id = annotatedText.meta_.source_
-              .substring(annotatedText.meta_.source_.lastIndexOf('/') + 1);
-
-          if (annotatedText.spans_ == null || annotatedText.spans_.isEmpty()) {
-            return Lists.newArrayList((IGoldLabel<String>) new GoldLabel(id,
-                annotatedText.meta_.expectedLabel_, annotatedText.text_, annotatedText.text_,
-                "accept".equals(annotatedText.answer_), false,
-                "reject".equals(annotatedText.answer_), false));
-          }
-          return annotatedText.spans_.stream()
-              .map(span -> (IGoldLabel<String>) new GoldLabel(id, span.label_, annotatedText.text_,
-                  annotatedText.text_.substring(span.start_, span.end_), true, false, false, false))
-              .collect(Collectors.toList());
-        }).flatten(View::of).filter(gl -> label == null || label.equals(gl.label())).toList();
-
-    bar.complete();
-
-    System.out.println(); // Cosmetic
-    observations.add(String.format("%d gold labels loaded.", gls.size()));
-
-    return gls;
-  }
-
-  /**
-   * Load gold labels from a gzip file.
-   *
-   * @param file gold labels as JSON objects stored inside a gzip file.
-   * @return a list of {@link IGoldLabel}.
-   */
-  @Deprecated
-  public static List<IGoldLabel<String>> load(Observations observations, File file, String label) {
-
-    Preconditions.checkNotNull(observations, "observations should not be null");
-    Preconditions.checkNotNull(file, "file should not be null");
-    Preconditions.checkArgument(file.exists(), "file should exist : %s", file);
-
-    observations.add("Loading gold labels...");
-
-    AsciiProgressBar.IndeterminateProgressBar bar = AsciiProgressBar.createIndeterminate();
-
-    List<IGoldLabel<String>> gls = View.of(file, true).index()
-        .filter(e -> !com.google.common.base.Strings.isNullOrEmpty(e.getValue()))
-        .peek(e -> bar.update())
-        .map(e -> (IGoldLabel<String>) new GoldLabel(JsonCodec.asObject(e.getValue())))
-        .filter(gl -> label == null || label.equals(gl.label())).toList();
-
-    bar.complete();
-
-    System.out.println(); // Cosmetic
-    observations.add(String.format("%d gold labels loaded.", gls.size()));
-
-    return gls;
-  }
-
   public static <T> void serialize(String filename, T t) {
 
     Preconditions.checkNotNull(t, "t should not be null");
@@ -153,6 +43,7 @@ final public class Helpers {
         "%s cannot be written", filename);
   }
 
+  @SuppressWarnings("unchecked")
   public static <T> T deserialize(String filename) {
 
     Preconditions.checkNotNull(filename, "filename should not be null");
@@ -183,7 +74,7 @@ final public class Helpers {
    *         labeling functions.
    */
   public static <D> Function<D, Map.Entry<D, FeatureVector<Integer>>> label(
-      List<? extends ILabelingFunction<D>> lfs) {
+      List<? extends AbstractLabelingFunction<D>> lfs) {
 
     Preconditions.checkNotNull(lfs, "lfs should not be null");
 
@@ -192,7 +83,7 @@ final public class Helpers {
       FeatureVector<Integer> vector = new FeatureVector<>(lfs.size(), ABSTAIN);
 
       for (int i = 0; i < lfs.size(); i++) {
-        ILabelingFunction<D> lf = lfs.get(i);
+        AbstractLabelingFunction<D> lf = lfs.get(i);
         int label = lf.apply(d);
         vector.set(i, label);
       }
@@ -200,26 +91,7 @@ final public class Helpers {
     };
   }
 
-  public static ITransformationFunction<String, FeatureVector<Double>> countVectorizer(
-      Dictionary alphabet, int maxGroupSize) {
-
-    Preconditions.checkNotNull(alphabet, "alphabet should not be null");
-    Preconditions.checkArgument(maxGroupSize > 0, "maxGroupSize must be > 0");
-
-    return text -> {
-
-      FeatureVector<Double> vector = new FeatureVector<>(alphabet.size(), 0.0);
-      Map<String, Double> features = features(maxGroupSize, text);
-
-      features.forEach((f, w) -> {
-        if (alphabet.containsKey(f)) {
-          vector.set(alphabet.id(f), 1.0);
-        }
-      });
-      return vector;
-    };
-  }
-
+  @Deprecated
   public static String[][] correlations(Table<String, String, CorTest> lfCorrelations) {
 
     Preconditions.checkNotNull(lfCorrelations, "lfCorrelations should not be null");
@@ -244,13 +116,14 @@ final public class Helpers {
     return matrix;
   }
 
+  @Deprecated
   public static String[][] vectors(TreeLabelModel<String> labelModel,
       List<? extends IGoldLabel<String>> goldLabels) {
 
     Preconditions.checkNotNull(labelModel, "labelModel should not be null");
     Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
 
-    Dictionary lfNames = labelModel.lfNames();
+    com.computablefacts.morta.Dictionary lfNames = labelModel.lfNames();
     Dictionary lfLabels = labelModel.lfLabels();
     List<? extends AbstractLabelingFunction<String>> labelingFunctions =
         labelModel.labelingFunctions();

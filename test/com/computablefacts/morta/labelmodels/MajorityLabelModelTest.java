@@ -1,6 +1,6 @@
 package com.computablefacts.morta.labelmodels;
 
-import static com.computablefacts.morta.snorkel.ILabelingFunction.*;
+import static com.computablefacts.morta.labelingfunctions.AbstractLabelingFunction.*;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -11,8 +11,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.computablefacts.asterix.View;
+import com.computablefacts.morta.*;
 import com.computablefacts.morta.labelingfunctions.AbstractLabelingFunction;
-import com.computablefacts.morta.snorkel.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
@@ -25,8 +25,8 @@ public class MajorityLabelModelTest {
   public void testProbabilities1() {
 
     List<FeatureVector<Double>> goldProbs = Lists.newArrayList(
-        FeatureVector.from(new double[] {1.0, 0.0}), FeatureVector.from(new double[] {0.5, 0.5}),
-        FeatureVector.from(new double[] {0.5, 0.5}));
+        FeatureVector.of(new double[] {1.0, 0.0}), FeatureVector.of(new double[] {0.5, 0.5}),
+        FeatureVector.of(new double[] {0.5, 0.5}));
 
     Dictionary lfNames = new Dictionary();
     lfNames.put("lf1", 0);
@@ -34,9 +34,9 @@ public class MajorityLabelModelTest {
     lfNames.put("lf3", 2);
 
     List<FeatureVector<Integer>> instances =
-        Lists.newArrayList(FeatureVector.from(new int[] {KO, KO, ABSTAIN}),
-            FeatureVector.from(new int[] {ABSTAIN, KO, OK}),
-            FeatureVector.from(new int[] {OK, ABSTAIN, KO}));
+        Lists.newArrayList(FeatureVector.of(new int[] {KO, KO, ABSTAIN}),
+            FeatureVector.of(new int[] {ABSTAIN, KO, OK}),
+            FeatureVector.of(new int[] {OK, ABSTAIN, KO}));
 
     List<FeatureVector<Double>> probabilities =
         MajorityLabelModel.probabilities(lfNames, lfLabels(), instances);
@@ -49,14 +49,14 @@ public class MajorityLabelModelTest {
   public void testProbabilities2() {
 
     List<FeatureVector<Double>> goldProbs = Lists.newArrayList(
-        FeatureVector.from(new double[] {0.0, 1.0}), FeatureVector.from(new double[] {1.0, 0.0}),
-        FeatureVector.from(new double[] {0.0, 1.0}), FeatureVector.from(new double[] {1.0, 0.0}),
-        FeatureVector.from(new double[] {1.0, 0.0}), FeatureVector.from(new double[] {1.0, 0.0}),
-        FeatureVector.from(new double[] {0.5, 0.5}), FeatureVector.from(new double[] {1.0, 0.0}),
-        FeatureVector.from(new double[] {0.0, 1.0}), FeatureVector.from(new double[] {0.0, 1.0}),
-        FeatureVector.from(new double[] {0.0, 1.0}), FeatureVector.from(new double[] {1.0, 0.0}),
-        FeatureVector.from(new double[] {0.0, 1.0}), FeatureVector.from(new double[] {1.0, 0.0}),
-        FeatureVector.from(new double[] {0.5, 0.5}));
+        FeatureVector.of(new double[] {0.0, 1.0}), FeatureVector.of(new double[] {1.0, 0.0}),
+        FeatureVector.of(new double[] {0.0, 1.0}), FeatureVector.of(new double[] {1.0, 0.0}),
+        FeatureVector.of(new double[] {1.0, 0.0}), FeatureVector.of(new double[] {1.0, 0.0}),
+        FeatureVector.of(new double[] {0.5, 0.5}), FeatureVector.of(new double[] {1.0, 0.0}),
+        FeatureVector.of(new double[] {0.0, 1.0}), FeatureVector.of(new double[] {0.0, 1.0}),
+        FeatureVector.of(new double[] {0.0, 1.0}), FeatureVector.of(new double[] {1.0, 0.0}),
+        FeatureVector.of(new double[] {0.0, 1.0}), FeatureVector.of(new double[] {1.0, 0.0}),
+        FeatureVector.of(new double[] {0.5, 0.5}));
 
     Dictionary lfNames = new Dictionary();
     lfNames.put("lf1", 0);
@@ -71,35 +71,35 @@ public class MajorityLabelModelTest {
     lfNames.put("lf10", 9);
 
     List<FeatureVector<Integer>> instances = Lists.newArrayList(
-        FeatureVector.from(new int[] {ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, OK,
+        FeatureVector.of(new int[] {ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, OK,
             ABSTAIN, ABSTAIN, ABSTAIN}),
-        FeatureVector.from(new int[] {KO, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN,
+        FeatureVector.of(new int[] {KO, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN,
             ABSTAIN, ABSTAIN, KO}),
-        FeatureVector.from(new int[] {ABSTAIN, OK, OK, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN,
+        FeatureVector.of(new int[] {ABSTAIN, OK, OK, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN,
             ABSTAIN, ABSTAIN}),
-        FeatureVector.from(new int[] {ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, KO, ABSTAIN,
+        FeatureVector.of(new int[] {ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, KO, ABSTAIN,
             ABSTAIN, ABSTAIN, ABSTAIN}),
-        FeatureVector.from(new int[] {ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, KO, ABSTAIN,
+        FeatureVector.of(new int[] {ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, KO, ABSTAIN,
             ABSTAIN, ABSTAIN, KO}),
-        FeatureVector.from(new int[] {KO, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN,
+        FeatureVector.of(new int[] {KO, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN,
             ABSTAIN, ABSTAIN, ABSTAIN}),
-        FeatureVector.from(new int[] {ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, KO, OK, ABSTAIN,
+        FeatureVector.of(new int[] {ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, KO, OK, ABSTAIN,
             ABSTAIN, ABSTAIN}),
-        FeatureVector.from(new int[] {ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, KO, ABSTAIN,
+        FeatureVector.of(new int[] {ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, KO, ABSTAIN,
             ABSTAIN, ABSTAIN, ABSTAIN}),
         FeatureVector
-            .from(new int[] {ABSTAIN, OK, ABSTAIN, ABSTAIN, OK, KO, OK, ABSTAIN, ABSTAIN, KO}),
-        FeatureVector.from(
+            .of(new int[] {ABSTAIN, OK, ABSTAIN, ABSTAIN, OK, KO, OK, ABSTAIN, ABSTAIN, KO}),
+        FeatureVector.of(
             new int[] {ABSTAIN, OK, OK, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, KO}),
-        FeatureVector.from(
+        FeatureVector.of(
             new int[] {KO, OK, OK, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN}),
-        FeatureVector.from(
+        FeatureVector.of(
             new int[] {KO, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, KO, KO}),
         FeatureVector
-            .from(new int[] {ABSTAIN, OK, OK, ABSTAIN, OK, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, KO}),
-        FeatureVector.from(new int[] {KO, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN,
+            .of(new int[] {ABSTAIN, OK, OK, ABSTAIN, OK, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, KO}),
+        FeatureVector.of(new int[] {KO, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN,
             ABSTAIN, ABSTAIN, KO}),
-        FeatureVector.from(new int[] {ABSTAIN, ABSTAIN, OK, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN,
+        FeatureVector.of(new int[] {ABSTAIN, ABSTAIN, OK, ABSTAIN, ABSTAIN, ABSTAIN, ABSTAIN,
             ABSTAIN, ABSTAIN, KO}));
 
     List<FeatureVector<Double>> probabilities =
@@ -121,14 +121,32 @@ public class MajorityLabelModelTest {
     // KO = !isDivisibleBy2 OR !isDivisibleBy3
     // goldProbs = [[1.0, 0.0], [1.0, 0.0], [1.0, 0.0], [1.0, 0.0], [1.0, 0.0], [0.0, 1.0]]
     List<FeatureVector<Double>> goldProbs = Lists.newArrayList(
-        FeatureVector.from(new double[] {1.0, 0.0}), FeatureVector.from(new double[] {1.0, 0.0}),
-        FeatureVector.from(new double[] {1.0, 0.0}), FeatureVector.from(new double[] {1.0, 0.0}),
-        FeatureVector.from(new double[] {1.0, 0.0}), FeatureVector.from(new double[] {0.0, 1.0}));
+        FeatureVector.of(new double[] {1.0, 0.0}), FeatureVector.of(new double[] {1.0, 0.0}),
+        FeatureVector.of(new double[] {1.0, 0.0}), FeatureVector.of(new double[] {1.0, 0.0}),
+        FeatureVector.of(new double[] {1.0, 0.0}), FeatureVector.of(new double[] {0.0, 1.0}));
 
-    List<ILabelingFunction<Integer>> lfs = new ArrayList<>();
-    lfs.add(x -> x % 2 == 0 ? OK : KO);
-    lfs.add(x -> x % 3 == 0 ? OK : KO);
-    lfs.add(x -> x % 6 == 0 ? OK : KO);
+    List<AbstractLabelingFunction<Integer>> lfs = new ArrayList<>();
+    lfs.add(new AbstractLabelingFunction<Integer>("isDivisibleBy2") {
+
+      @Override
+      public Integer apply(Integer x) {
+        return x % 2 == 0 ? OK : KO;
+      }
+    });
+    lfs.add(new AbstractLabelingFunction<Integer>("isDivisibleBy3") {
+
+      @Override
+      public Integer apply(Integer x) {
+        return x % 3 == 0 ? OK : KO;
+      }
+    });
+    lfs.add(new AbstractLabelingFunction<Integer>("isDivisibleBy6") {
+
+      @Override
+      public Integer apply(Integer x) {
+        return x % 6 == 0 ? OK : KO;
+      }
+    });
 
     List<Integer> instances = Lists.newArrayList(1, 2, 3, 4, 5, 6);
 
@@ -255,78 +273,78 @@ public class MajorityLabelModelTest {
     // OK = isDivisibleBy2 AND isDivisibleBy3
     // KO = !isDivisibleBy2 OR !isDivisibleBy3
     return Lists.newArrayList(
-        new GoldLabel(Integer.toString(1, 10), "KO", "1", true, false, false, false),
-        new GoldLabel(Integer.toString(2, 10), "OK", "2", false, true, false, false),
-        new GoldLabel(Integer.toString(3, 10), "OK", "3", false, true, false, false),
-        new GoldLabel(Integer.toString(4, 10), "KO", "4", false, false, true, false),
-        new GoldLabel(Integer.toString(5, 10), "KO", "5", false, false, true, false),
-        new GoldLabel(Integer.toString(6, 10), "OK", "6", true, false, false, false),
-        new GoldLabel(Integer.toString(7, 10), "KO", "7", true, false, false, false),
-        new GoldLabel(Integer.toString(8, 10), "KO", "8", true, false, false, false),
-        new GoldLabel(Integer.toString(9, 10), "KO", "9", true, false, false, false),
-        new GoldLabel(Integer.toString(10, 10), "KO", "10", true, false, false, false),
-        new GoldLabel(Integer.toString(11, 10), "KO", "11", true, false, false, false),
-        new GoldLabel(Integer.toString(12, 10), "KO", "12", false, false, false, true));
+        new GoldLabelOfString(Integer.toString(1, 10), "KO", "1", false, true, false, false),
+        new GoldLabelOfString(Integer.toString(2, 10), "OK", "2", true, false, false, false),
+        new GoldLabelOfString(Integer.toString(3, 10), "OK", "3", true, false, false, false),
+        new GoldLabelOfString(Integer.toString(4, 10), "KO", "4", true, false, false, false),
+        new GoldLabelOfString(Integer.toString(5, 10), "KO", "5", true, false, false, false),
+        new GoldLabelOfString(Integer.toString(6, 10), "OK", "6", false, true, false, false),
+        new GoldLabelOfString(Integer.toString(7, 10), "KO", "7", false, true, false, false),
+        new GoldLabelOfString(Integer.toString(8, 10), "KO", "8", false, true, false, false),
+        new GoldLabelOfString(Integer.toString(9, 10), "KO", "9", false, true, false, false),
+        new GoldLabelOfString(Integer.toString(10, 10), "KO", "10", false, true, false, false),
+        new GoldLabelOfString(Integer.toString(11, 10), "KO", "11", false, true, false, false),
+        new GoldLabelOfString(Integer.toString(12, 10), "KO", "12", false, false, true, false));
   }
 
   private List<Map.Entry<String, FeatureVector<Integer>>> isDivisibleBy2Correct() {
     return Lists.newArrayList(
-        new AbstractMap.SimpleEntry<>("1", FeatureVector.from(new int[] {KO, KO, KO})),
-        new AbstractMap.SimpleEntry<>("2", FeatureVector.from(new int[] {OK, KO, KO})),
-        new AbstractMap.SimpleEntry<>("5", FeatureVector.from(new int[] {KO, KO, KO})),
-        new AbstractMap.SimpleEntry<>("6", FeatureVector.from(new int[] {OK, OK, OK})),
-        new AbstractMap.SimpleEntry<>("7", FeatureVector.from(new int[] {KO, KO, KO})),
-        new AbstractMap.SimpleEntry<>("9", FeatureVector.from(new int[] {KO, OK, KO})),
-        new AbstractMap.SimpleEntry<>("11", FeatureVector.from(new int[] {KO, KO, KO})));
+        new AbstractMap.SimpleEntry<>("1", FeatureVector.of(new int[] {KO, KO, KO})),
+        new AbstractMap.SimpleEntry<>("2", FeatureVector.of(new int[] {OK, KO, KO})),
+        new AbstractMap.SimpleEntry<>("5", FeatureVector.of(new int[] {KO, KO, KO})),
+        new AbstractMap.SimpleEntry<>("6", FeatureVector.of(new int[] {OK, OK, OK})),
+        new AbstractMap.SimpleEntry<>("7", FeatureVector.of(new int[] {KO, KO, KO})),
+        new AbstractMap.SimpleEntry<>("9", FeatureVector.of(new int[] {KO, OK, KO})),
+        new AbstractMap.SimpleEntry<>("11", FeatureVector.of(new int[] {KO, KO, KO})));
   }
 
   private List<Map.Entry<String, FeatureVector<Integer>>> isDivisibleBy2Incorrect() {
     return Lists.newArrayList(
-        new AbstractMap.SimpleEntry<>("3", FeatureVector.from(new int[] {KO, OK, KO})),
-        new AbstractMap.SimpleEntry<>("4", FeatureVector.from(new int[] {OK, KO, KO})),
-        new AbstractMap.SimpleEntry<>("8", FeatureVector.from(new int[] {OK, KO, KO})),
-        new AbstractMap.SimpleEntry<>("10", FeatureVector.from(new int[] {OK, KO, KO})),
-        new AbstractMap.SimpleEntry<>("12", FeatureVector.from(new int[] {OK, OK, OK})));
+        new AbstractMap.SimpleEntry<>("3", FeatureVector.of(new int[] {KO, OK, KO})),
+        new AbstractMap.SimpleEntry<>("4", FeatureVector.of(new int[] {OK, KO, KO})),
+        new AbstractMap.SimpleEntry<>("8", FeatureVector.of(new int[] {OK, KO, KO})),
+        new AbstractMap.SimpleEntry<>("10", FeatureVector.of(new int[] {OK, KO, KO})),
+        new AbstractMap.SimpleEntry<>("12", FeatureVector.of(new int[] {OK, OK, OK})));
   }
 
   private List<Map.Entry<String, FeatureVector<Integer>>> isDivisibleBy3Correct() {
     return Lists.newArrayList(
-        new AbstractMap.SimpleEntry<>("1", FeatureVector.from(new int[] {KO, KO, KO})),
-        new AbstractMap.SimpleEntry<>("3", FeatureVector.from(new int[] {KO, OK, KO})),
-        new AbstractMap.SimpleEntry<>("4", FeatureVector.from(new int[] {OK, KO, KO})),
-        new AbstractMap.SimpleEntry<>("5", FeatureVector.from(new int[] {KO, KO, KO})),
-        new AbstractMap.SimpleEntry<>("6", FeatureVector.from(new int[] {OK, OK, OK})),
-        new AbstractMap.SimpleEntry<>("7", FeatureVector.from(new int[] {KO, KO, KO})),
-        new AbstractMap.SimpleEntry<>("8", FeatureVector.from(new int[] {OK, KO, KO})),
-        new AbstractMap.SimpleEntry<>("10", FeatureVector.from(new int[] {OK, KO, KO})),
-        new AbstractMap.SimpleEntry<>("11", FeatureVector.from(new int[] {KO, KO, KO})));
+        new AbstractMap.SimpleEntry<>("1", FeatureVector.of(new int[] {KO, KO, KO})),
+        new AbstractMap.SimpleEntry<>("3", FeatureVector.of(new int[] {KO, OK, KO})),
+        new AbstractMap.SimpleEntry<>("4", FeatureVector.of(new int[] {OK, KO, KO})),
+        new AbstractMap.SimpleEntry<>("5", FeatureVector.of(new int[] {KO, KO, KO})),
+        new AbstractMap.SimpleEntry<>("6", FeatureVector.of(new int[] {OK, OK, OK})),
+        new AbstractMap.SimpleEntry<>("7", FeatureVector.of(new int[] {KO, KO, KO})),
+        new AbstractMap.SimpleEntry<>("8", FeatureVector.of(new int[] {OK, KO, KO})),
+        new AbstractMap.SimpleEntry<>("10", FeatureVector.of(new int[] {OK, KO, KO})),
+        new AbstractMap.SimpleEntry<>("11", FeatureVector.of(new int[] {KO, KO, KO})));
   }
 
   private List<Map.Entry<String, FeatureVector<Integer>>> isDivisibleBy3Incorrect() {
     return Lists.newArrayList(
-        new AbstractMap.SimpleEntry<>("2", FeatureVector.from(new int[] {OK, KO, KO})),
-        new AbstractMap.SimpleEntry<>("9", FeatureVector.from(new int[] {KO, OK, KO})),
-        new AbstractMap.SimpleEntry<>("12", FeatureVector.from(new int[] {OK, OK, OK})));
+        new AbstractMap.SimpleEntry<>("2", FeatureVector.of(new int[] {OK, KO, KO})),
+        new AbstractMap.SimpleEntry<>("9", FeatureVector.of(new int[] {KO, OK, KO})),
+        new AbstractMap.SimpleEntry<>("12", FeatureVector.of(new int[] {OK, OK, OK})));
   }
 
   private List<Map.Entry<String, FeatureVector<Integer>>> isDivisibleBy6Correct() {
     return Lists.newArrayList(
-        new AbstractMap.SimpleEntry<>("1", FeatureVector.from(new int[] {KO, KO, KO})),
-        new AbstractMap.SimpleEntry<>("4", FeatureVector.from(new int[] {OK, KO, KO})),
-        new AbstractMap.SimpleEntry<>("5", FeatureVector.from(new int[] {KO, KO, KO})),
-        new AbstractMap.SimpleEntry<>("6", FeatureVector.from(new int[] {OK, OK, OK})),
-        new AbstractMap.SimpleEntry<>("7", FeatureVector.from(new int[] {KO, KO, KO})),
-        new AbstractMap.SimpleEntry<>("8", FeatureVector.from(new int[] {OK, KO, KO})),
-        new AbstractMap.SimpleEntry<>("9", FeatureVector.from(new int[] {KO, OK, KO})),
-        new AbstractMap.SimpleEntry<>("10", FeatureVector.from(new int[] {OK, KO, KO})),
-        new AbstractMap.SimpleEntry<>("11", FeatureVector.from(new int[] {KO, KO, KO})));
+        new AbstractMap.SimpleEntry<>("1", FeatureVector.of(new int[] {KO, KO, KO})),
+        new AbstractMap.SimpleEntry<>("4", FeatureVector.of(new int[] {OK, KO, KO})),
+        new AbstractMap.SimpleEntry<>("5", FeatureVector.of(new int[] {KO, KO, KO})),
+        new AbstractMap.SimpleEntry<>("6", FeatureVector.of(new int[] {OK, OK, OK})),
+        new AbstractMap.SimpleEntry<>("7", FeatureVector.of(new int[] {KO, KO, KO})),
+        new AbstractMap.SimpleEntry<>("8", FeatureVector.of(new int[] {OK, KO, KO})),
+        new AbstractMap.SimpleEntry<>("9", FeatureVector.of(new int[] {KO, OK, KO})),
+        new AbstractMap.SimpleEntry<>("10", FeatureVector.of(new int[] {OK, KO, KO})),
+        new AbstractMap.SimpleEntry<>("11", FeatureVector.of(new int[] {KO, KO, KO})));
   }
 
   private List<Map.Entry<String, FeatureVector<Integer>>> isDivisibleBy6Incorrect() {
     return Lists.newArrayList(
-        new AbstractMap.SimpleEntry<>("2", FeatureVector.from(new int[] {OK, KO, KO})),
-        new AbstractMap.SimpleEntry<>("3", FeatureVector.from(new int[] {KO, OK, KO})),
-        new AbstractMap.SimpleEntry<>("12", FeatureVector.from(new int[] {OK, OK, OK})));
+        new AbstractMap.SimpleEntry<>("2", FeatureVector.of(new int[] {OK, KO, KO})),
+        new AbstractMap.SimpleEntry<>("3", FeatureVector.of(new int[] {KO, OK, KO})),
+        new AbstractMap.SimpleEntry<>("12", FeatureVector.of(new int[] {OK, OK, OK})));
   }
 
   private List<Summary> summaries() {

@@ -1,6 +1,6 @@
-package com.computablefacts.morta.snorkel;
+package com.computablefacts.morta;
 
-import static com.computablefacts.morta.snorkel.ILabelingFunction.ABSTAIN;
+import static com.computablefacts.morta.labelingfunctions.AbstractLabelingFunction.ABSTAIN;
 
 import java.util.*;
 
@@ -56,9 +56,9 @@ final public class Summary {
    * @param correlation correlation type.
    * @return a correlation matrix.
    */
-  public static <T> Table<String, String, CorTest> labelingFunctionsCorrelations(Dictionary lfNames,
-      Dictionary lfLabels, List<Map.Entry<T, FeatureVector<Integer>>> instances,
-      eCorrelation correlation) {
+  public static <T> Table<String, String, CorTest> labelingFunctionsCorrelations(
+      com.computablefacts.morta.Dictionary lfNames, com.computablefacts.morta.Dictionary lfLabels,
+      List<Map.Entry<T, FeatureVector<Integer>>> instances, eCorrelation correlation) {
 
     Preconditions.checkNotNull(lfNames, "lfNames should not be null");
     Preconditions.checkNotNull(lfLabels, "lfLabels should not be null");
@@ -113,8 +113,8 @@ final public class Summary {
    * @return a segmentation of the data according to the output produced by each labeling function.
    */
   public static <T> Table<String, eStatus, List<Map.Entry<T, FeatureVector<Integer>>>> explore(
-      Dictionary lfNames, Dictionary lfLabels, List<Map.Entry<T, FeatureVector<Integer>>> instances,
-      List<Integer> goldLabels) {
+      com.computablefacts.morta.Dictionary lfNames, com.computablefacts.morta.Dictionary lfLabels,
+      List<Map.Entry<T, FeatureVector<Integer>>> instances, List<Integer> goldLabels) {
 
     Preconditions.checkNotNull(lfNames, "lfNames should not be null");
     Preconditions.checkNotNull(lfLabels, "lfNames should not be null");
@@ -185,8 +185,9 @@ final public class Summary {
    * @param goldLabels gold labels (optional).
    * @return a {@link Summary} object for each labeling function.
    */
-  public static <T> List<Summary> summarize(Dictionary lfNames, Dictionary lfLabels,
-      List<Map.Entry<T, FeatureVector<Integer>>> instances, List<Integer> goldLabels) {
+  public static <T> List<Summary> summarize(com.computablefacts.morta.Dictionary lfNames,
+      Dictionary lfLabels, List<Map.Entry<T, FeatureVector<Integer>>> instances,
+      List<Integer> goldLabels) {
 
     Preconditions.checkNotNull(lfNames, "lfNames should not be null");
     Preconditions.checkNotNull(lfLabels, "lfLabels should not be null");

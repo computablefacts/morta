@@ -1,19 +1,11 @@
-package com.computablefacts.morta.snorkel;
+package com.computablefacts.morta;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 import com.computablefacts.asterix.ConfusionMatrix;
-import com.computablefacts.morta.prodigy.AnnotatedText;
-import com.computablefacts.morta.prodigy.Meta;
-import com.computablefacts.morta.prodigy.Span;
-import com.computablefacts.morta.prodigy.Token;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
-import com.google.errorprone.annotations.Var;
-import com.google.re2j.Matcher;
-import com.google.re2j.Pattern;
 
 public interface IGoldLabel<D> {
 
@@ -211,94 +203,11 @@ public interface IGoldLabel<D> {
     map.put("id", id());
     map.put("label", label());
     map.put("data", data());
-    map.put("snippet", snippet());
     map.put("is_true_positive", isTruePositive());
     map.put("is_false_positive", isFalsePositive());
     map.put("is_true_negative", isTrueNegative());
     map.put("is_false_negative", isFalseNegative());
 
     return map;
-  }
-
-  /**
-   * If {@code D} is an instance of {@link String}, an optional text snippet which must be a
-   * substring of {@link data()}. This text snippet is used by
-   * {@link com.computablefacts.morta.docsetlabeler.DocSetLabelerImpl} to boost terms included in
-   * it.
-   *
-   * @return a text snippet.
-   */
-  @Deprecated
-  default String snippet() {
-    return "";
-  }
-
-  /**
-   * A sanitized version of the string returned by the {@link #snippet()} method.
-   *
-   * @return a sanitized text snippet.
-   */
-  @Deprecated
-  default String snippetSanitized() {
-    return snippet().replaceAll(SANITIZE_SNIPPET, " ");
-  }
-
-  /**
-   * Output the Gold Label in <a href="https://prodi.gy/">Prodigy</a> data format for
-   * <a href="https://prodi.gy/docs/text-classification">text classification</a> or
-   * <a href="https://prodi.gy/docs/span-categorization">span categorization</a>.
-   *
-   * @return an {@link AnnotatedText}.
-   */
-  @Deprecated
-  default Optional<AnnotatedText> annotatedText() {
-
-    if (!isTruePositive() && !isTrueNegative() && !isFalsePositive() && !isFalseNegative()) {
-      return Optional.empty();
-    }
-    if (!(data() instanceof String)) {
-      return Optional.empty();
-    }
-
-    boolean accept = isTruePositive() || isFalseNegative();
-    String data = (String) data();
-
-    if (Strings.isNullOrEmpty(snippet()) || !data.contains(snippet())) {
-      Meta meta = new Meta(id(), label(), accept ? "accept" : "reject");
-      return Optional.of(new AnnotatedText(meta, data));
-    }
-
-    int beginSpan = data.indexOf(snippet());
-    int endSpan = beginSpan + snippet().length();
-
-    @Var
-    int firstSpanId = -1;
-    @Var
-    int lastSpanId = -1;
-
-    List<Token> tokens = new ArrayList<>();
-    Matcher tokenizer =
-        Pattern.compile("[^\\p{Zs}\\n\\r\\t]+", Pattern.DOTALL | Pattern.MULTILINE).matcher(data);
-
-    while (tokenizer.find()) {
-
-      String text = tokenizer.group();
-      int beginToken = tokenizer.start();
-      int endToken = tokenizer.end();
-
-      if (beginToken <= beginSpan) {
-        firstSpanId = tokens.size();
-      }
-      if (endToken <= endSpan) {
-        lastSpanId = tokens.size();
-      }
-
-      tokens.add(new Token(text, beginToken, endToken, tokens.size(), true));
-    }
-
-    Span span = new Span(beginSpan, endSpan, firstSpanId, lastSpanId, label());
-    Meta meta = new Meta(id(), label(), accept ? "accept" : "reject", snippet());
-
-    return Optional.of(new AnnotatedText(meta, data, tokens, Lists.newArrayList(span)));
   }
 }

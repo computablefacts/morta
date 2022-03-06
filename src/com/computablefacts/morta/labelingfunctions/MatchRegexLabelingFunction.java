@@ -3,7 +3,6 @@ package com.computablefacts.morta.labelingfunctions;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.computablefacts.morta.snorkel.ILabelingFunction;
 import com.google.common.base.Strings;
 import com.google.errorprone.annotations.CheckReturnValue;
 import com.google.re2j.Matcher;
@@ -25,7 +24,7 @@ final public class MatchRegexLabelingFunction extends AbstractLabelingFunction<S
   @Override
   public Integer apply(String text) {
     Matcher matcher = pattern().matcher(text);
-    return matcher.find() ? ILabelingFunction.OK : ILabelingFunction.ABSTAIN;
+    return matcher.find() ? OK : ABSTAIN;
   }
 
   @Override

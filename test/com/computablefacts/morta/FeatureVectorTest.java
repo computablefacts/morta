@@ -1,4 +1,4 @@
-package com.computablefacts.morta.snorkel;
+package com.computablefacts.morta;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -21,7 +21,7 @@ public class FeatureVectorTest {
   @Test
   public void testFromDoubleArray() {
 
-    FeatureVector<Double> vector = FeatureVector.from(new double[] {1.0, 1.0, 1.0, 1.0, 1.0});
+    FeatureVector<Double> vector = FeatureVector.of(new double[] {1.0, 1.0, 1.0, 1.0, 1.0});
 
     Assert.assertEquals(new FeatureVector<>(5, 1.0), vector);
   }
@@ -29,7 +29,7 @@ public class FeatureVectorTest {
   @Test
   public void testFromIntArray() {
 
-    FeatureVector<Integer> vector = FeatureVector.from(new int[] {1, 1, 1, 1, 1});
+    FeatureVector<Integer> vector = FeatureVector.of(new int[] {1, 1, 1, 1, 1});
 
     Assert.assertEquals(new FeatureVector<>(5, 1), vector);
   }

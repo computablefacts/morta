@@ -1,4 +1,4 @@
-package com.computablefacts.morta.nextgen;
+package com.computablefacts.morta;
 
 import java.io.File;
 import java.util.*;
@@ -9,11 +9,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.computablefacts.asterix.Document;
+import com.computablefacts.asterix.Generated;
 import com.computablefacts.asterix.View;
 import com.computablefacts.asterix.codecs.JsonCodec;
 import com.computablefacts.asterix.console.AsciiProgressBar;
 import com.computablefacts.logfmt.LogFormatter;
-import com.computablefacts.morta.snorkel.IGoldLabel;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -256,6 +256,7 @@ public final class FactAndDocument {
     return Objects.hash(fact_, document_);
   }
 
+  @Generated
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this).add("fact", fact_).add("document", document_)

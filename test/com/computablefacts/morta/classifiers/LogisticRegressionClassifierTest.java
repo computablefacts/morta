@@ -1,11 +1,12 @@
 package com.computablefacts.morta.classifiers;
 
-import static com.computablefacts.morta.snorkel.ILabelingFunction.KO;
-import static com.computablefacts.morta.snorkel.ILabelingFunction.OK;
+import static com.computablefacts.morta.labelingfunctions.AbstractLabelingFunction.KO;
+import static com.computablefacts.morta.labelingfunctions.AbstractLabelingFunction.OK;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.junit.Assert;
@@ -13,8 +14,11 @@ import org.junit.Test;
 
 import com.computablefacts.asterix.ConfusionMatrix;
 import com.computablefacts.asterix.View;
+import com.computablefacts.morta.Dictionary;
+import com.computablefacts.morta.FeatureVector;
+import com.computablefacts.morta.Helpers;
+import com.computablefacts.morta.labelingfunctions.AbstractLabelingFunction;
 import com.computablefacts.morta.labelmodels.MajorityLabelModel;
-import com.computablefacts.morta.snorkel.*;
 import com.google.common.collect.Lists;
 
 public class LogisticRegressionClassifierTest {
@@ -33,14 +37,32 @@ public class LogisticRegressionClassifierTest {
     lfLabels.put("OK", OK);
     lfLabels.put("KO", KO);
 
-    List<ILabelingFunction<Integer>> lfs = new ArrayList<>();
-    lfs.add(x -> x % 2 == 0 ? OK : KO);
-    lfs.add(x -> x % 3 == 0 ? OK : KO);
-    lfs.add(x -> x % 6 == 0 ? OK : KO);
+    List<AbstractLabelingFunction<Integer>> lfs = new ArrayList<>();
+    lfs.add(new AbstractLabelingFunction<Integer>("isDivisibleBy2") {
+
+      @Override
+      public Integer apply(Integer x) {
+        return x % 2 == 0 ? OK : KO;
+      }
+    });
+    lfs.add(new AbstractLabelingFunction<Integer>("isDivisibleBy3") {
+
+      @Override
+      public Integer apply(Integer x) {
+        return x % 3 == 0 ? OK : KO;
+      }
+    });
+    lfs.add(new AbstractLabelingFunction<Integer>("isDivisibleBy6") {
+
+      @Override
+      public Integer apply(Integer x) {
+        return x % 6 == 0 ? OK : KO;
+      }
+    });
 
     List<Integer> instances = Lists.newArrayList(1, 2, 3, 4, 5, 6);
 
-    ITransformationFunction<Integer, FeatureVector<Double>> transform = x -> {
+    Function<Integer, FeatureVector<Double>> transform = x -> {
 
       String number = new StringBuilder(Integer.toBinaryString(x)).reverse().toString();
       FeatureVector<Double> vector = new FeatureVector<>(8, 0.0);

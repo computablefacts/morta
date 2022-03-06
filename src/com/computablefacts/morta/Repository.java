@@ -1,10 +1,11 @@
-package com.computablefacts.morta.nextgen;
+package com.computablefacts.morta;
 
-import static com.computablefacts.morta.snorkel.IGoldLabel.SANITIZE_SNIPPET;
-import static com.computablefacts.morta.snorkel.ILabelingFunction.OK;
+import static com.computablefacts.morta.IGoldLabel.SANITIZE_SNIPPET;
+import static com.computablefacts.morta.labelingfunctions.AbstractLabelingFunction.OK;
 
 import java.io.File;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.computablefacts.asterix.SnippetExtractor;
@@ -15,10 +16,6 @@ import com.computablefacts.morta.labelingfunctions.AbstractLabelingFunction;
 import com.computablefacts.morta.labelingfunctions.MatchRegexLabelingFunction;
 import com.computablefacts.morta.labelmodels.AbstractLabelModel;
 import com.computablefacts.morta.labelmodels.TreeLabelModel;
-import com.computablefacts.morta.snorkel.Dictionary;
-import com.computablefacts.morta.snorkel.FeatureVector;
-import com.computablefacts.morta.snorkel.Helpers;
-import com.computablefacts.morta.snorkel.IGoldLabel;
 import com.computablefacts.morta.textcat.FingerPrint;
 import com.computablefacts.morta.textcat.TextCategorizer;
 import com.google.common.base.Preconditions;
@@ -369,7 +366,7 @@ public final class Repository {
         goldLabels.size(), train.size() + test.size());
 
     List<FeatureVector<Double>> actuals = train.stream().map(IGoldLabel::data)
-        .map(Helpers.countVectorizer(alphabet, maxGroupSize_)).collect(Collectors.toList());
+        .map(countVectorizer(alphabet, maxGroupSize_)).collect(Collectors.toList());
 
     List<Integer> predictions = labelModel.predict(train);
 
@@ -455,7 +452,7 @@ public final class Repository {
     Preconditions.checkNotNull(classifier, "classifier should not be null");
     Preconditions.checkNotNull(text, "text should not be null");
 
-    return classifier.predict(Helpers.countVectorizer(alphabet, maxGroupSize_).apply(text));
+    return classifier.predict(countVectorizer(alphabet, maxGroupSize_).apply(text));
   }
 
   /**
@@ -542,6 +539,26 @@ public final class Repository {
 
     GoldLabelOfString.save(file, goldLabels);
     return goldLabels;
+  }
+
+  private Function<String, FeatureVector<Double>> countVectorizer(Dictionary alphabet,
+      int maxGroupSize) {
+
+    Preconditions.checkNotNull(alphabet, "alphabet should not be null");
+    Preconditions.checkArgument(maxGroupSize > 0, "maxGroupSize must be > 0");
+
+    return text -> {
+
+      FeatureVector<Double> vector = new FeatureVector<>(alphabet.size(), 0.0);
+      Map<String, Double> features = Helpers.features(maxGroupSize, text);
+
+      features.forEach((f, w) -> {
+        if (alphabet.containsKey(f)) {
+          vector.set(alphabet.id(f), 1.0);
+        }
+      });
+      return vector;
+    };
   }
 
   private File fileFactsAndDocuments() {

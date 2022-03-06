@@ -1,14 +1,14 @@
 package com.computablefacts.morta.docsetlabeler;
 
-import static com.computablefacts.morta.nextgen.Repository.ACCEPT;
-import static com.computablefacts.morta.snorkel.IGoldLabel.SANITIZE_SNIPPET;
+import static com.computablefacts.morta.IGoldLabel.SANITIZE_SNIPPET;
+import static com.computablefacts.morta.Repository.ACCEPT;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
-import com.computablefacts.morta.snorkel.Helpers;
+import com.computablefacts.morta.Helpers;
 import com.computablefacts.morta.textcat.TextCategorizer;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
