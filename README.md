@@ -4,7 +4,8 @@
 [![Build Status](https://travis-ci.com/computablefacts/morta.svg?branch=master)](https://travis-ci.com/computablefacts/morta)
 [![codecov](https://codecov.io/gh/computablefacts/morta/branch/master/graph/badge.svg)](https://codecov.io/gh/computablefacts/morta)
 
-Morta is a proof-of-concept Java implementation of [Snorkel](https://www.snorkel.org/).
+Morta is a proof-of-concept Java implementation of a span categorizer using many 
+ideas from [Snorkel](https://www.snorkel.org/).
 
 ## Usage
 
