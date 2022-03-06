@@ -16,6 +16,7 @@ import com.computablefacts.morta.classifiers.AbstractClassifier;
 import com.computablefacts.morta.labelingfunctions.AbstractLabelingFunction;
 import com.computablefacts.morta.labelmodels.AbstractLabelModel;
 import com.computablefacts.morta.labelmodels.TreeLabelModel;
+import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.errorprone.annotations.CheckReturnValue;
@@ -46,18 +47,38 @@ final public class SaturatedDive extends ConsoleApp {
 
     for (String lbl : labels) {
 
+      System.out.println("\nThe label is " + lbl);
+      System.out.println("Building alphabet...");
+
       Dictionary alphabet = repository.alphabet(lbl);
+
+      System.out.println("The alphabet size is " + alphabet.size());
+      System.out.println("Guesstimating labeling functions...");
+      System.out.println("The number of candidates to consider is " + nbCandidatesToConsider);
+      System.out.println("The number of patterns to return is " + nbLabelsToReturn);
+
       List<AbstractLabelingFunction<String>> labelingFunctions =
           repository.labelingFunctions(lbl, nbCandidatesToConsider, nbLabelsToReturn);
+
+      System.out
+          .println("The extracted patterns are : [\n  " + Joiner.on(",\n ").join(labelingFunctions
+              .stream().map(AbstractLabelingFunction::name).collect(Collectors.toList())) + "\n]");
+      System.out.println("Training label model...");
+      System.out.println("The evaluation metric is MCC");
+
       AbstractLabelModel<String> labelModel =
           repository.labelModel(lbl, labelingFunctions, TreeLabelModel.eMetric.MCC);
+
+      System.out.println("Training classifier...");
+      System.out.println("The classifier type is LOGIT");
+
       AbstractClassifier classifier =
           repository.classifier(lbl, alphabet, labelModel, Repository.eClassifier.LOGIT);
       // TODO : save prodigy annotations
 
-      System.out.print("\n*** Label Model Summary ***\n");
-      System.out.println("Label is " + lbl);
-      System.out.println("Label model is " + labelModel.toString() + "\n");
+      System.out.println("Summarizing label model...");
+      System.out.println("The label model is " + labelModel.toString());
+
       labelModel.summarize(Lists.newArrayList(repository.pagesAsGoldLabels(lbl)))
           .forEach(System.out::println);
 
@@ -68,7 +89,7 @@ final public class SaturatedDive extends ConsoleApp {
 
       ConfusionMatrix labelModelConfusionMatrix = IGoldLabel.confusionMatrix(labelModelPredictions);
 
-      System.out.print("*** Label Model Confusion Matrix ***");
+      System.out.print("Computing the label model confusion matrix...");
       System.out.print(labelModelConfusionMatrix);
 
       List<IGoldLabel<String>> classifierPredictions = repository.pagesAsGoldLabels(lbl).stream()
@@ -78,7 +99,7 @@ final public class SaturatedDive extends ConsoleApp {
 
       ConfusionMatrix classifierConfusionMatrix = IGoldLabel.confusionMatrix(classifierPredictions);
 
-      System.out.print("\n*** Classifier Confusion Matrix ***");
+      System.out.print("\nComputing the classifier confusion matrix...");
       System.out.print(classifierConfusionMatrix);
     }
   }
