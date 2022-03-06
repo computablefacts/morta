@@ -41,43 +41,47 @@ final public class SaturatedDive extends ConsoleApp {
     Preconditions.checkArgument(nbLabelsToReturn > 0, "nbLabelsToReturn must be > 0");
     Preconditions.checkArgument(maxGroupSize > 0, "maxGroupSize must be > 0");
 
+    Observations observations =
+        new Observations(new File(outputDir + File.separator + "observations.txt"));
     Repository repository = new Repository(outputDir, maxGroupSize);
     Set<String> labels = repository.init(facts, documents, verbose).stream()
         .filter(lbl -> label == null || label.equals(lbl)).collect(Collectors.toSet());
 
     for (String lbl : labels) {
 
-      System.out.println("\nThe label is " + lbl);
-      System.out.println("Building alphabet...");
+      observations.add(
+          "\n================================================================================");
+      observations.add("\nThe label is " + lbl);
+      observations.add("\nBuilding alphabet...");
 
       Dictionary alphabet = repository.alphabet(lbl);
 
-      System.out.println("The alphabet size is " + alphabet.size());
-      System.out.println("Guesstimating labeling functions...");
-      System.out.println("The number of candidates to consider is " + nbCandidatesToConsider);
-      System.out.println("The number of patterns to return is " + nbLabelsToReturn);
+      observations.add("\nThe alphabet size is " + alphabet.size());
+      observations.add("\nGuesstimating labeling functions...");
+      observations.add("\nThe number of candidates to consider is " + nbCandidatesToConsider);
+      observations.add("\nThe number of patterns to return is " + nbLabelsToReturn);
 
       List<AbstractLabelingFunction<String>> labelingFunctions =
           repository.labelingFunctions(lbl, nbCandidatesToConsider, nbLabelsToReturn);
 
-      System.out
-          .println("The extracted patterns are : [\n  " + Joiner.on(",\n ").join(labelingFunctions
+      observations
+          .add("\nThe extracted patterns are : [\n  " + Joiner.on(",\n  ").join(labelingFunctions
               .stream().map(AbstractLabelingFunction::name).collect(Collectors.toList())) + "\n]");
-      System.out.println("Training label model...");
-      System.out.println("The evaluation metric is MCC");
+      observations.add("\nTraining label model...");
+      observations.add("\nThe evaluation metric is MCC");
 
       AbstractLabelModel<String> labelModel =
           repository.labelModel(lbl, labelingFunctions, TreeLabelModel.eMetric.MCC);
 
-      System.out.println("Training classifier...");
-      System.out.println("The classifier type is LOGIT");
+      observations.add("\nThe label model is " + labelModel.toString());
+      observations.add("\nTraining classifier...");
+      observations.add("\nThe classifier type is LOGIT");
 
       AbstractClassifier classifier =
           repository.classifier(lbl, alphabet, labelModel, Repository.eClassifier.LOGIT);
       // TODO : save prodigy annotations
 
-      System.out.println("Summarizing label model...");
-      System.out.println("The label model is " + labelModel.toString());
+      observations.add("\nSummarizing label model...");
 
       labelModel.summarize(Lists.newArrayList(repository.pagesAsGoldLabels(lbl)))
           .forEach(System.out::println);
@@ -89,8 +93,8 @@ final public class SaturatedDive extends ConsoleApp {
 
       ConfusionMatrix labelModelConfusionMatrix = IGoldLabel.confusionMatrix(labelModelPredictions);
 
-      System.out.print("Computing the label model confusion matrix...");
-      System.out.print(labelModelConfusionMatrix);
+      observations.add("\nComputing the label model confusion matrix...");
+      observations.add(labelModelConfusionMatrix.toString());
 
       List<IGoldLabel<String>> classifierPredictions = repository.pagesAsGoldLabels(lbl).stream()
           .map(goldLabel -> newGoldLabel(goldLabel,
@@ -99,9 +103,11 @@ final public class SaturatedDive extends ConsoleApp {
 
       ConfusionMatrix classifierConfusionMatrix = IGoldLabel.confusionMatrix(classifierPredictions);
 
-      System.out.print("\nComputing the classifier confusion matrix...");
-      System.out.print(classifierConfusionMatrix);
+      observations.add("\nComputing the classifier confusion matrix...");
+      observations.add(classifierConfusionMatrix.toString());
     }
+
+    observations.flush();
   }
 
   private static GoldLabelOfString newGoldLabel(IGoldLabel<String> goldLabel, int clazz) {
