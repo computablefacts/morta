@@ -1,7 +1,5 @@
-package com.computablefacts.morta.nextgen2;
+package com.computablefacts.morta.nextgen;
 
-import static com.computablefacts.morta.nextgen.GoldLabelsRepository.ACCEPT;
-import static com.computablefacts.morta.nextgen.GoldLabelsRepository.REJECT;
 import static com.computablefacts.morta.snorkel.IGoldLabel.SANITIZE_SNIPPET;
 import static com.computablefacts.morta.snorkel.ILabelingFunction.OK;
 
@@ -32,6 +30,10 @@ import com.google.errorprone.annotations.CheckReturnValue;
 
 @CheckReturnValue
 public final class Repository {
+
+  public static final String UNKNOWN = "unknown";
+  public static final String ACCEPT = "ACCEPT";
+  public static final String REJECT = "REJECT";
 
   private final String outputDir_;
   private final int maxGroupSize_;

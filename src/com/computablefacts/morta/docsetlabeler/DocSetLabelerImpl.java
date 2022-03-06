@@ -1,6 +1,6 @@
 package com.computablefacts.morta.docsetlabeler;
 
-import static com.computablefacts.morta.nextgen.GoldLabelsRepository.ACCEPT;
+import static com.computablefacts.morta.nextgen.Repository.ACCEPT;
 import static com.computablefacts.morta.snorkel.IGoldLabel.SANITIZE_SNIPPET;
 
 import java.util.*;

@@ -1,4 +1,4 @@
-package com.computablefacts.morta.nextgen2;
+package com.computablefacts.morta.nextgen;
 
 import java.io.File;
 import java.util.*;
