@@ -55,7 +55,7 @@ public final class Repository {
   }
 
   @Generated
-  public String outputDirectory() {
+  public String directory() {
     return outputDir_;
   }
 
