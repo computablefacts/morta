@@ -1,6 +1,7 @@
 package com.computablefacts.morta;
 
 import static com.computablefacts.morta.IGoldLabel.SANITIZE_SNIPPET;
+import static com.computablefacts.morta.labelingfunctions.AbstractLabelingFunction.KO;
 import static com.computablefacts.morta.labelingfunctions.AbstractLabelingFunction.OK;
 
 import java.io.File;
@@ -8,6 +9,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.computablefacts.asterix.ConfusionMatrix;
 import com.computablefacts.asterix.SnippetExtractor;
 import com.computablefacts.asterix.View;
 import com.computablefacts.morta.classifiers.*;
@@ -328,6 +330,17 @@ public final class Repository {
     TreeLabelModel<String> labelModel = new TreeLabelModel<>(labelingFunctions, metric);
     labelModel.fit(train);
 
+    List<IGoldLabel<String>> predictions =
+        train.stream()
+            .map(goldLabel -> newGoldLabel(goldLabel,
+                labelModel.predict(Lists.newArrayList(goldLabel)).get(0)))
+            .collect(Collectors.toList());
+
+    ConfusionMatrix confusionMatrix = IGoldLabel.confusionMatrix(predictions);
+
+    labelModel.f1(confusionMatrix.f1Score());
+    labelModel.mcc(confusionMatrix.matthewsCorrelationCoefficient());
+
     Helpers.serialize(file.getAbsolutePath(), labelModel);
     return labelModel;
   }
@@ -387,6 +400,15 @@ public final class Repository {
     }
 
     classifier.train(actuals, predictions);
+
+    List<IGoldLabel<String>> newPredictions = train.stream()
+        .map(goldLabel -> newGoldLabel(goldLabel, classify(alphabet, classifier, goldLabel.data())))
+        .collect(Collectors.toList());
+
+    ConfusionMatrix confusionMatrix = IGoldLabel.confusionMatrix(newPredictions);
+
+    classifier.f1(confusionMatrix.f1Score());
+    classifier.mcc(confusionMatrix.matthewsCorrelationCoefficient());
 
     Helpers.serialize(file.getAbsolutePath(), classifier);
     return classifier;
@@ -485,6 +507,35 @@ public final class Repository {
       return Optional.empty();
     }
     return Optional.ofNullable(SnippetExtractor.extract(keywords, text, 300, 50, ""));
+  }
+
+  /**
+   * Create a new gold label by comparing the gold label actual class with the predicted one.
+   *
+   * @param goldLabel the actual gold label.
+   * @param prediction the prediction.
+   * @return a new gold label.
+   */
+  public GoldLabelOfString newGoldLabel(IGoldLabel<String> goldLabel, int prediction) {
+
+    Preconditions.checkNotNull(goldLabel, "goldLabel should not be null");
+    Preconditions.checkArgument(prediction == OK || prediction == KO,
+        "the prediction should be in {OK, KO}");
+
+    if (prediction == OK) {
+      if (goldLabel.isTruePositive() || goldLabel.isFalseNegative()) {
+        return new GoldLabelOfString(goldLabel.id(), goldLabel.label(), goldLabel.data(), false,
+            true, false, false);
+      }
+      return new GoldLabelOfString(goldLabel.id(), goldLabel.label(), goldLabel.data(), false,
+          false, false, true);
+    }
+    if (goldLabel.isTruePositive() || goldLabel.isFalseNegative()) {
+      return new GoldLabelOfString(goldLabel.id(), goldLabel.label(), goldLabel.data(), false,
+          false, true, false);
+    }
+    return new GoldLabelOfString(goldLabel.id(), goldLabel.label(), goldLabel.data(), true, false,
+        false, false);
   }
 
   private Set<FactAndDocument> factsAndDocuments(File facts, File documents,

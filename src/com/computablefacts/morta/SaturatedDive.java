@@ -1,7 +1,5 @@
 package com.computablefacts.morta;
 
-import static com.computablefacts.morta.labelingfunctions.AbstractLabelingFunction.OK;
-
 import java.io.File;
 import java.util.List;
 import java.util.Set;
@@ -91,7 +89,7 @@ final public class SaturatedDive extends ConsoleApp {
         observations.add("\nComputing label model confusion matrix...");
 
         List<IGoldLabel<String>> labelModelPredictions = repository.pagesAsGoldLabels(lbl).stream()
-            .map(goldLabel -> newGoldLabel(goldLabel,
+            .map(goldLabel -> repository.newGoldLabel(goldLabel,
                 labelModel.predict(Lists.newArrayList(goldLabel)).get(0)))
             .collect(Collectors.toList());
 
@@ -102,7 +100,7 @@ final public class SaturatedDive extends ConsoleApp {
         observations.add("Computing classifier confusion matrix...");
 
         List<IGoldLabel<String>> classifierPredictions = repository.pagesAsGoldLabels(lbl).stream()
-            .map(goldLabel -> newGoldLabel(goldLabel,
+            .map(goldLabel -> repository.newGoldLabel(goldLabel,
                 repository.classify(alphabet, classifier, goldLabel.data())))
             .collect(Collectors.toList());
 
@@ -117,22 +115,5 @@ final public class SaturatedDive extends ConsoleApp {
     }
 
     observations.flush();
-  }
-
-  private static GoldLabelOfString newGoldLabel(IGoldLabel<String> goldLabel, int clazz) {
-    if (clazz == OK) {
-      if (goldLabel.isTruePositive() || goldLabel.isFalseNegative()) {
-        return new GoldLabelOfString(goldLabel.id(), goldLabel.label(), goldLabel.data(), false,
-            true, false, false);
-      }
-      return new GoldLabelOfString(goldLabel.id(), goldLabel.label(), goldLabel.data(), false,
-          false, false, true);
-    }
-    if (goldLabel.isTruePositive() || goldLabel.isFalseNegative()) {
-      return new GoldLabelOfString(goldLabel.id(), goldLabel.label(), goldLabel.data(), false,
-          false, true, false);
-    }
-    return new GoldLabelOfString(goldLabel.id(), goldLabel.label(), goldLabel.data(), true, false,
-        false, false);
   }
 }
