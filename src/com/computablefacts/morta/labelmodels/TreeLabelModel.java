@@ -1,4 +1,4 @@
-package com.computablefacts.morta.snorkel.labelmodels;
+package com.computablefacts.morta.labelmodels;
 
 import static com.computablefacts.morta.snorkel.ILabelingFunction.*;
 
@@ -14,8 +14,8 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import com.computablefacts.asterix.ConfusionMatrix;
 import com.computablefacts.asterix.View;
 import com.computablefacts.asterix.console.AsciiProgressBar;
+import com.computablefacts.morta.labelingfunctions.AbstractLabelingFunction;
 import com.computablefacts.morta.snorkel.*;
-import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunction;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Table;

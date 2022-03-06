@@ -1,4 +1,4 @@
-package com.computablefacts.morta.spacy;
+package com.computablefacts.morta.prodigy;
 
 import java.util.List;
 import java.util.Objects;

@@ -12,12 +12,12 @@ import org.slf4j.LoggerFactory;
 
 import com.computablefacts.asterix.ConfusionMatrix;
 import com.computablefacts.asterix.console.ConsoleApp;
+import com.computablefacts.morta.classifiers.AbstractClassifier;
+import com.computablefacts.morta.labelingfunctions.AbstractLabelingFunction;
+import com.computablefacts.morta.labelmodels.AbstractLabelModel;
+import com.computablefacts.morta.labelmodels.TreeLabelModel;
 import com.computablefacts.morta.snorkel.Dictionary;
 import com.computablefacts.morta.snorkel.IGoldLabel;
-import com.computablefacts.morta.snorkel.classifiers.AbstractClassifier;
-import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunction;
-import com.computablefacts.morta.snorkel.labelmodels.AbstractLabelModel;
-import com.computablefacts.morta.snorkel.labelmodels.TreeLabelModel;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.errorprone.annotations.CheckReturnValue;

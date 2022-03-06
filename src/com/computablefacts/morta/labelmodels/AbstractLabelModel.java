@@ -1,12 +1,12 @@
-package com.computablefacts.morta.snorkel.labelmodels;
+package com.computablefacts.morta.labelmodels;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import com.computablefacts.asterix.View;
+import com.computablefacts.morta.labelingfunctions.AbstractLabelingFunction;
 import com.computablefacts.morta.snorkel.*;
-import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunction;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Table;
 import com.google.errorprone.annotations.CheckReturnValue;

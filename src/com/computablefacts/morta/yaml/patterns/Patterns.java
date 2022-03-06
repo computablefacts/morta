@@ -12,9 +12,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.computablefacts.logfmt.LogFormatter;
-import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunction;
-import com.computablefacts.morta.snorkel.labelingfunctions.MatchRegexLabelingFunction;
-import com.computablefacts.morta.snorkel.labelingfunctions.MatchWildcardLabelingFunction;
+import com.computablefacts.morta.labelingfunctions.AbstractLabelingFunction;
+import com.computablefacts.morta.labelingfunctions.MatchRegexLabelingFunction;
+import com.computablefacts.morta.labelingfunctions.MatchWildcardLabelingFunction;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;

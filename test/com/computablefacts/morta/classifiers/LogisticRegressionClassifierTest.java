@@ -1,4 +1,4 @@
-package com.computablefacts.morta.snorkel.classifiers;
+package com.computablefacts.morta.classifiers;
 
 import static com.computablefacts.morta.snorkel.ILabelingFunction.KO;
 import static com.computablefacts.morta.snorkel.ILabelingFunction.OK;
@@ -13,8 +13,8 @@ import org.junit.Test;
 
 import com.computablefacts.asterix.ConfusionMatrix;
 import com.computablefacts.asterix.View;
+import com.computablefacts.morta.labelmodels.MajorityLabelModel;
 import com.computablefacts.morta.snorkel.*;
-import com.computablefacts.morta.snorkel.labelmodels.MajorityLabelModel;
 import com.google.common.collect.Lists;
 
 public class LogisticRegressionClassifierTest {

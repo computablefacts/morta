@@ -1,4 +1,4 @@
-package com.computablefacts.morta.snorkel.classifiers;
+package com.computablefacts.morta.classifiers;
 
 import java.util.HashSet;
 import java.util.List;

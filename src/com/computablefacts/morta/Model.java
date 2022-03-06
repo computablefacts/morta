@@ -7,12 +7,12 @@ import java.util.List;
 
 import javax.annotation.concurrent.NotThreadSafe;
 
+import com.computablefacts.morta.classifiers.AbstractClassifier;
+import com.computablefacts.morta.labelingfunctions.AbstractLabelingFunction;
 import com.computablefacts.morta.snorkel.Dictionary;
 import com.computablefacts.morta.snorkel.FeatureVector;
 import com.computablefacts.morta.snorkel.Helpers;
 import com.computablefacts.morta.snorkel.ITransformationFunction;
-import com.computablefacts.morta.snorkel.classifiers.AbstractClassifier;
-import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunction;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.errorprone.annotations.CheckReturnValue;

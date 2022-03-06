@@ -1,4 +1,4 @@
-package com.computablefacts.morta.snorkel.labelmodels;
+package com.computablefacts.morta.labelmodels;
 
 import static com.computablefacts.morta.snorkel.ILabelingFunction.*;
 
@@ -11,8 +11,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.computablefacts.asterix.View;
+import com.computablefacts.morta.labelingfunctions.AbstractLabelingFunction;
 import com.computablefacts.morta.snorkel.*;
-import com.computablefacts.morta.snorkel.labelingfunctions.AbstractLabelingFunction;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Table;

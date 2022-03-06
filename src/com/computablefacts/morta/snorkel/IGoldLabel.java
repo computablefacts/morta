@@ -4,10 +4,10 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import com.computablefacts.asterix.ConfusionMatrix;
-import com.computablefacts.morta.spacy.AnnotatedText;
-import com.computablefacts.morta.spacy.Meta;
-import com.computablefacts.morta.spacy.Span;
-import com.computablefacts.morta.spacy.Token;
+import com.computablefacts.morta.prodigy.AnnotatedText;
+import com.computablefacts.morta.prodigy.Meta;
+import com.computablefacts.morta.prodigy.Span;
+import com.computablefacts.morta.prodigy.Token;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;

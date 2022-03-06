@@ -1,4 +1,4 @@
-package com.computablefacts.morta.snorkel.labelingfunctions;
+package com.computablefacts.morta.labelingfunctions;
 
 import java.util.HashSet;
 import java.util.Set;

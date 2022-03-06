@@ -11,12 +11,12 @@ import com.computablefacts.asterix.ConfusionMatrix;
 import com.computablefacts.asterix.View;
 import com.computablefacts.asterix.console.AsciiProgressBar;
 import com.computablefacts.asterix.console.ConsoleApp;
+import com.computablefacts.morta.classifiers.*;
+import com.computablefacts.morta.labelmodels.TreeLabelModel;
 import com.computablefacts.morta.snorkel.Dictionary;
 import com.computablefacts.morta.snorkel.FeatureVector;
 import com.computablefacts.morta.snorkel.Helpers;
 import com.computablefacts.morta.snorkel.IGoldLabel;
-import com.computablefacts.morta.snorkel.classifiers.*;
-import com.computablefacts.morta.snorkel.labelmodels.TreeLabelModel;
 import com.google.common.base.Preconditions;
 import com.google.errorprone.annotations.CheckReturnValue;
 
