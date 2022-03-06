@@ -6,14 +6,12 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import com.computablefacts.asterix.ConfusionMatrix;
 import com.computablefacts.asterix.View;
-import com.computablefacts.asterix.console.AsciiProgressBar;
 import com.computablefacts.morta.*;
 import com.computablefacts.morta.labelingfunctions.AbstractLabelingFunction;
 import com.google.common.base.Function;
@@ -21,8 +19,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Table;
 import com.google.errorprone.annotations.CheckReturnValue;
 import com.google.errorprone.annotations.Var;
-
-import smile.stat.hypothesis.CorTest;
 
 /**
  * This model is especially good when the labeling functions are highly correlated. Each labeling
@@ -102,35 +98,13 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
   }
 
   @Override
-  public Table<String, String, CorTest> labelingFunctionsCorrelations(
-      List<IGoldLabel<T>> goldLabels, Summary.eCorrelation correlation) {
-
-    Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
-    Preconditions.checkNotNull(correlation, "correlation should not be null");
-
-    AtomicInteger count = new AtomicInteger(0);
-    AsciiProgressBar.ProgressBar bar = AsciiProgressBar.create();
-
-    return Summary.labelingFunctionsCorrelations(lfNames(), lfLabels(),
-        View.of(goldLabels).map(IGoldLabel::data)
-            .peek(d -> bar.update(count.incrementAndGet(), goldLabels.size(), "Correlating..."))
-            .map(Helpers.label(lfs())).toList(),
-        correlation);
-  }
-
-  @Override
   public Table<String, Summary.eStatus, List<Map.Entry<T, FeatureVector<Integer>>>> explore(
       List<IGoldLabel<T>> goldLabels) {
 
     Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
 
-    AtomicInteger count = new AtomicInteger(0);
-    AsciiProgressBar.ProgressBar bar = AsciiProgressBar.create();
-
     return Summary.explore(lfNames(), lfLabels(),
-        View.of(goldLabels).map(IGoldLabel::data)
-            .peek(d -> bar.update(count.incrementAndGet(), goldLabels.size(), "Exploring..."))
-            .map(Helpers.label(lfs())).toList(),
+        View.of(goldLabels).map(IGoldLabel::data).map(Helpers.label(lfs())).toList(),
         View.of(goldLabels).map(TreeLabelModel::label).toList());
   }
 
@@ -139,13 +113,8 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
 
     Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
 
-    AtomicInteger count = new AtomicInteger(0);
-    AsciiProgressBar.ProgressBar bar = AsciiProgressBar.create();
-
     return Summary.summarize(lfNames(), lfLabels(),
-        View.of(goldLabels).map(IGoldLabel::data)
-            .peek(d -> bar.update(count.incrementAndGet(), goldLabels.size(), "Summarizing..."))
-            .map(Helpers.label(lfs())).toList(),
+        View.of(goldLabels).map(IGoldLabel::data).map(Helpers.label(lfs())).toList(),
         View.of(goldLabels).map(TreeLabelModel::label).toList());
   }
 

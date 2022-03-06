@@ -56,7 +56,8 @@ final public class SaturatedDive extends ConsoleApp {
       // TODO : save prodigy annotations
 
       System.out.print("\n*** Label Model Summary ***\n");
-      System.out.println("Summarizing model : " + labelModel.toString());
+      System.out.println("Label is " + lbl);
+      System.out.println("Label model is " + labelModel.toString() + "\n");
       labelModel.summarize(Lists.newArrayList(repository.pagesAsGoldLabels(lbl)))
           .forEach(System.out::println);
 
@@ -67,7 +68,7 @@ final public class SaturatedDive extends ConsoleApp {
 
       ConfusionMatrix labelModelConfusionMatrix = IGoldLabel.confusionMatrix(labelModelPredictions);
 
-      System.out.print("\n*** Label Model Confusion Matrix ***");
+      System.out.print("*** Label Model Confusion Matrix ***");
       System.out.print(labelModelConfusionMatrix);
 
       List<IGoldLabel<String>> classifierPredictions = repository.pagesAsGoldLabels(lbl).stream()
