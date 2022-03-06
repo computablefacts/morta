@@ -228,10 +228,10 @@ final public class MajorityLabelModel<T> extends AbstractLabelModel<T> {
   }
 
   @Override
-  public void fit(List<? extends IGoldLabel<T>> goldLabels) {}
+  public void fit(List<IGoldLabel<T>> goldLabels) {}
 
   @Override
-  public List<Integer> predict(List<? extends IGoldLabel<T>> goldLabels) {
+  public List<Integer> predict(List<IGoldLabel<T>> goldLabels) {
 
     Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
 

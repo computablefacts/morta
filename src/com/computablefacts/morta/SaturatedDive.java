@@ -36,43 +36,50 @@ final public class SaturatedDive extends ConsoleApp {
     int maxGroupSize = getIntCommand(args, "max_group_size", 3);
     boolean verbose = getBooleanCommand(args, "verbose", true);
 
-    Preconditions.checkArgument(label != null, "label should not be null");
     Preconditions.checkArgument(nbCandidatesToConsider > 0, "nbCandidatesToConsider must be > 0");
     Preconditions.checkArgument(nbLabelsToReturn > 0, "nbLabelsToReturn must be > 0");
     Preconditions.checkArgument(maxGroupSize > 0, "maxGroupSize must be > 0");
 
     Repository repository = new Repository(outputDir, maxGroupSize);
-    Set<String> labels = repository.init(facts, documents, verbose);
-    Dictionary alphabet = repository.alphabet(label);
-    List<AbstractLabelingFunction<String>> labelingFunctions =
-        repository.labelingFunctions(label, nbCandidatesToConsider, nbLabelsToReturn);
-    AbstractLabelModel<String> labelModel =
-        repository.labelModel(label, labelingFunctions, TreeLabelModel.eMetric.MCC);
-    AbstractClassifier classifier =
-        repository.classifier(label, alphabet, labelModel, Repository.eClassifier.LOGIT);
+    Set<String> labels = repository.init(facts, documents, verbose).stream()
+        .filter(lbl -> label == null || label.equals(lbl)).collect(Collectors.toSet());
 
-    List<IGoldLabel<String>> labelModelPredictions =
-        repository.pagesAsGoldLabels(label).stream()
-            .map(goldLabel -> newGoldLabel(goldLabel,
-                labelModel.predict(Lists.newArrayList(goldLabel)).get(0)))
-            .collect(Collectors.toList());
+    for (String lbl : labels) {
 
-    ConfusionMatrix labelModelConfusionMatrix = IGoldLabel.confusionMatrix(labelModelPredictions);
+      Dictionary alphabet = repository.alphabet(lbl);
+      List<AbstractLabelingFunction<String>> labelingFunctions =
+          repository.labelingFunctions(lbl, nbCandidatesToConsider, nbLabelsToReturn);
+      AbstractLabelModel<String> labelModel =
+          repository.labelModel(lbl, labelingFunctions, TreeLabelModel.eMetric.MCC);
+      AbstractClassifier classifier =
+          repository.classifier(lbl, alphabet, labelModel, Repository.eClassifier.LOGIT);
+      // TODO : save prodigy annotations
 
-    System.out.print("\n*** Label Model Confusion Matrix ***");
-    System.out.print(labelModelConfusionMatrix);
+      System.out.print("\n*** Label Model Summary ***\n");
+      System.out.println("Summarizing model : " + labelModel.toString());
+      labelModel.summarize(Lists.newArrayList(repository.pagesAsGoldLabels(lbl)))
+          .forEach(System.out::println);
 
-    List<IGoldLabel<String>> classifierPredictions = repository.pagesAsGoldLabels(label).stream()
-        .map(goldLabel -> newGoldLabel(goldLabel,
-            repository.classify(alphabet, classifier, goldLabel.data())))
-        .collect(Collectors.toList());
+      List<IGoldLabel<String>> labelModelPredictions = repository.pagesAsGoldLabels(lbl).stream()
+          .map(goldLabel -> newGoldLabel(goldLabel,
+              labelModel.predict(Lists.newArrayList(goldLabel)).get(0)))
+          .collect(Collectors.toList());
 
-    ConfusionMatrix classifierConfusionMatrix = IGoldLabel.confusionMatrix(classifierPredictions);
+      ConfusionMatrix labelModelConfusionMatrix = IGoldLabel.confusionMatrix(labelModelPredictions);
 
-    System.out.print("\n*** Classifier Confusion Matrix ***");
-    System.out.print(classifierConfusionMatrix);
+      System.out.print("\n*** Label Model Confusion Matrix ***");
+      System.out.print(labelModelConfusionMatrix);
 
-    // TODO : save prodigy annotations
+      List<IGoldLabel<String>> classifierPredictions = repository.pagesAsGoldLabels(lbl).stream()
+          .map(goldLabel -> newGoldLabel(goldLabel,
+              repository.classify(alphabet, classifier, goldLabel.data())))
+          .collect(Collectors.toList());
+
+      ConfusionMatrix classifierConfusionMatrix = IGoldLabel.confusionMatrix(classifierPredictions);
+
+      System.out.print("\n*** Classifier Confusion Matrix ***");
+      System.out.print(classifierConfusionMatrix);
+    }
   }
 
   private static GoldLabelOfString newGoldLabel(IGoldLabel<String> goldLabel, int clazz) {

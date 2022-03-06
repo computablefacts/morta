@@ -84,7 +84,7 @@ public abstract class AbstractLabelModel<T> {
    * @return a correlation matrix.
    */
   public Table<String, String, CorTest> labelingFunctionsCorrelations(
-      List<? extends IGoldLabel<T>> goldLabels, Summary.eCorrelation correlation) {
+      List<IGoldLabel<T>> goldLabels, Summary.eCorrelation correlation) {
 
     Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
     Preconditions.checkNotNull(correlation, "correlation should not be null");
@@ -100,7 +100,7 @@ public abstract class AbstractLabelModel<T> {
    * @return a segmentation of the data according to the output produced by each labeling function.
    */
   public Table<String, Summary.eStatus, List<Map.Entry<T, FeatureVector<Integer>>>> explore(
-      List<? extends IGoldLabel<T>> goldLabels) {
+      List<IGoldLabel<T>> goldLabels) {
 
     Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
 
@@ -117,7 +117,7 @@ public abstract class AbstractLabelModel<T> {
    * @param goldLabels gold labels.
    * @return a {@link Summary} object for each labeling function.
    */
-  public List<Summary> summarize(List<? extends IGoldLabel<T>> goldLabels) {
+  public List<Summary> summarize(List<IGoldLabel<T>> goldLabels) {
 
     Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
 
@@ -155,7 +155,7 @@ public abstract class AbstractLabelModel<T> {
    * 
    * @param goldLabels gold labels.
    */
-  public abstract void fit(List<? extends IGoldLabel<T>> goldLabels);
+  public abstract void fit(List<IGoldLabel<T>> goldLabels);
 
   /**
    * Make predictions.
@@ -163,5 +163,5 @@ public abstract class AbstractLabelModel<T> {
    * @param goldLabels gold labels.
    * @return output a prediction for each gold label.
    */
-  public abstract List<Integer> predict(List<? extends IGoldLabel<T>> goldLabels);
+  public abstract List<Integer> predict(List<IGoldLabel<T>> goldLabels);
 }

@@ -118,7 +118,7 @@ final public class Helpers {
 
   @Deprecated
   public static String[][] vectors(TreeLabelModel<String> labelModel,
-      List<? extends IGoldLabel<String>> goldLabels) {
+      List<IGoldLabel<String>> goldLabels) {
 
     Preconditions.checkNotNull(labelModel, "labelModel should not be null");
     Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");

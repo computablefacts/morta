@@ -103,7 +103,7 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
 
   @Override
   public Table<String, String, CorTest> labelingFunctionsCorrelations(
-      List<? extends IGoldLabel<T>> goldLabels, Summary.eCorrelation correlation) {
+      List<IGoldLabel<T>> goldLabels, Summary.eCorrelation correlation) {
 
     Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
     Preconditions.checkNotNull(correlation, "correlation should not be null");
@@ -120,7 +120,7 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
 
   @Override
   public Table<String, Summary.eStatus, List<Map.Entry<T, FeatureVector<Integer>>>> explore(
-      List<? extends IGoldLabel<T>> goldLabels) {
+      List<IGoldLabel<T>> goldLabels) {
 
     Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
 
@@ -135,7 +135,7 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
   }
 
   @Override
-  public List<Summary> summarize(List<? extends IGoldLabel<T>> goldLabels) {
+  public List<Summary> summarize(List<IGoldLabel<T>> goldLabels) {
 
     Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
 
@@ -150,7 +150,7 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
   }
 
   @Override
-  public void fit(List<? extends IGoldLabel<T>> goldLabels) {
+  public void fit(List<IGoldLabel<T>> goldLabels) {
 
     Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
     Preconditions.checkArgument(
@@ -190,7 +190,7 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
    * @return output a prediction for each gold label.
    */
   @Override
-  public List<Integer> predict(List<? extends IGoldLabel<T>> goldLabels) {
+  public List<Integer> predict(List<IGoldLabel<T>> goldLabels) {
 
     Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
     Preconditions.checkArgument(
@@ -205,8 +205,7 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
     return metric_;
   }
 
-  public List<Map.Entry<T, FeatureVector<Integer>>> vectors(
-      List<? extends IGoldLabel<T>> goldLabels) {
+  public List<Map.Entry<T, FeatureVector<Integer>>> vectors(List<IGoldLabel<T>> goldLabels) {
 
     Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
 
@@ -221,7 +220,7 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
         .map(pred -> labelingFunctionLabels().label(pred)).toList();
   }
 
-  public List<String> predicted(List<? extends IGoldLabel<T>> goldLabels) {
+  public List<String> predicted(List<IGoldLabel<T>> goldLabels) {
 
     Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
 
@@ -230,7 +229,7 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
         .collect(Collectors.toList());
   }
 
-  public ConfusionMatrix confusionMatrix(List<? extends IGoldLabel<T>> goldLabels) {
+  public ConfusionMatrix confusionMatrix(List<IGoldLabel<T>> goldLabels) {
 
     Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
 

@@ -87,10 +87,10 @@ public class AbstractLabelModelTest {
     return new AbstractLabelModel<String>(lfNames(), lfLabels(), lfs()) {
 
       @Override
-      public void fit(List<? extends IGoldLabel<String>> goldLabels) {}
+      public void fit(List<IGoldLabel<String>> goldLabels) {}
 
       @Override
-      public List<Integer> predict(List<? extends IGoldLabel<String>> goldLabels) {
+      public List<Integer> predict(List<IGoldLabel<String>> goldLabels) {
         return new ArrayList<>();
       }
     };
