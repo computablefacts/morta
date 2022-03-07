@@ -389,11 +389,10 @@ public final class Repository {
     TreeLabelModel<String> labelModel = new TreeLabelModel<>(labelingFunctions, metric);
     labelModel.fit(train);
 
-    List<IGoldLabel<String>> predictions =
-        test.stream()
-            .map(goldLabel -> newGoldLabel(goldLabel,
-                labelModel.predict(Lists.newArrayList(goldLabel)).get(0)))
-            .collect(Collectors.toList());
+    List<IGoldLabel<String>> predictions = test.stream()
+        .map(goldLabel -> newGoldLabel(goldLabel,
+            labelModel.predict(Lists.newArrayList(goldLabel.data())).get(0)))
+        .collect(Collectors.toList());
 
     ConfusionMatrix confusionMatrix = IGoldLabel.confusionMatrix(predictions);
 
@@ -440,7 +439,8 @@ public final class Repository {
     List<FeatureVector<Double>> actuals = train.stream().map(IGoldLabel::data)
         .map(countVectorizer(alphabet, maxGroupSize_)).collect(Collectors.toList());
 
-    List<Integer> predictions = labelModel.predict(train);
+    List<Integer> predictions =
+        labelModel.predict(train.stream().map(IGoldLabel::data).collect(Collectors.toList()));
 
     AbstractClassifier classifier;
 

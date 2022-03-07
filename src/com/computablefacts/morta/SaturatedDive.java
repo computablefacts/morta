@@ -90,7 +90,7 @@ final public class SaturatedDive extends ConsoleApp {
 
         List<IGoldLabel<String>> labelModelPredictions = repository.pagesAsGoldLabels(lbl).stream()
             .map(goldLabel -> repository.newGoldLabel(goldLabel,
-                labelModel.predict(Lists.newArrayList(goldLabel)).get(0)))
+                labelModel.predict(Lists.newArrayList(goldLabel.data())).get(0)))
             .collect(Collectors.toList());
 
         ConfusionMatrix labelModelConfusionMatrix =

@@ -7,6 +7,7 @@ import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -90,7 +91,8 @@ public class TreeLabelModelTest {
     TreeLabelModel<String> labelModel = labelModel();
     labelModel.fit(goldLabels());
 
-    List<Integer> list = labelModel.predict(goldLabels());
+    List<Integer> list = labelModel
+        .predict(goldLabels().stream().map(IGoldLabel::data).collect(Collectors.toList()));
 
     Assert.assertEquals(Lists.newArrayList(KO, KO, OK, KO, KO, OK, KO, KO, OK, KO, KO, OK), list);
   }

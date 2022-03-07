@@ -90,7 +90,7 @@ public class AbstractLabelModelTest {
       public void fit(List<IGoldLabel<String>> goldLabels) {}
 
       @Override
-      public List<Integer> predict(List<IGoldLabel<String>> goldLabels) {
+      public List<Integer> predict(List<String> goldLabels) {
         return new ArrayList<>();
       }
     };

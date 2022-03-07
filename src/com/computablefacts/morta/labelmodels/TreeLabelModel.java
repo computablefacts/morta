@@ -155,19 +155,15 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
   /**
    * Make predictions. All predictions MUST BE in {OK, KO}.
    *
-   * @param goldLabels gold labels.
+   * @param data a list of data points.
    * @return output a prediction for each gold label.
    */
   @Override
-  public List<Integer> predict(List<IGoldLabel<T>> goldLabels) {
+  public List<Integer> predict(List<T> data) {
 
-    Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
-    Preconditions.checkArgument(
-        goldLabels.stream().allMatch(gl -> gl.label().equals(goldLabels.get(0).label())),
-        "gold labels must be identical");
+    Preconditions.checkNotNull(data, "data should not be null");
 
-    return goldLabels.stream().map(IGoldLabel::data).map(this::predict)
-        .collect(Collectors.toList());
+    return data.stream().map(this::predict).collect(Collectors.toList());
   }
 
   public eMetric metric() {
@@ -193,7 +189,7 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
 
     Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
 
-    return predict(goldLabels).stream()
+    return predict(goldLabels.stream().map(IGoldLabel::data).collect(Collectors.toList())).stream()
         .map(pred -> pred == ABSTAIN ? "ABSTAIN" : labelingFunctionLabels().label(pred))
         .collect(Collectors.toList());
   }
@@ -204,7 +200,8 @@ final public class TreeLabelModel<T> extends AbstractLabelModel<T> {
 
     List<Integer> actual =
         goldLabels.stream().map(TreeLabelModel::label).collect(Collectors.toList());
-    List<Integer> predicted = predict(goldLabels);
+    List<Integer> predicted =
+        predict(goldLabels.stream().map(IGoldLabel::data).collect(Collectors.toList()));
 
     ConfusionMatrix matrix = new ConfusionMatrix();
     matrix.addAll(actual, predicted, OK, KO);

@@ -6,6 +6,7 @@ import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -24,9 +25,9 @@ public class MajorityLabelModelTest {
   @Test
   public void testProbabilities1() {
 
-    List<FeatureVector<Double>> goldProbs = Lists.newArrayList(
-        FeatureVector.of(new double[] {1.0, 0.0}), FeatureVector.of(new double[] {0.5, 0.5}),
-        FeatureVector.of(new double[] {0.5, 0.5}));
+    List<FeatureVector<Double>> goldProbs =
+        Lists.newArrayList(FeatureVector.of(new double[] {1.0, 0.0}),
+            FeatureVector.of(new double[] {0.5, 0.5}), FeatureVector.of(new double[] {0.5, 0.5}));
 
     Dictionary lfNames = new Dictionary();
     lfNames.put("lf1", 0);
@@ -48,15 +49,15 @@ public class MajorityLabelModelTest {
   @Test
   public void testProbabilities2() {
 
-    List<FeatureVector<Double>> goldProbs = Lists.newArrayList(
-        FeatureVector.of(new double[] {0.0, 1.0}), FeatureVector.of(new double[] {1.0, 0.0}),
-        FeatureVector.of(new double[] {0.0, 1.0}), FeatureVector.of(new double[] {1.0, 0.0}),
-        FeatureVector.of(new double[] {1.0, 0.0}), FeatureVector.of(new double[] {1.0, 0.0}),
-        FeatureVector.of(new double[] {0.5, 0.5}), FeatureVector.of(new double[] {1.0, 0.0}),
-        FeatureVector.of(new double[] {0.0, 1.0}), FeatureVector.of(new double[] {0.0, 1.0}),
-        FeatureVector.of(new double[] {0.0, 1.0}), FeatureVector.of(new double[] {1.0, 0.0}),
-        FeatureVector.of(new double[] {0.0, 1.0}), FeatureVector.of(new double[] {1.0, 0.0}),
-        FeatureVector.of(new double[] {0.5, 0.5}));
+    List<FeatureVector<Double>> goldProbs =
+        Lists.newArrayList(FeatureVector.of(new double[] {0.0, 1.0}),
+            FeatureVector.of(new double[] {1.0, 0.0}), FeatureVector.of(new double[] {0.0, 1.0}),
+            FeatureVector.of(new double[] {1.0, 0.0}), FeatureVector.of(new double[] {1.0, 0.0}),
+            FeatureVector.of(new double[] {1.0, 0.0}), FeatureVector.of(new double[] {0.5, 0.5}),
+            FeatureVector.of(new double[] {1.0, 0.0}), FeatureVector.of(new double[] {0.0, 1.0}),
+            FeatureVector.of(new double[] {0.0, 1.0}), FeatureVector.of(new double[] {0.0, 1.0}),
+            FeatureVector.of(new double[] {1.0, 0.0}), FeatureVector.of(new double[] {0.0, 1.0}),
+            FeatureVector.of(new double[] {1.0, 0.0}), FeatureVector.of(new double[] {0.5, 0.5}));
 
     Dictionary lfNames = new Dictionary();
     lfNames.put("lf1", 0);
@@ -222,7 +223,8 @@ public class MajorityLabelModelTest {
     MajorityLabelModel<String> labelModel = labelModel();
     labelModel.fit(goldLabels());
 
-    List<Integer> list = labelModel.predict(goldLabels());
+    List<Integer> list = labelModel
+        .predict(goldLabels().stream().map(IGoldLabel::data).collect(Collectors.toList()));
 
     Assert.assertEquals(Lists.newArrayList(KO, KO, KO, KO, KO, OK, KO, KO, KO, KO, KO, OK), list);
   }

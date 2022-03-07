@@ -231,13 +231,13 @@ final public class MajorityLabelModel<T> extends AbstractLabelModel<T> {
   public void fit(List<IGoldLabel<T>> goldLabels) {}
 
   @Override
-  public List<Integer> predict(List<IGoldLabel<T>> goldLabels) {
+  public List<Integer> predict(List<T> data) {
 
-    Preconditions.checkNotNull(goldLabels, "goldLabels should not be null");
+    Preconditions.checkNotNull(data, "data should not be null");
 
     return predictions(lfNames(), lfLabels(),
-        probabilities(lfNames(), lfLabels(), View.of(goldLabels).map(IGoldLabel::data)
-            .map(Helpers.label(lfs())).map(Map.Entry::getValue).toList()),
+        probabilities(lfNames(), lfLabels(),
+            View.of(data).map(Helpers.label(lfs())).map(Map.Entry::getValue).toList()),
         tieBreakPolicy_, tolerance_);
   }
 

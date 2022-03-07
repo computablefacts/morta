@@ -160,8 +160,8 @@ public abstract class AbstractLabelModel<T> {
   /**
    * Make predictions.
    *
-   * @param goldLabels gold labels.
-   * @return output a prediction for each gold label.
+   * @param data a list of data points.
+   * @return output a prediction for each data point.
    */
-  public abstract List<Integer> predict(List<IGoldLabel<T>> goldLabels);
+  public abstract List<Integer> predict(List<T> data);
 }
