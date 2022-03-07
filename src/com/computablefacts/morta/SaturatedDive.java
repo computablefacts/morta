@@ -1,24 +1,40 @@
 package com.computablefacts.morta;
 
+import static com.computablefacts.morta.Repository.ACCEPT;
+import static com.computablefacts.morta.Repository.REJECT;
+import static com.computablefacts.morta.labelingfunctions.AbstractLabelingFunction.OK;
+
 import java.io.File;
-import java.util.List;
-import java.util.Set;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.computablefacts.asterix.ConfusionMatrix;
+import com.computablefacts.asterix.SnippetExtractor;
+import com.computablefacts.asterix.View;
+import com.computablefacts.asterix.codecs.JsonCodec;
 import com.computablefacts.asterix.console.ConsoleApp;
 import com.computablefacts.morta.classifiers.AbstractClassifier;
 import com.computablefacts.morta.labelingfunctions.AbstractLabelingFunction;
 import com.computablefacts.morta.labelmodels.AbstractLabelModel;
 import com.computablefacts.morta.labelmodels.TreeLabelModel;
+import com.computablefacts.morta.prodigy.AnnotatedText;
+import com.computablefacts.morta.prodigy.Meta;
+import com.computablefacts.morta.prodigy.Span;
+import com.computablefacts.morta.prodigy.Token;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
+import com.google.common.hash.Hashing;
 import com.google.errorprone.annotations.CheckReturnValue;
+import com.google.errorprone.annotations.Var;
+import com.google.re2j.Matcher;
+import com.google.re2j.Pattern;
 
 @CheckReturnValue
 final public class SaturatedDive extends ConsoleApp {
@@ -108,6 +124,14 @@ final public class SaturatedDive extends ConsoleApp {
             IGoldLabel.confusionMatrix(classifierPredictions);
 
         observations.add(classifierConfusionMatrix.toString());
+        observations.add("Exporting prodigy annotations for text classification...");
+
+        exportProdigyAnnotations(repository, lbl, alphabet, classifier, labelingFunctions,
+            new File(outputDir + File.separator + lbl
+                + "_prodigy_annotations_for_text_classification.jsonl"));
+
+        observations.add(String.format("\n%d prodigy annotations have been exported.",
+            classifierPredictions.size()));
 
       } catch (Exception e) {
         observations.add(Throwables.getStackTraceAsString(Throwables.getRootCause(e)));
@@ -115,5 +139,135 @@ final public class SaturatedDive extends ConsoleApp {
     }
 
     observations.flush();
+  }
+
+  private static void exportProdigyAnnotations(Repository repository, String label,
+      Dictionary alphabet, AbstractClassifier classifier,
+      List<AbstractLabelingFunction<String>> labelingFunctions, File output) {
+
+    Preconditions.checkNotNull(repository, "repository should not be null");
+    Preconditions.checkNotNull(label, "label should not be null");
+    Preconditions.checkNotNull(alphabet, "alphabet should not be null");
+    Preconditions.checkNotNull(classifier, "classifier should not be null");
+    Preconditions.checkNotNull(labelingFunctions, "labelingFunctions should not be null");
+    Preconditions.checkNotNull(output, "output should not be null");
+    Preconditions.checkArgument(!output.exists(), "output file should not exist : %s", output);
+
+    int maxNumberOfElementsPerClass = 250;
+    Set<String> hashAccepted = new HashSet<>();
+    Set<String> hashRejected = new HashSet<>();
+
+    View.of(repository.factsAndDocuments(null)).flatten(doc -> {
+
+      // Extract all non-empty pages of all documents
+      List<String> pages = doc.unmatchedPages();
+      pages.add(doc.matchedPage());
+      return View.of(pages).filter(page -> !Strings.isNullOrEmpty(page) /* ignore empty pages */)
+          .map(page -> new AbstractMap.SimpleImmutableEntry<>(doc.id(), page));
+    }).flatten(entry -> {
+
+      String docId = entry.getKey();
+      String page = entry.getValue();
+
+      // Classify each page and extract a single snippet for each labeling function
+      int prediction = repository.predict(alphabet, classifier, page);
+      return View.of(labelingFunctions).map(lf -> {
+
+        // Extract the keywords associated with each labeling function
+        List<String> keywords = Helpers.keywords(Lists.newArrayList(lf), page);
+
+        // Extract the snippet associated with each labeling function
+        String snippet =
+            keywords.isEmpty() ? "" : SnippetExtractor.extract(keywords, page, 400, 200, "");
+
+        // Create a temporary data structure with all the relevant information
+        Annotation annotation = new Annotation();
+        annotation.id_ = docId;
+        annotation.page_ = page;
+        annotation.snippet_ = snippet;
+        annotation.labelingFunction_ = lf;
+        annotation.keywords_ = keywords;
+        annotation.label_ = prediction;
+
+        return annotation;
+      }).filter(annotation -> !Strings
+          .isNullOrEmpty(annotation.snippet_) /* ignore annotations with empty snippets */);
+    }).flatten(annotation -> View.of(annotation.keywords_)
+        .filter(keyword -> annotation.snippet_.contains(keyword) /* ignore unmatched keywords */)
+        .map(keyword -> {
+
+          int beginSpan = annotation.snippet_.indexOf(keyword);
+          int endSpan = beginSpan + keyword.length();
+
+          @Var
+          int firstSpanId = -1;
+          @Var
+          int lastSpanId = -1;
+
+          List<Token> tokens = new ArrayList<>();
+          Matcher tokenizer =
+              Pattern.compile("[^\\p{Zs}\\n\\r\\t]+", Pattern.DOTALL | Pattern.MULTILINE)
+                  .matcher(annotation.snippet_);
+
+          while (tokenizer.find()) {
+
+            String text = tokenizer.group();
+            int beginToken = tokenizer.start();
+            int endToken = tokenizer.end();
+
+            if (beginToken <= beginSpan) {
+              firstSpanId = tokens.size();
+            }
+            if (endToken <= endSpan) {
+              lastSpanId = tokens.size();
+            }
+
+            tokens.add(new Token(text, beginToken, endToken, tokens.size(), true));
+          }
+
+          String answer = annotation.label_ == OK ? ACCEPT : REJECT;
+          Span span = new Span(beginSpan, endSpan, firstSpanId, lastSpanId, label);
+          Meta meta = new Meta(annotation.id_, label, answer);
+
+          return new AnnotatedText(meta, annotation.snippet_, tokens, Lists.newArrayList(span));
+        })).filter(annotatedText -> {
+
+          String hash = Hashing
+              .murmur3_128().newHasher().putString(annotatedText.tokens_.stream()
+                  .map(token -> token.text_).collect(Collectors.joining()), StandardCharsets.UTF_8)
+              .hash().toString();
+
+          // Balance the number of ACCEPT/REJECT classes
+          if (ACCEPT.equals(annotatedText.meta_.expectedAnswer_)) {
+            if (hashAccepted.contains(hash)) {
+              return false;
+            }
+            hashAccepted.add(hash);
+            return true;
+          }
+          if (hashRejected.contains(hash)) {
+            return false;
+          }
+          hashRejected.add(hash);
+          return true;
+        }).takeWhile(annotatedText -> hashAccepted.size() <= maxNumberOfElementsPerClass
+            && hashRejected.size() <= maxNumberOfElementsPerClass)
+        .index().peek(entry -> {
+          if (entry.getKey() % 10 == 0) {
+            System.out.printf("%d annotations exported...%n", entry.getKey());
+          }
+        }).map(Map.Entry::getValue).toFile(JsonCodec::asString, output, false);
+  }
+
+  private final static class Annotation {
+
+    public String id_;
+    public String page_;
+    public String snippet_;
+    public AbstractLabelingFunction<String> labelingFunction_;
+    public List<String> keywords_;
+    public int label_;
+
+    public Annotation() {}
   }
 }
