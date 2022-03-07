@@ -521,6 +521,21 @@ public final class Repository {
 
   /**
    * Classify a given text.
+   *
+   * @param labelModel the label model to use.
+   * @param text the text to classify.
+   * @return a label in {OK, KO}.
+   */
+  public int predict(AbstractLabelModel<String> labelModel, String text) {
+
+    Preconditions.checkNotNull(labelModel, "labelModel should not be null");
+    Preconditions.checkNotNull(text, "text should not be null");
+
+    return labelModel.predict(Lists.newArrayList(text)).get(0);
+  }
+
+  /**
+   * Classify a given text.
    * 
    * @param alphabet the alphabet to use.
    * @param classifier the classifier to use.
@@ -534,6 +549,36 @@ public final class Repository {
     Preconditions.checkNotNull(text, "text should not be null");
 
     return classifier.predict(countVectorizer(alphabet, maxGroupSize_).apply(text));
+  }
+
+  /**
+   * On positive classification, returns a snippet of text centered around its most 'interesting'
+   * part.
+   *
+   * @param labelModel the label model to use.
+   * @param labelingFunctions the labeling functions to use.
+   * @param text the text to classify.
+   * @return a snippet centered around its most 'interesting' part (if any).
+   */
+  public Optional<String> predictAndGetFocusPoint(AbstractLabelModel<String> labelModel,
+      List<AbstractLabelingFunction<String>> labelingFunctions, String text) {
+
+    Preconditions.checkNotNull(labelModel, "labelModel should not be null");
+    Preconditions.checkNotNull(labelingFunctions, "labelingFunctions should not be null");
+    Preconditions.checkNotNull(text, "text should not be null");
+
+    int prediction = predict(labelModel, text);
+
+    if (prediction != OK) {
+      return Optional.empty();
+    }
+
+    List<String> keywords = Helpers.keywords(labelingFunctions, text);
+
+    if (keywords.isEmpty()) {
+      return Optional.empty();
+    }
+    return Optional.ofNullable(SnippetExtractor.extract(keywords, text, 300, 50, ""));
   }
 
   /**
