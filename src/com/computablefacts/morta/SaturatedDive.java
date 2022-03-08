@@ -5,7 +5,6 @@ import static com.computablefacts.morta.Repository.REJECT;
 import static com.computablefacts.morta.labelingfunctions.AbstractLabelingFunction.OK;
 
 import java.io.File;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -23,18 +22,12 @@ import com.computablefacts.morta.labelmodels.AbstractLabelModel;
 import com.computablefacts.morta.labelmodels.TreeLabelModel;
 import com.computablefacts.morta.prodigy.AnnotatedText;
 import com.computablefacts.morta.prodigy.Meta;
-import com.computablefacts.morta.prodigy.Span;
-import com.computablefacts.morta.prodigy.Token;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
-import com.google.common.hash.Hashing;
 import com.google.errorprone.annotations.CheckReturnValue;
-import com.google.errorprone.annotations.Var;
-import com.google.re2j.Matcher;
-import com.google.re2j.Pattern;
 
 @CheckReturnValue
 final public class SaturatedDive extends ConsoleApp {
@@ -124,14 +117,13 @@ final public class SaturatedDive extends ConsoleApp {
             IGoldLabel.confusionMatrix(classifierPredictions);
 
         observations.add(classifierConfusionMatrix.toString());
-        observations.add("Exporting prodigy annotations for text classification...");
+        observations.add("Exporting prodigy dataset...");
 
-        exportProdigyAnnotations(repository, lbl, alphabet, classifier, labelingFunctions,
-            new File(outputDir + File.separator + lbl
-                + "_prodigy_annotations_for_text_classification.jsonl"));
+        exportTextsAsProdigyDataset(repository, lbl, alphabet, classifier, labelingFunctions,
+            new File(outputDir + File.separator + lbl + "_prodigy_dataset.jsonl"));
 
-        observations.add(String.format("\n%d prodigy annotations have been exported.",
-            classifierPredictions.size()));
+        observations
+            .add(String.format("\n%d texts have been exported.", classifierPredictions.size()));
 
       } catch (Exception e) {
         observations.add(Throwables.getStackTraceAsString(Throwables.getRootCause(e)));
@@ -141,7 +133,7 @@ final public class SaturatedDive extends ConsoleApp {
     observations.flush();
   }
 
-  private static void exportProdigyAnnotations(Repository repository, String label,
+  private static void exportTextsAsProdigyDataset(Repository repository, String label,
       Dictionary alphabet, AbstractClassifier classifier,
       List<AbstractLabelingFunction<String>> labelingFunctions, File output) {
 
@@ -164,91 +156,54 @@ final public class SaturatedDive extends ConsoleApp {
       pages.add(doc.matchedPage());
       return View.of(pages).filter(page -> !Strings.isNullOrEmpty(page) /* ignore empty pages */)
           .map(page -> new AbstractMap.SimpleImmutableEntry<>(doc.id(), page));
-    }).flatten(entry -> {
+    }).map(entry -> {
 
       String docId = entry.getKey();
       String page = entry.getValue();
 
       // Classify each page and extract a single snippet for each labeling function
       int prediction = repository.predict(alphabet, classifier, page);
-      return View.of(labelingFunctions).map(lf -> {
 
-        // Extract the keywords associated with each labeling function
-        List<String> keywords = Helpers.keywords(Lists.newArrayList(lf), page);
+      // Extract the keywords associated with the labeling functions
+      List<String> keywords = Helpers.keywords(labelingFunctions, page);
 
-        // Extract the snippet associated with each labeling function
-        String snippet =
-            keywords.isEmpty() ? "" : SnippetExtractor.extract(keywords, page, 400, 200, "");
+      // Extract the snippet associated with the labeling functions
+      String snippet =
+          keywords.isEmpty() ? "" : SnippetExtractor.extract(keywords, page, 400, 200, "");
 
-        // Create a temporary data structure with all the relevant information
-        Annotation annotation = new Annotation();
-        annotation.id_ = docId;
-        annotation.page_ = page;
-        annotation.snippet_ = snippet;
-        annotation.labelingFunction_ = lf;
-        annotation.keywords_ = keywords;
-        annotation.label_ = prediction;
+      // Create a temporary data structure with all the relevant information
+      Annotation annotation = new Annotation();
+      annotation.id_ = docId;
+      annotation.page_ = page;
+      annotation.snippet_ = snippet;
+      annotation.labelingFunctions_ = labelingFunctions;
+      annotation.keywords_ = keywords;
+      annotation.label_ = prediction;
 
-        return annotation;
-      }).filter(annotation -> !Strings
-          .isNullOrEmpty(annotation.snippet_) /* ignore annotations with empty snippets */);
-    }).flatten(annotation -> View.of(annotation.keywords_)
-        .filter(keyword -> annotation.snippet_.contains(keyword) /* ignore unmatched keywords */)
-        .map(keyword -> {
+      return annotation;
+    }).filter(annotation -> !Strings
+        .isNullOrEmpty(annotation.snippet_) /* ignore annotations with empty snippets */)
+        .map(annotation -> {
 
-          int beginSpan = annotation.snippet_.indexOf(keyword);
-          int endSpan = beginSpan + keyword.length();
+          String matchedKeywords = String.join("/", annotation.keywords_);
+          String expectedAnswer = annotation.label_ == OK ? ACCEPT : REJECT;
+          Meta meta = new Meta(annotation.id_, label, expectedAnswer, matchedKeywords);
 
-          @Var
-          int firstSpanId = -1;
-          @Var
-          int lastSpanId = -1;
-
-          List<Token> tokens = new ArrayList<>();
-          Matcher tokenizer =
-              Pattern.compile("[^\\p{Zs}\\n\\r\\t]+", Pattern.DOTALL | Pattern.MULTILINE)
-                  .matcher(annotation.snippet_);
-
-          while (tokenizer.find()) {
-
-            String text = tokenizer.group();
-            int beginToken = tokenizer.start();
-            int endToken = tokenizer.end();
-
-            if (beginToken <= beginSpan) {
-              firstSpanId = tokens.size();
-            }
-            if (endToken <= endSpan) {
-              lastSpanId = tokens.size();
-            }
-
-            tokens.add(new Token(text, beginToken, endToken, tokens.size(), true));
-          }
-
-          String answer = annotation.label_ == OK ? ACCEPT : REJECT;
-          Span span = new Span(beginSpan, endSpan, firstSpanId, lastSpanId, label);
-          Meta meta = new Meta(annotation.id_, label, answer);
-
-          return new AnnotatedText(meta, annotation.snippet_, tokens, Lists.newArrayList(span));
-        })).filter(annotatedText -> {
-
-          String hash = Hashing
-              .murmur3_128().newHasher().putString(annotatedText.tokens_.stream()
-                  .map(token -> token.text_).collect(Collectors.joining()), StandardCharsets.UTF_8)
-              .hash().toString();
+          return new AnnotatedText(meta, annotation.snippet_);
+        }).filter(annotatedText -> {
 
           // Balance the number of ACCEPT/REJECT classes
           if (ACCEPT.equals(annotatedText.meta_.expectedAnswer_)) {
-            if (hashAccepted.contains(hash)) {
+            if (hashAccepted.contains(annotatedText.text_)) {
               return false;
             }
-            hashAccepted.add(hash);
+            hashAccepted.add(annotatedText.text_);
             return true;
           }
-          if (hashRejected.contains(hash)) {
+          if (hashRejected.contains(annotatedText.text_)) {
             return false;
           }
-          hashRejected.add(hash);
+          hashRejected.add(annotatedText.text_);
           return true;
         }).takeWhile(annotatedText -> hashAccepted.size() <= maxNumberOfElementsPerClass
             && hashRejected.size() <= maxNumberOfElementsPerClass)
@@ -264,7 +219,7 @@ final public class SaturatedDive extends ConsoleApp {
     public String id_;
     public String page_;
     public String snippet_;
-    public AbstractLabelingFunction<String> labelingFunction_;
+    public List<AbstractLabelingFunction<String>> labelingFunctions_;
     public List<String> keywords_;
     public int label_;
 

@@ -18,8 +18,8 @@ final public class Meta {
   public final String expectedLabel_;
   @JsonProperty(value = "expected_answer", required = true)
   public final String expectedAnswer_;
-  @JsonProperty(value = "expected_span")
-  public final String expectedSpan_;
+  @JsonProperty(value = "matched_keywords")
+  public final String matchedKeywords_;
 
   public Meta(@JsonProperty(value = "source") String source,
       @JsonProperty(value = "expected_label") String expectedLabel,
@@ -31,11 +31,11 @@ final public class Meta {
   public Meta(@JsonProperty(value = "source") String source,
       @JsonProperty(value = "expected_label") String expectedLabel,
       @JsonProperty(value = "expected_answer") String expectedAnswer,
-      @JsonProperty(value = "expected_span") String expectedSpan) {
+      @JsonProperty(value = "matched_keywords") String matchedKeywords) {
     source_ = source;
     expectedLabel_ = expectedLabel;
     expectedAnswer_ = expectedAnswer;
-    expectedSpan_ = expectedSpan;
+    matchedKeywords_ = matchedKeywords;
   }
 
   @Override
@@ -50,18 +50,18 @@ final public class Meta {
     return Objects.equals(source_, meta.source_)
         && Objects.equals(expectedLabel_, meta.expectedLabel_)
         && Objects.equals(expectedAnswer_, meta.expectedAnswer_)
-        && Objects.equals(expectedSpan_, meta.expectedSpan_);
+        && Objects.equals(matchedKeywords_, meta.matchedKeywords_);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(source_, expectedLabel_, expectedAnswer_, expectedSpan_);
+    return Objects.hash(source_, expectedLabel_, expectedAnswer_, matchedKeywords_);
   }
 
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this).add("source", source_)
         .add("expected_label", expectedLabel_).add("expected_answer", expectedAnswer_)
-        .add("expected_span", expectedSpan_).omitNullValues().toString();
+        .add("matched_keyword", matchedKeywords_).omitNullValues().toString();
   }
 }
