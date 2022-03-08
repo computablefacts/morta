@@ -117,17 +117,19 @@ public final class Repository {
    *
    * @param facts the facts.
    * @param documents the facts' underlying documents.
+   * @param resize true iif the fact should be enlarged when less than 300 characters, false
+   *        otherwise.
    * @param withProgressBar true iif a progress bar should be displayed, false otherwise.
    * @return a set of fact types i.e. labels.
    */
-  public Set<String> init(File facts, File documents, boolean withProgressBar) {
+  public Set<String> init(File facts, File documents, boolean resize, boolean withProgressBar) {
 
     Preconditions.checkState(!isInitialized_, "init() should be called only once");
 
     isInitialized_ = true;
 
     return View.of(pagesAsGoldLabels(facts, documents, withProgressBar))
-        .concat(View.of(factsAsGoldLabels(facts, documents, withProgressBar)))
+        .concat(View.of(factsAsGoldLabels(facts, documents, resize, withProgressBar)))
         .map(IGoldLabel::label).toSet();
   }
 
@@ -141,7 +143,8 @@ public final class Repository {
     Preconditions.checkState(isInitialized_, "init() should be called first");
 
     return View.of(pagesAsGoldLabels(null, null, false))
-        .concat(View.of(factsAsGoldLabels(null, null, false))).map(IGoldLabel::label).toSet();
+        .concat(View.of(factsAsGoldLabels(null, null, false, false))).map(IGoldLabel::label)
+        .toSet();
   }
 
   /**
@@ -681,7 +684,7 @@ public final class Repository {
     return goldLabels;
   }
 
-  private Set<IGoldLabel<String>> factsAsGoldLabels(File facts, File documents,
+  private Set<IGoldLabel<String>> factsAsGoldLabels(File facts, File documents, boolean resize,
       boolean withProgressBar) {
 
     File file = fileFactsAsGoldLabels();
@@ -691,7 +694,8 @@ public final class Repository {
     }
 
     Set<FactAndDocument> factsAndDocuments = factsAndDocuments(facts, documents, withProgressBar);
-    Set<IGoldLabel<String>> goldLabels = FactAndDocument.factsAsGoldLabels(factsAndDocuments);
+    Set<IGoldLabel<String>> goldLabels =
+        FactAndDocument.factsAsGoldLabels(factsAndDocuments, resize);
 
     GoldLabelOfString.save(file, goldLabels);
     return goldLabels;

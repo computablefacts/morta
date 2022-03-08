@@ -52,7 +52,7 @@ final public class SaturatedDive extends ConsoleApp {
     Observations observations =
         new Observations(new File(outputDir + File.separator + "observations.txt"));
     Repository repository = new Repository(outputDir, maxGroupSize);
-    Set<String> labels = repository.init(facts, documents, verbose).stream()
+    Set<String> labels = repository.init(facts, documents, true, verbose).stream()
         .filter(lbl -> label == null || label.equals(lbl)).collect(Collectors.toSet());
 
     for (String lbl : labels) {

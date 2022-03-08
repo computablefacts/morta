@@ -212,17 +212,20 @@ public final class FactAndDocument {
 
   /**
    * Returns each accepted or rejected fact as a gold label.
-   * 
+   *
    * @param elements a set of elements.
+   * @param resize true iif the fact should be enlarged when less than 300 characters, false
+   *        otherwise.
    * @return a set of gold labels.
    */
-  public static Set<IGoldLabel<String>> factsAsGoldLabels(Collection<FactAndDocument> elements) {
+  public static Set<IGoldLabel<String>> factsAsGoldLabels(Collection<FactAndDocument> elements,
+      boolean resize) {
 
     Preconditions.checkNotNull(elements, "elements should not be null");
 
     return elements.stream().filter(element -> element.isAccepted() || element.isRejected())
         .filter(element -> !Strings.isNullOrEmpty(element.fact()))
-        .map(FactAndDocument::factAsGoldLabel).collect(Collectors.toSet());
+        .map(element -> element.factAsGoldLabel(resize)).collect(Collectors.toSet());
   }
 
   /**
@@ -383,14 +386,28 @@ public final class FactAndDocument {
   /**
    * Returns the fact as a gold label.
    *
+   * @param resize true iif the fact should be enlarged when less than 300 characters, false
+   *        otherwise.
    * @return a gold label.
    */
-  public IGoldLabel<String> factAsGoldLabel() {
+  public IGoldLabel<String> factAsGoldLabel(boolean resize) {
 
     Preconditions.checkState(isAccepted() || isRejected(),
         "unverified facts cannot be treated as gold labels");
 
-    return new GoldLabelOfString(id(), label(), fact(), isRejected(), isAccepted(), false, false);
+    int minLength = 300;
+    String fact = fact();
+    String page = matchedPage();
+
+    if (!resize || fact.length() >= minLength || !page.contains(fact)) {
+      return new GoldLabelOfString(id(), label(), fact, isRejected(), isAccepted(), false, false);
+    }
+
+    int begin = Math.max(0, page.indexOf(fact) - 50);
+    int end = Math.min(page.length(), begin + minLength);
+    String newFact = page.substring(begin, end);
+
+    return new GoldLabelOfString(id(), label(), newFact, isRejected(), isAccepted(), false, false);
   }
 
   /**
