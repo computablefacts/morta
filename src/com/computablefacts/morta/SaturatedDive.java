@@ -43,6 +43,7 @@ final public class SaturatedDive extends ConsoleApp {
     int nbCandidatesToConsider = getIntCommand(args, "nb_candidates_to_consider", 50);
     int nbLabelsToReturn = getIntCommand(args, "nb_labels_to_return", 15);
     int maxGroupSize = getIntCommand(args, "max_group_size", 3);
+    boolean prodigyDataset = getBooleanCommand(args, "prodigy_dataset", false);
     boolean verbose = getBooleanCommand(args, "verbose", true);
 
     Preconditions.checkArgument(nbCandidatesToConsider > 0, "nbCandidatesToConsider must be > 0");
@@ -119,8 +120,10 @@ final public class SaturatedDive extends ConsoleApp {
         observations.add(classifierConfusionMatrix.toString());
         observations.add("Exporting prodigy dataset...");
 
-        exportTextsAsProdigyDataset(repository, lbl, alphabet, classifier, labelingFunctions,
-            new File(outputDir + File.separator + lbl + "_prodigy_dataset.jsonl"));
+        if (prodigyDataset) {
+          exportTextsAsProdigyDataset(repository, lbl, alphabet, classifier, labelingFunctions,
+              new File(outputDir + File.separator + lbl + "_prodigy_dataset.jsonl"));
+        }
 
         observations
             .add(String.format("\n%d texts have been exported.", classifierPredictions.size()));
