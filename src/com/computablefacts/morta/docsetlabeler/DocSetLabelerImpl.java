@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
+import com.computablefacts.asterix.DocSetLabeler;
 import com.computablefacts.morta.Helpers;
 import com.computablefacts.morta.textcat.TextCategorizer;
 import com.google.common.base.Preconditions;
