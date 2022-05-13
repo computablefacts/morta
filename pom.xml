@@ -40,7 +40,7 @@
 
     <properties>
         <junon.version>0.10</junon.version>
-        <nona.version>3.8</nona.version>
+        <asterix.version>0.9</asterix.version>
         <error-prone.version>2.3.1</error-prone.version>
         <junit.version>4.13.1</junit.version>
         <equalsverifier.version>3.4.2</equalsverifier.version>
@@ -67,8 +67,8 @@
         </dependency>
         <dependency>
             <groupId>com.computablefacts</groupId>
-            <artifactId>nona</artifactId>
-            <version>${nona.version}</version>
+            <artifactId>asterix</artifactId>
+            <version>${asterix.version}</version>
         </dependency>
         <dependency>
             <groupId>com.github.haifengl</groupId>
@@ -144,9 +144,6 @@
                                         implementation="de.skuzzle.enforcer.restrictimports.rule.RestrictImports">
                                     <reason>Morta must not inherit from Nona</reason>
                                     <bannedImport>com.computablefacts.nona.**</bannedImport>
-                                    <exclusions>
-                                        <exclusion>com.computablefacts.morta.Helpers</exclusion>
-                                    </exclusions>
                                 </restrictImports>
                                 <restrictImports
                                         implementation="de.skuzzle.enforcer.restrictimports.rule.RestrictImports">
