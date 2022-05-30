@@ -293,14 +293,14 @@ public final class Repository {
 
   /**
    * Load or guesstimate labeling functions using the
-   * {@link com.computablefacts.morta.docsetlabeler.DocSetLabeler} algorithm.
+   * {@link com.computablefacts.morta.docsetlabeler.DocSetLabelerImpl} algorithm.
    *
    * @param label the label for which the labeling functions must be guesstimated.
    * @param nbCandidatesToConsider number of candidate labels the
-   *        {@link com.computablefacts.morta.docsetlabeler.DocSetLabeler} algorithm should consider
+   *        {@link com.computablefacts.morta.docsetlabeler.DocSetLabelerImpl} algorithm should consider
    *        on each iteration.
    * @param nbLabelsToReturn number of labels the
-   *        {@link com.computablefacts.morta.docsetlabeler.DocSetLabeler} algorithm should return at
+   *        {@link com.computablefacts.morta.docsetlabeler.DocSetLabelerImpl} algorithm should return at
    *        the end.
    * @return a list of labeling functions.
    */
