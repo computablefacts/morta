@@ -58,9 +58,9 @@ public final class FactAndDocument {
   /**
    * Load elements from a gzipped JSONL file.
    *
-   * @param file the input file.
-   * @param label the specific gold labels to load. If {@code label} is set to {@code null}, all
-   *        gold labels will be loaded.
+   * @param file            the input file.
+   * @param label           the specific gold labels to load. If {@code label} is set to {@code null}, all
+   *                        gold labels will be loaded.
    * @param withProgressBar true iif a progress bar should be displayed, false otherwise.
    * @return a set of elements.
    */
@@ -92,10 +92,10 @@ public final class FactAndDocument {
   /**
    * Load elements from raw gzipped JSONL files.
    *
-   * @param facts the 'fact' file.
-   * @param documents the 'document' file.
-   * @param label the specific gold labels to load. If {@code label} is set to {@code null}, all
-   *        gold labels will be loaded.
+   * @param facts           the 'fact' file.
+   * @param documents       the 'document' file.
+   * @param label           the specific gold labels to load. If {@code label} is set to {@code null}, all
+   *                        gold labels will be loaded.
    * @param withProgressBar true iif a progress bar should be displayed, false otherwise.
    * @return a set of elements.
    */
@@ -122,7 +122,7 @@ public final class FactAndDocument {
     AtomicInteger nbElements = new AtomicInteger(0);
 
     return View.of(documents, true).takeWhile(
-        row -> !elements.isEmpty() /* exit as soon as all facts are associated with a document */)
+            row -> !elements.isEmpty() /* exit as soon as all facts are associated with a document */)
         .filter(row -> !Strings.isNullOrEmpty(row) /* remove empty rows */).map(row -> {
           try {
             return new Document(JsonCodec.asObject(row));
@@ -176,7 +176,7 @@ public final class FactAndDocument {
   /**
    * Save elements to a gzipped JSONL file.
    *
-   * @param file the output file.
+   * @param file     the output file.
    * @param elements the elements to save.
    * @return true iif the elements have been written to the file, false otherwise.
    */
@@ -214,8 +214,8 @@ public final class FactAndDocument {
    * Returns each accepted or rejected fact as a gold label.
    *
    * @param elements a set of elements.
-   * @param resize true iif the fact should be enlarged when less than 300 characters, false
-   *        otherwise.
+   * @param resize   true iif the fact should be enlarged when less than 300 characters, false
+   *                 otherwise.
    * @return a set of gold labels.
    */
   public static Set<IGoldLabel<String>> factsAsGoldLabels(Collection<FactAndDocument> elements,
@@ -325,7 +325,7 @@ public final class FactAndDocument {
 
   /**
    * Returns the extracted fact i.e. the span of text extracted from {@link #matchedPage()}.
-   *
+   * <p>
    * Note that it does not imply that {@code matchedPage().indexOf(snippet()) >= 0}.
    *
    * @return a text fragment if any, an empty string otherwise.
@@ -335,7 +335,14 @@ public final class FactAndDocument {
         .filter(map -> startIndex().isPresent() && endIndex().isPresent()
             && map.containsKey("string_span"))
         .map(map -> (String) map.get("string_span"))
-        .map(span -> span.substring(startIndex().orElse(0), endIndex().orElse(span.length())))
+        .map(span -> {
+
+          int begin = Math.max(0, startIndex().orElse(0));
+          int end = Math.min(span.length(), endIndex().orElse(span.length()));
+          String fact = span.substring(begin, end);
+
+          return fact;
+        })
         .orElse("");
   }
 
@@ -387,7 +394,7 @@ public final class FactAndDocument {
    * Returns the fact as a gold label.
    *
    * @param resize true iif the fact should be enlarged when less than 300 characters, false
-   *        otherwise.
+   *               otherwise.
    * @return a gold label.
    */
   public IGoldLabel<String> factAsGoldLabel(boolean resize) {
