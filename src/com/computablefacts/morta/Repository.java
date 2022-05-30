@@ -13,6 +13,7 @@ import com.computablefacts.asterix.ConfusionMatrix;
 import com.computablefacts.asterix.Generated;
 import com.computablefacts.asterix.SnippetExtractor;
 import com.computablefacts.asterix.View;
+import com.computablefacts.morta.bow.BagOfNGrams;
 import com.computablefacts.morta.classifiers.*;
 import com.computablefacts.morta.docsetlabeler.DocSetLabelerImpl;
 import com.computablefacts.morta.labelingfunctions.AbstractLabelingFunction;
@@ -42,7 +43,7 @@ public final class Repository {
   /**
    * Constructor.
    *
-   * @param outputDir where the temporary files will be written.
+   * @param outputDir    where the temporary files will be written.
    * @param maxGroupSize the maximum number of tokens for a single ngram.
    */
   public Repository(String outputDir, int maxGroupSize) {
@@ -115,10 +116,10 @@ public final class Repository {
   /**
    * Initialize the current repository.
    *
-   * @param facts the facts.
-   * @param documents the facts' underlying documents.
-   * @param resize true iif the fact should be enlarged when less than 300 characters, false
-   *        otherwise.
+   * @param facts           the facts.
+   * @param documents       the facts' underlying documents.
+   * @param resize          true iif the fact should be enlarged when less than 300 characters, false
+   *                        otherwise.
    * @param withProgressBar true iif a progress bar should be displayed, false otherwise.
    * @return a set of fact types i.e. labels.
    */
@@ -166,7 +167,7 @@ public final class Repository {
    * Load pages as gold labels for a given label.
    *
    * @param label the label to load. If {@code label} is {@code null}, load all pages as gold
-   *        labels.
+   *              labels.
    * @return a set of gold labels.
    */
   public Set<IGoldLabel<String>> pagesAsGoldLabels(String label) {
@@ -183,7 +184,7 @@ public final class Repository {
    * Load facts as gold labels for a given label.
    *
    * @param label the label to load. If {@code label} is {@code null}, load all facts as gold
-   *        labels.
+   *              labels.
    * @return a set of gold labels.
    */
   public Set<IGoldLabel<String>> factsAsGoldLabels(String label) {
@@ -197,7 +198,7 @@ public final class Repository {
 
   /**
    * Create a {@link TextCategorizer}.
-   *
+   * <p>
    * The returned category is the fact type i.e. gold label's label.
    *
    * @return a {@link TextCategorizer}.
@@ -238,7 +239,7 @@ public final class Repository {
 
   /**
    * Create a {@link TextCategorizer} for a given gold label.
-   *
+   * <p>
    * The returned categories are either {@code ACCEPT} or {@code REJECT}.
    *
    * @param label the label to load.
@@ -295,13 +296,13 @@ public final class Repository {
    * Load or guesstimate labeling functions using the
    * {@link com.computablefacts.morta.docsetlabeler.DocSetLabelerImpl} algorithm.
    *
-   * @param label the label for which the labeling functions must be guesstimated.
+   * @param label                  the label for which the labeling functions must be guesstimated.
    * @param nbCandidatesToConsider number of candidate labels the
-   *        {@link com.computablefacts.morta.docsetlabeler.DocSetLabelerImpl} algorithm should consider
-   *        on each iteration.
-   * @param nbLabelsToReturn number of labels the
-   *        {@link com.computablefacts.morta.docsetlabeler.DocSetLabelerImpl} algorithm should return at
-   *        the end.
+   *                               {@link com.computablefacts.morta.docsetlabeler.DocSetLabelerImpl} algorithm should consider
+   *                               on each iteration.
+   * @param nbLabelsToReturn       number of labels the
+   *                               {@link com.computablefacts.morta.docsetlabeler.DocSetLabelerImpl} algorithm should return at
+   *                               the end.
    * @return a list of labeling functions.
    */
   public List<AbstractLabelingFunction<String>> labelingFunctions(String label,
@@ -361,9 +362,9 @@ public final class Repository {
   /**
    * Load or train a label model.
    *
-   * @param label the label for which a label model must be trained.
+   * @param label             the label for which a label model must be trained.
    * @param labelingFunctions the set of labeling functions to use.
-   * @param metric the metric to use to evaluate the trained model.
+   * @param metric            the metric to use to evaluate the trained model.
    * @return a label model.
    */
   public AbstractLabelModel<String> labelModel(String label,
@@ -409,8 +410,8 @@ public final class Repository {
   /**
    * Load or train a classifier.
    *
-   * @param label the label for which a classifier must be trained.
-   * @param alphabet the alphabet to use.
+   * @param label      the label for which a classifier must be trained.
+   * @param alphabet   the alphabet to use.
    * @param labelModel the label model to use.
    * @param clazzifier the classifier to use.
    * @return a classifier.
@@ -478,7 +479,7 @@ public final class Repository {
 
   /**
    * Load or compute the alphabet associated with a set of verified gold labels.
-   * 
+   *
    * @param label the label for which the alphabet must be computed.
    * @return the alphabet.
    */
@@ -526,7 +527,7 @@ public final class Repository {
    * Classify a given text.
    *
    * @param labelModel the label model to use.
-   * @param text the text to classify.
+   * @param text       the text to classify.
    * @return a label in {OK, KO}.
    */
   public int predict(AbstractLabelModel<String> labelModel, String text) {
@@ -539,10 +540,10 @@ public final class Repository {
 
   /**
    * Classify a given text.
-   * 
-   * @param alphabet the alphabet to use.
+   *
+   * @param alphabet   the alphabet to use.
    * @param classifier the classifier to use.
-   * @param text the text to classify.
+   * @param text       the text to classify.
    * @return a label in {OK, KO}.
    */
   public int predict(Dictionary alphabet, AbstractClassifier classifier, String text) {
@@ -558,9 +559,9 @@ public final class Repository {
    * On positive classification, returns a snippet of text centered around its most 'interesting'
    * part.
    *
-   * @param labelModel the label model to use.
+   * @param labelModel        the label model to use.
    * @param labelingFunctions the labeling functions to use.
-   * @param text the text to classify.
+   * @param text              the text to classify.
    * @return a snippet centered around its most 'interesting' part (if any).
    */
   public Optional<String> predictAndGetFocusPoint(AbstractLabelModel<String> labelModel,
@@ -588,10 +589,10 @@ public final class Repository {
    * On positive classification, returns a snippet of text centered around its most 'interesting'
    * part.
    *
-   * @param alphabet the alphabet to use.
-   * @param classifier the classifier to use.
+   * @param alphabet          the alphabet to use.
+   * @param classifier        the classifier to use.
    * @param labelingFunctions the labeling functions to use.
-   * @param text the text to classify.
+   * @param text              the text to classify.
    * @return a snippet centered around its most 'interesting' part (if any).
    */
   public Optional<String> predictAndGetFocusPoint(Dictionary alphabet,
@@ -620,7 +621,7 @@ public final class Repository {
   /**
    * Create a new gold label by comparing the gold label actual class with the predicted one.
    *
-   * @param goldLabel the actual gold label.
+   * @param goldLabel  the actual gold label.
    * @param prediction the prediction.
    * @return a new gold label.
    */
